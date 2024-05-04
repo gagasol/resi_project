@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/new/saveIcon">
+        <file>icons/floppy-disk.svg</file>
+        <file>icons/floppy-disk-back.svg</file>
+    </qresource>
+    <qresource prefix="/icons">
+        <file>icons/cards-three.svg</file>
+        <file>icons/file-pdf.svg</file>
+        <file>icons/folder-open.svg</file>
+        <file>icons/gear-six.svg</file>
+        <file>icons/tabs.svg</file>
+    </qresource>
+</RCC>
