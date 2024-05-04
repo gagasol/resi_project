@@ -1,6 +1,9 @@
 # This Python file uses the following encoding: utf-8
 import sys
 
+import random
+import string
+from PySide6.QtGui import QPixmap, QColor, QIcon
 from PySide6.QtWidgets import QApplication, QWidget, QComboBox, QVBoxLayout, QSpacerItem, QSizePolicy, QLabel
 
 # Important:
@@ -22,18 +25,43 @@ class MarkerPresetWindow(QWidget):
         self.listPresets = listPresets if listPresets else []
 
         self.listPresets = [
-            {"Aa": "A1", "Ab": "A2", "Ac" : "A3", "Ad": "A4"},
-            {"Ba": "B1", "Bb": "B2", "Bc" : "B3", "Bd" : "B4"},
-            {"Ca": "C1", "Cb": "C2", "Cc" : "C3", "Cd" : "C4"},
-            {"Da": "D1", "Db": "D2", "Eb" : "E3", "Ed" : "E4"},
-            {"Ea": "E1", "Eb" : "E2", "Ec" : "E3", "Ed" : "E4"}
+            {
+                "Red": "#FF0000",
+                "Green": "#008000",
+                "Blue": "#0000FF",
+                "Yellow": "#FFFF00",
+                "Black": "#000000",
+                "White": "#FFFFFF"
+            },
+            {
+                "Aloof": "#7B68EE",
+                "Cherish": "#FFB6C1",
+                "Divine": "#FFA07A",
+                "Elapse": "#8B0000",
+                "Green": "#00FF00"
+            },
+            {"Coral": "#FF7F50",
+             "Cyan": "#00FFFF",
+             "Chocolate": "#D2691E",
+             "Crimson": "#DC143C"}
         ]
+
+
 
         self.listComboBoxPresets = []
 
         self.ui.pushButtonAddPreset.clicked.connect(self.manipulatePresets)
 
-    # @todo add an on focus change fct that changes a label that represents the color or something. FUCK ME xD
+
+    def onComboBoxItemChanged(self, index):
+        for preset in self.listPresets:
+            if self.sender().currentText() in preset:
+                self.mainWindow.colorRect = preset[self.sender().currentText()]
+                self.mainWindow.nameRectMark = self.sender().currentText()
+
+
+        print(self.sender().currentText())
+
     def manipulatePresets(self):
 
         if (self.flagChange):
@@ -43,17 +71,26 @@ class MarkerPresetWindow(QWidget):
             self.loadPresets()
             print(self.ui.scrollAreaWidgetContents.layout())
 
+    # @todo create an icon with a pixelmap with the chosen marker name and set the color with listPresets
     def loadPresets(self):
 
         tmpComboBoxMarker = []
 
         for preset in self.listPresets:
             tmpComboBox = QComboBox(self)
+            i = 0
             for marker in preset:
-                tmpComboBox.addItem(marker)
 
+                pixmap = QPixmap(30, 30)
+                pixmap.fill(QColor(preset.get(marker)))
+                icon = QIcon(pixmap)
+                tmpComboBox.addItem(marker)
+                tmpComboBox.setItemIcon(i, icon)
+                i += 1
+
+            self.ui.scrollAreaWidgetContents.layout().insertWidget(len(tmpComboBoxMarker), tmpComboBox)
+            tmpComboBox.currentIndexChanged.connect(self.onComboBoxItemChanged)
             tmpComboBoxMarker.append(tmpComboBox)
-            self.ui.scrollAreaWidgetContents.layout().insertWidget(1, tmpComboBox)
 
 
         self.listComboBoxPresets.append(tmpComboBoxMarker)
@@ -65,6 +102,7 @@ class MarkerPresetWindow(QWidget):
 
         return tmpComboBox
 
+# useless functions
 
 
 '''

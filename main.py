@@ -76,6 +76,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.dictMarker = {}
         self.listMarkerRect = []
         self.colorRect = "#000000"
+        self.nameRectMark = ""
 
         self.currentCanvasInd = None
         self.listRectByCanvInd = []
