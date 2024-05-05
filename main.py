@@ -67,7 +67,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # @xDataForMarker variable that holds the first clicked position to draw a marker from that to the second click
         # @dict dictMarker dictionary containing a "String::Name: String::HexColor" pair to save all Marker
         # @list listMarkerRect list that doesnt do anything I believe @todo check this variable
-        # @colorRect variable given from selectMarkerWindow that determines the color of a rectangle
+        # @colorRect variable set by selectMarkerWindow that determines the color of a rectangle
+        # @nameRectMark variable set by selectMarkerWindow is the name of a marker rectangle
+        # @heightRectMarkPerc sets the height of the marker as percent of the y-axis
+        # @percMarkerFocusHeight sets the height of the focus for the marker as a percent of the y-axis
+
         # @int currentCanvasInd variable that saves the Index of the focus Canvas
         # @list listRectByCanvInd a list of lists of rectangles each i_ind points to the canvas, j_ind to the rect
             # listRectCanvInd[canvasIndex][rectangleIndex] -> Rectangle
@@ -77,6 +81,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.listMarkerRect = []
         self.colorRect = "#000000"
         self.nameRectMark = ""
+        self.heightRectMarkPerc = 1
+        self.percMarkerFocusHeight = 30
 
         self.currentCanvasInd = None
         self.listRectByCanvInd = []
@@ -259,6 +265,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # @todo highlight either side if hovered or change mouse
     def checkIfClickByRect(self, event, rect):
 
+        axisHeight = self.test_array_mplCanvas[self.currentCanvasInd].axes.get_ylim()[1]
+
         rectCent = rect.get_center()
         rectWidth = rect.get_width()
 
@@ -271,8 +279,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         rectX = rect.get_x()
 
         xRange = True if (rectX < event.xdata < rectX + rectWidth) else False
-        yRange = True if (0.1 > event.ydata >= rect.get_height()) else False
-
+        yRange = True if (-0.1 < event.ydata <= axisHeight*self.percMarkerFocusHeight/100) else False
+        print(xRange, yRange)
         self.flagRectLeftFocus = True if ((disLeft < epsilonSides) and yRange) else False
         self.flagRectRightFocus = True if ((disRight < epsilonSides) and yRange) else False
         self.flagRectFocus = (
@@ -361,6 +369,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if (self.currentCanvasInd is None):
             return
 
+        axisHeight = self.test_array_mplCanvas[self.currentCanvasInd].axes.get_ylim()[1]
         # if length of listReactByCanvInd is smaller than currentCanvasInd create a new list for that canvas
         # else select the already existing list
         if (len(self.listRectByCanvInd) <= self.currentCanvasInd):
@@ -370,7 +379,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             tmpListRect = self.listRectByCanvInd[self.currentCanvasInd]
 
-        tmpRect = Rectangle((anchorX, 0), width, -0.02)
+        tmpRect = Rectangle((anchorX, -axisHeight*0.005), width, - axisHeight * self.heightRectMarkPerc / 100)
         tmpRect.set_color(self.colorRect)
         tmpListRect.append(tmpRect)
 

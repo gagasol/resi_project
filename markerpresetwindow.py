@@ -24,6 +24,7 @@ class MarkerPresetWindow(QWidget):
         self. flagChange = flagChange
         self.listPresets = listPresets if listPresets else []
 
+        # bunch of stuff for trying stuff out
         self.listPresets = [
             {
                 "Red": "#FF0000",
@@ -46,10 +47,9 @@ class MarkerPresetWindow(QWidget):
              "Crimson": "#DC143C"}
         ]
 
-
-
         self.listComboBoxPresets = []
 
+        self.loadPresets()
         self.ui.pushButtonAddPreset.clicked.connect(self.manipulatePresets)
 
 

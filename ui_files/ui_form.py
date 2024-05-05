@@ -22,7 +22,7 @@ class Ui_SelectMarkerWindow(object):
     def setupUi(self, SelectMarkerWindow):
         if not SelectMarkerWindow.objectName():
             SelectMarkerWindow.setObjectName(u"SelectMarkerWindow")
-        SelectMarkerWindow.resize(412, 147)
+        SelectMarkerWindow.resize(412, 600)
         self.verticalLayout = QVBoxLayout(SelectMarkerWindow)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.scrollArea = QScrollArea(SelectMarkerWindow)
