@@ -48,9 +48,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.test_rect = Rectangle((0, 0), 0.2, - 0.03)
         self.test_x_start = 0
 
-        self.test_map_title_to_ind = {}
-        self.test_array_mplCanvas = []
-        self.test_rectFocusInd = None
+        self.flagWindowClosedByUserSignal = False
 
     # variable setup
 
@@ -60,8 +58,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # @currentTargetRect variable that holds a rectangle if it has been clicked on
         self.markerWindow = None
 
-        self.vLineRect = Rectangle((0, 0), 0.0005, 1)
-        self.currentTargetRect = None
+        self.vLineRect = Rectangle((-5, 0), 0.0005, 1)
+        self.focusRect = None
 
         # data
         # @xDataForMarker variable that holds the first clicked position to draw a marker from that to the second click
@@ -84,8 +82,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.heightRectMarkPerc = 1
         self.percMarkerFocusHeight = 30
 
-        self.currentCanvasInd = None
-        self.listRectByCanvInd = []
+        self.dictCanvasToRectList = {}
 
         # counter
         # @variable clickCount counts to a max of 1, on 0 it sets the xDataForMarker var
@@ -126,76 +123,79 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # test on how to move a rectangle
         if (event.inaxes and event.button == MouseButton.LEFT and self.flagRectFocus):
-            currentX = self.currentTargetRect.get_x()
+            currentX = self.focusRect.get_x()
 
-            self.currentTargetRect.set_x(
+            self.focusRect.set_x(
                 currentX + (event.xdata - self.test_x_start))
             self.test_x_start = event.xdata
 
         # test on how to change the length of a rectangle
         if (event.inaxes and event.button == MouseButton.LEFT and self.flagRectRightFocus):
-            currentWidth = self.currentTargetRect.get_width()
+            currentWidth = self.focusRect.get_width()
 
-            self.currentTargetRect.set_width(
+            self.focusRect.set_width(
                 currentWidth + (event.xdata - self.test_x_start))
             self.test_x_start = event.xdata
 
         if (event.inaxes and event.button == MouseButton.LEFT and self.flagRectLeftFocus):
-            currentX = self.currentTargetRect.get_x()
-            currentWidth = self.currentTargetRect.get_width()
+            currentX = self.focusRect.get_x()
+            currentWidth = self.focusRect.get_width()
 
-            self.currentTargetRect.set_x(
+            self.focusRect.set_x(
                 currentX + (event.xdata - self.test_x_start))
-            self.currentTargetRect.set_width(
+            self.focusRect.set_width(
                 currentWidth - (event.xdata - self.test_x_start))
             self.test_x_start = event.xdata
 
-        if (self.currentCanvasInd is not None):
-            self.test_array_mplCanvas[self.currentCanvasInd].draw_idle()
+        if (event.inaxes):
+            event.canvas.draw()
 
     def onButtonPress(self, event):
 
         if (event.inaxes is None):
             return
 
+        print(event.canvas)
+
         self.flagMouseClicked = True
 
         self.test_x_start = event.xdata
         print(event.xdata, event.ydata)
 
-        if (len(self.listRectByCanvInd) > self.currentCanvasInd):
-
-            i = 0
-            for rect in self.listRectByCanvInd[self.currentCanvasInd]:
-
-                if (self.checkIfClickByRect(event, rect)):
-                    self.currentTargetRect = self.listRectByCanvInd[self.currentCanvasInd][i]
-                    self.test_rectFocusInd = i
-                    return
-                else:
-                    i += 1
+        # check if any marker rectangle is close by
+        # @todo add the loop to the function and just call the function
+        for rect in self.dictCanvasToRectList[event.canvas]:
+            if self.checkIfClickByRect(event, rect):
+                self.focusRect = rect
+                return
 
         # logic for creating markers with addRectToCurrentCanv
-        if (not self.flagRectFocus
-                and not self.flagRectLeftFocus
-                and not self.flagRectRightFocus):
+        if (not (self.flagRectFocus or self.flagRectLeftFocus or self.flagRectRightFocus)):
 
             if (self.clickCount == 0):
                 self.xDataForMarker = event.xdata
 
-            else:
+            elif (self.clickCount == 1):
                 self.markerWindow = markerpresetwindow.MarkerPresetWindow(self)
                 self.markerWindow.setAttribute(Qt.WA_DeleteOnClose)
                 self.markerWindow.show()
+                self.markerWindow.destroyed.emit()
 
                 waitForMarkerInputLoop = QEventLoop()
+                self.markerWindow.closedByUser.connect(self.windowClosedByUser)
+                self.markerWindow.closedProgrammatically.connect(self.windowClosedProgrammatically)
                 self.markerWindow.destroyed.connect(waitForMarkerInputLoop.quit)
                 waitForMarkerInputLoop.exec()
-                self.addRectToCurrentCanv(self.xDataForMarker, event.xdata - self.xDataForMarker)
+
+                if (not self.flagWindowClosedByUserSignal):
+                    self.addRectToCurrentCanv(event)
+                self.flagMouseClicked = False
 
             self.clickCount = self.clickCount + 1 if (self.clickCount < 1) else 0
 
-    def onButtonRelease(self, event):
+
+
+    def onButtonReleased(self, event):
 
         self.flagMouseClicked = False
         self.flagRectFocus = False
@@ -203,26 +203,40 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.flagRectRightFocus = False
 
     def onAxesEnter(self, event):
+        print("ENTERED")
+        self.vLineRect.set_visible(True)
+        event.canvas.axes.add_patch(self.vLineRect)
+        #print(self.test_array_mplCanvas[self.currentCanvasInd].axes)
+    '''
+        if (self.currentCanvasInd is not None):
+            self.vLineRect.remove()
+            self.test_array_mplCanvas[self.currentCanvasInd].draw()
 
-        if (self.flagMouseClicked): return
         self.currentCanvasInd = self.test_map_title_to_ind.get(event.inaxes.get_title())
 
         self.test_array_mplCanvas[self.currentCanvasInd].axes.add_patch(self.vLineRect)
         #event.inaxes.add_patch(self.rect)
-        print(event.inaxes.get_title(), self.test_map_title_to_ind.get(event.inaxes.get_title()))
+        print(event.inaxes.get_title(), self.test_map_title_to_ind.get(event.inaxes.get_title()), self.currentCanvasInd)
+    '''
+
+
 
     def onAxesLeave(self, event):
-        if (self.currentCanvasInd is None or self.flagMouseClicked):
+
+
+        print(event.canvas)
+        if (event is None
+                or event.canvas is None
+                or self.clickCount == 1
+                or self.flagMouseClicked):
             return
-        #self.test_array_mplCanvas[self.test_currentCanvasInd].axes.clear()
-        print("Exit axe")
+
         self.vLineRect.remove()
-        self.test_array_mplCanvas[self.currentCanvasInd].draw()
-        self.currentCanvasInd = None
+        event.canvas.draw()
         self.flagRectFocus = False
         self.flagRectLeftFocus = False
         self.flagRectRightFocus = False
-        self.test_rectFocusInd = None
+        self.focusRect = None
 
     def onResize(self, event):
         print("RESIZED")
@@ -247,7 +261,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def saveButtonClicked(self):
 
         print("saveButtonClicked")
-        print(self.listRectByCanvInd)
 
     # functionality for the pushButtonTabView QPushButton
     def tabButtonClicked(self):
@@ -257,6 +270,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def windowButtonClicked(self):
         self.ui.stackedWidgetWorkArea.setCurrentIndex(1)
 
+
+    # event listener handling
+    def windowClosedByUser(self):
+        self.flagWindowClosedByUserSignal = True
+        print("TRUE")
+    def windowClosedProgrammatically(self):
+        self.flagWindowClosedByUserSignal = False
+        print("FALSE")
+
     # algorithms
 
     # function to check if event coordinates are close to a Rectangle and/or close to either side of that Rectangle
@@ -265,7 +287,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # @todo highlight either side if hovered or change mouse
     def checkIfClickByRect(self, event, rect):
 
-        axisHeight = self.test_array_mplCanvas[self.currentCanvasInd].axes.get_ylim()[1]
+        axisHeight = event.canvas.axes.get_ylim()[1]
 
         rectCent = rect.get_center()
         rectWidth = rect.get_width()
@@ -317,22 +339,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         verticalLayout_2.addWidget(widgetTop)
 
         test_canvas = MplCanvas(self, width=6, height=4, dpi=100)
-        test_title = "titleVar" + str(len(self.test_array_mplCanvas))
-        test_canvas.axes.set_title(test_title)
         test_canvas.axes.plot([0, 0.1, 0.2, 0.3, 0.4, 0.5], [0, 0.1, 0.2, 0.3, 0.4, 0.5])
         test_canvas.draw()
 
         test_canvas.mpl_connect('motion_notify_event', self.onMouseMove)
         test_canvas.mpl_connect('button_press_event', self.onButtonPress)
+        test_canvas.mpl_connect('button_release_event', self.onButtonReleased)
         test_canvas.mpl_connect('axes_enter_event', self.onAxesEnter)
-        test_canvas.mpl_connect('axes_leave_event', self.onAxesLeave)
+        #test_canvas.mpl_connect('axes_leave_event', self.onAxesLeave)
         test_canvas.mpl_connect('figure_leave_event', self.onAxesLeave)
         test_canvas.mpl_connect('resize_event', self.onResize)
 
-        test_canvas.figure.set_gid(len(self.test_array_mplCanvas))
-
-        self.test_map_title_to_ind.update({test_title: len(self.test_array_mplCanvas)})
-        self.test_array_mplCanvas.append(test_canvas)
+        self.dictCanvasToRectList.update({test_canvas: []})
 
         widgetGraph = test_canvas
         widgetGraph.setObjectName(u"widgetGraph")
@@ -363,30 +381,23 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         return verticalLayout_2
 
-    def addRectToCurrentCanv(self, anchorX, width):
+    def addRectToCurrentCanv(self, event):
 
-        # return if no Canvas selected
-        if (self.currentCanvasInd is None):
-            return
-
-        axisHeight = self.test_array_mplCanvas[self.currentCanvasInd].axes.get_ylim()[1]
+        anchorX = self.xDataForMarker
+        width = event.xdata - self.xDataForMarker
+        axisHeight = event.canvas.axes.get_ylim()[1]
         # if length of listReactByCanvInd is smaller than currentCanvasInd create a new list for that canvas
         # else select the already existing list
-        if (len(self.listRectByCanvInd) <= self.currentCanvasInd):
-            tmpListRect = []
-            self.listRectByCanvInd.append(tmpListRect)
-
-        else:
-            tmpListRect = self.listRectByCanvInd[self.currentCanvasInd]
+        tmpListRect = self.dictCanvasToRectList[event.canvas]
 
         tmpRect = Rectangle((anchorX, -axisHeight*0.005), width, - axisHeight * self.heightRectMarkPerc / 100)
         tmpRect.set_color(self.colorRect)
         tmpListRect.append(tmpRect)
 
-        self.listRectByCanvInd[self.currentCanvasInd] = tmpListRect
+        #self.listRectByCanvInd[self.currentCanvasInd] = tmpListRect
 
-        self.test_array_mplCanvas[self.currentCanvasInd].axes.add_patch(tmpRect)
-        self.test_array_mplCanvas[self.currentCanvasInd].draw()
+        event.canvas.axes.add_patch(tmpRect)
+        event.canvas.draw()
 
 
 app = QtWidgets.QApplication(sys.argv)

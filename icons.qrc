@@ -9,5 +9,9 @@
         <file>icons/folder-open.svg</file>
         <file>icons/gear-six.svg</file>
         <file>icons/tabs.svg</file>
+        <file>icons/palette.svg</file>
+        <file>icons/brackets-square.svg</file>
+        <file>icons/minus-square.svg</file>
+        <file>icons/plus-square.svg</file>
     </qresource>
 </RCC>

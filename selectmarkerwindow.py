@@ -1,10 +1,9 @@
-
 # This Python file uses the following encoding: utf-8
 import sys
 
 from PySide6.QtWidgets import QApplication, QWidget, QDialog, QMainWindow, QPushButton, QVBoxLayout, QLineEdit, \
     QInputDialog, QLabel
-from PySide6.QtGui import QColor
+from PySide6.QtGui import QColor, QPixmap, QIcon
 from PySide6.QtCore import Qt
 from PySide6 import QtWidgets
 # Important:
@@ -36,50 +35,74 @@ class ClickableLabel(QtWidgets.QLabel):
         print(self.text(), self.palette().color(self.backgroundRole()).name())
         self._whenClicked(event)
 '''
-
+# @todo implement the text fields as the input after the button is clicked, check if fields are not None and if color is a hex nr
 
 class SelectMarkerWindow(QWidget):
-    def __init__(self, parent=None, lineEditsColors=[]):
+    def __init__(self, MarkerPresetWindow, argDictMarker=None, parent=None):
         super().__init__(parent)
         self.ui = Ui_markerPresetWindow()
         self.ui.setupUi(self)
 
+        self.markerPresetWindow = MarkerPresetWindow
+
+        self.allMarkerDict = self.markerPresetWindow.dictAllMarkers
         # variable setup
-        self.lineEditList = lineEditsColors
         self.labelDict = {}
         self.presetDict = {}
+        self.dictMarker = argDictMarker if argDictMarker else {}
 
-        self.ui.pushButtonAddMrk.clicked.connect(self.addButtonClicked)
-        self.ui.pushButtonChgMrk.clicked.connect(self.chgButtonClicked)
+        self.ui.pushButtonChgMrk.clicked.connect(self.addButtonClicked)
         self.ui.pushButtonDelMrk.clicked.connect(self.delButtonClicked)
+
+        self.loadAllMarkers()
+        self.loadPresetMarkers()
 
     def mousePressEvent(self, event):
         widget = self.childAt(event.pos())
-        if (type(widget) == QLabel):
-            self.addOrChangeMarker(True, widget)
 
-        a = [1, 2, 3, 4, 5]
-        print(a[-1])
+        if (type(widget) == QLabel):
+            text = widget.text()
+            col = widget.palette().color(widget.backgroundRole()).name()
+            self.addOrChangeMarker(text, col, True, widget)
+
 
     def addButtonClicked(self):
 
-        self.addOrChangeMarker()
-
-    def addOrChangeMarker(self, changeFlag=False, widget=None):
-
         dialog = QInputDialog()
         dialog.exec()
-        #if(dialog.reject()): return
 
         text = dialog.textValue()
-
         color = QtWidgets.QColorDialog.getColor().name()
 
+        self.addOrChangeMarker(argText=text, argColor=color)
+
+
+    def chgButtonClicked(self):
+
+        print(self.ui.comboBox.currentText())
+
+    def delButtonClicked(self):
+
+        layout = QVBoxLayout()
+        self.ui.widget_3.setLayout(layout)
+        print("DEATH AND DESTRUCTION")
+
+    def onIndexChange(self, index):
+        print(self.sender().currentText())
+
+    def addOrChangeMarker(self, argText, argColor, changeFlag=False, widget=None):
+
+        text = argText
+        color = argColor
+
         if (changeFlag):
-            argText = widget.text()
-            argCol = widget.palette().color(widget.backgroundRole()).name()
-            print(changeFlag, argText, argCol)
-            color = argCol if color == "#ffffff" else color
+            dialog = QInputDialog()
+            dialog.exec()
+
+            text = dialog.textValue()
+            color = QtWidgets.QColorDialog.getColor().name()
+            print(changeFlag, argText, argColor)
+            color = argColor if color == "#ffffff" else color
             text = argText if text == "" else text
             print(self.labelDict[argText])
             widget.setParent(None)
@@ -98,16 +121,20 @@ class SelectMarkerWindow(QWidget):
         #self.lineEditList.append(tmpLabel)
         self.ui.widget_3.layout().insertWidget(len(self.labelDict) - 1, tmpLabel)
 
-    def chgButtonClicked(self):
+    def loadPresetMarkers(self):
+        if self.dictMarker:
+            for key, value in self.dictMarker.items():
+                self.addOrChangeMarker(key, value)
+    def loadAllMarkers(self):
 
-        print(self.presetDict)
-
-    def delButtonClicked(self):
-
-        layout = QVBoxLayout()
-        self.ui.widget_3.setLayout(layout)
-        print("DEATH AND DESTRUCTION")
-
+        self.ui.comboBox.currentIndexChanged.connect(self.onIndexChange)
+        for key, value in self.allMarkerDict.items():
+            pixmap = QPixmap(30, 30)
+            pixmap.fill(QColor(value))
+            icon = QIcon(pixmap)
+            fakeIndex = self.ui.comboBox.count()
+            self.ui.comboBox.addItem(key)
+            self.ui.comboBox.setItemIcon(fakeIndex, icon)
 
 # IMPORTANT : Add a function that updates the main marker list when self.addOrChangeMarker(self) is called
 '''
