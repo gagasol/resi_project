@@ -19,6 +19,9 @@ from PySide6.QtWidgets import (QApplication, QHBoxLayout, QHeaderView, QListWidg
     QListWidgetItem, QSizePolicy, QSpacerItem, QTableView,
     QTextEdit, QVBoxLayout, QWidget)
 
+from main import MplCanvas
+
+
 class Ui_Form(object):
     def setupUi(self, Form):
         if not Form.objectName():
@@ -29,7 +32,6 @@ class Ui_Form(object):
         self.widgetTop = QWidget(Form)
         self.widgetTop.setObjectName(u"widgetTop")
         self.widgetTop.setMaximumSize(QSize(16777215, 90))
-        self.widgetTop.setStyleSheet(u"QListWidget{background:lightblue; border: none; spacing: 0}")
         self.horizontalLayout = QHBoxLayout(self.widgetTop)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.tableView = QTableView(self.widgetTop)
@@ -48,7 +50,8 @@ class Ui_Form(object):
 
         self.verticalLayout_2.addWidget(self.widgetTop)
 
-        self.widgetGraph = QWidget(Form)
+        self.widgetGraph = MplCanvas(self, width=6, height=4, dpi=100)
+
         self.widgetGraph.setObjectName(u"widgetGraph")
 
         self.verticalLayout_2.addWidget(self.widgetGraph)

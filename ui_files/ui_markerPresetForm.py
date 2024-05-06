@@ -16,15 +16,14 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QAbstractButton, QApplication, QComboBox, QDialogButtonBox,
-    QHBoxLayout, QLineEdit, QPushButton, QSizePolicy,
-    QSpacerItem, QVBoxLayout, QWidget)
-import rc_icons
+    QHBoxLayout, QLineEdit, QPushButton, QScrollArea,
+    QSizePolicy, QSpacerItem, QVBoxLayout, QWidget)
 
 class Ui_markerPresetWindow(object):
     def setupUi(self, markerPresetWindow):
         if not markerPresetWindow.objectName():
             markerPresetWindow.setObjectName(u"markerPresetWindow")
-        markerPresetWindow.resize(618, 197)
+        markerPresetWindow.resize(400, 150)
         self.verticalLayout = QVBoxLayout(markerPresetWindow)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.widget = QWidget(markerPresetWindow)
@@ -74,17 +73,17 @@ class Ui_markerPresetWindow(object):
 
         self.horizontalLayout.addWidget(self.lineEditName)
 
-        self.lineEdit_2 = QLineEdit(self.widget)
-        self.lineEdit_2.setObjectName(u"lineEdit_2")
+        self.lineEditColor = QLineEdit(self.widget)
+        self.lineEditColor.setObjectName(u"lineEditColor")
         sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         sizePolicy1.setHorizontalStretch(0)
         sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.lineEdit_2.sizePolicy().hasHeightForWidth())
-        self.lineEdit_2.setSizePolicy(sizePolicy1)
-        self.lineEdit_2.setMinimumSize(QSize(60, 0))
-        self.lineEdit_2.setMaximumSize(QSize(60, 16777215))
+        sizePolicy1.setHeightForWidth(self.lineEditColor.sizePolicy().hasHeightForWidth())
+        self.lineEditColor.setSizePolicy(sizePolicy1)
+        self.lineEditColor.setMinimumSize(QSize(60, 0))
+        self.lineEditColor.setMaximumSize(QSize(60, 16777215))
 
-        self.horizontalLayout.addWidget(self.lineEdit_2)
+        self.horizontalLayout.addWidget(self.lineEditColor)
 
         self.pushButtonColorPick = QPushButton(self.widget)
         self.pushButtonColorPick.setObjectName(u"pushButtonColorPick")
@@ -138,22 +137,40 @@ class Ui_markerPresetWindow(object):
         self.widget_3 = QWidget(markerPresetWindow)
         self.widget_3.setObjectName(u"widget_3")
         self.widget_3.setStyleSheet(u"QLabel{\n"
-"	border-style: outset;\n"
-"	border-width: 3px;\n"
-"	border-radius: 5px;\n"
+"	font: 12pt \"NSimSun\";\n"
+"	border-style: none outset outset none;\n"
+"	border-width: 4px;\n"
 "	border-color: black;\n"
-"	font: bold 14px;\n"
+"	text-decoration: underline;\n"
 "}")
-        self.verticalLayout_3 = QVBoxLayout(self.widget_3)
-        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.verticalLayout_2 = QVBoxLayout()
+        self.horizontalLayout_3 = QHBoxLayout(self.widget_3)
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout_3.addItem(self.horizontalSpacer)
+
+        self.scrollArea = QScrollArea(self.widget_3)
+        self.scrollArea.setObjectName(u"scrollArea")
+        sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        sizePolicy2.setHorizontalStretch(0)
+        sizePolicy2.setVerticalStretch(0)
+        sizePolicy2.setHeightForWidth(self.scrollArea.sizePolicy().hasHeightForWidth())
+        self.scrollArea.setSizePolicy(sizePolicy2)
+        self.scrollArea.setMinimumSize(QSize(190, 0))
+        self.scrollArea.setMaximumSize(QSize(190, 0))
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollAreaWidgetContents = QWidget()
+        self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 168, 48))
+        self.verticalLayout_2 = QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.verticalSpacer = QSpacerItem(20, 27, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.verticalLayout_2.addItem(self.verticalSpacer)
 
+        self.scrollArea.setWidget(self.scrollAreaWidgetContents)
 
-        self.verticalLayout_3.addLayout(self.verticalLayout_2)
+        self.horizontalLayout_3.addWidget(self.scrollArea)
 
 
         self.verticalLayout.addWidget(self.widget_3)
@@ -182,7 +199,7 @@ class Ui_markerPresetWindow(object):
 
     def retranslateUi(self, markerPresetWindow):
         markerPresetWindow.setWindowTitle(QCoreApplication.translate("markerPresetWindow", u"markerPresetWindow", None))
-        self.lineEdit_2.setText("")
+        self.lineEditColor.setText("")
         self.pushButtonColorPick.setText("")
         self.pushButtonChgMrk.setText("")
         self.pushButtonDelMrk.setText("")

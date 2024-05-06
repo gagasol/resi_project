@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (QApplication, QHBoxLayout, QListView, QListWidget
                                QVBoxLayout, QWidget)
 
 import markerpresetwindow
+import widgetGraph
 from ui_files.ui_mainwindow import Ui_MainWindow
 from markerpresetwindow import MarkerPresetWindow
 from selectmarkerwindow import SelectMarkerWindow
@@ -248,12 +249,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # @todo on click open x files and read the data into specific array indicies
     def openButtonClicked(self):
 
-        layout = self.makeStupidGraph()
-        #layout.addWidget(self.sc)
-        #layout.addWidget(QPushButton())
+        #layout = self.makeStupidGraph()
 
-        widget = QWidget()
-        widget.setLayout(layout)
+        widget = widgetGraph.WidgetGraph(self)
         self.ui.tabWidget.addTab(widget, "Graph?")
 
     # functionality for the pushButtonSave QPushButton
@@ -309,6 +307,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 xRange and yRange and not self.flagRectLeftFocus and not self.flagRectRightFocus)
 
         return self.flagRectLeftFocus or self.flagRectRightFocus or self.flagRectFocus
+
 
     # testing for the stupid graph widget
     def makeStupidGraph(self):

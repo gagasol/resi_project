@@ -4,7 +4,7 @@ import sys
 from PySide6.QtWidgets import QApplication, QWidget, QDialog, QMainWindow, QPushButton, QVBoxLayout, QLineEdit, \
     QInputDialog, QLabel
 from PySide6.QtGui import QColor, QPixmap, QIcon
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
 from PySide6 import QtWidgets
 # Important:
 # You need to run the following command to generate the ui_form.py file
@@ -47,39 +47,55 @@ class SelectMarkerWindow(QWidget):
 
         self.allMarkerDict = self.markerPresetWindow.dictAllMarkers
         # variable setup
-        self.labelDict = {}
-        self.presetDict = {}
+        self.dictLabel = {}
+        self.dictPreset = {}
         self.dictMarker = argDictMarker if argDictMarker else {}
 
+        self.ui.pushButtonColorPick.clicked.connect(self.colorButtonClicked)
         self.ui.pushButtonChgMrk.clicked.connect(self.addButtonClicked)
         self.ui.pushButtonDelMrk.clicked.connect(self.delButtonClicked)
+
+        self.ui.lineEditColor.textChanged.connect(self.colorTextChanged)
 
         self.loadAllMarkers()
         self.loadPresetMarkers()
 
+
+# event functions
     def mousePressEvent(self, event):
+
         widget = self.childAt(event.pos())
 
         if (type(widget) == QLabel):
             text = widget.text()
             col = widget.palette().color(widget.backgroundRole()).name()
-            self.addOrChangeMarker(text, col, True, widget)
+            self.addOrChangeMarker(text, col, widget)
+
+
+    def colorButtonClicked(self):
+
+        color = QtWidgets.QColorDialog.getColor().name()
+        self.ui.lineEditColor.setText(color)
 
 
     def addButtonClicked(self):
 
-        dialog = QInputDialog()
-        dialog.exec()
-
-        text = dialog.textValue()
-        color = QtWidgets.QColorDialog.getColor().name()
-
+        # dialog = QInputDialog()
+        # dialog.exec()
+        #
+        # text = dialog.textValue()
+        # color = QtWidgets.QColorDialog.getColor().name()
+        text = self.ui.lineEditName.text()
+        color = self.ui.lineEditColor.text()
+        self.ui.lineEditName.setText("")
+        self.ui.lineEditName.setText("")
         self.addOrChangeMarker(argText=text, argColor=color)
 
 
     def chgButtonClicked(self):
 
         print(self.ui.comboBox.currentText())
+
 
     def delButtonClicked(self):
 
@@ -90,36 +106,55 @@ class SelectMarkerWindow(QWidget):
     def onIndexChange(self, index):
         print(self.sender().currentText())
 
-    def addOrChangeMarker(self, argText, argColor, changeFlag=False, widget=None):
 
-        text = argText
-        color = argColor
+    def colorTextChanged(self):
+        if (len(self.ui.lineEditColor.text()) == 7):
+            self.ui.lineEditColor.setStyleSheet("color: {color}; background-color: {color};".format(color = str(self.ui.lineEditColor.text())))
 
-        if (changeFlag):
+
+# algorithm section
+
+# algorithmic
+    def addOrChangeMarker(self, argText, argColor, widget=None):
+        """
+        creates a new marker entry and adds it as a label or changes it if widget != None
+        Parameters
+        argText (str): the text of the marker
+        argColor (str): the color of the marker
+        widget (QLabel): the widget to change
+        """
+
+        if (widget != None):
             dialog = QInputDialog()
             dialog.exec()
 
             text = dialog.textValue()
             color = QtWidgets.QColorDialog.getColor().name()
-            print(changeFlag, argText, argColor)
             color = argColor if color == "#ffffff" else color
             text = argText if text == "" else text
-            print(self.labelDict[argText])
-            widget.setParent(None)
-            self.ui.widget_3.layout().removeWidget(widget)
-            del self.presetDict[argText]
-            del self.labelDict[argText]
+            print(self.dictLabel[argText])
+            widget.setText(text)
+            widget.setStyleSheet("background-color:" + color)
+            return
+
+        text = argText
+        color = argColor
 
         tmpLabel = QLabel()
         tmpLabel.setStyleSheet("background-color:" + color)
-        tmpLabel.setAlignment(Qt.AlignCenter)
+        tmpLabel.setAlignment(Qt.AlignRight)
         tmpLabel.setMaximumHeight(45)
+        tmpLabel.setMinimumWidth(150)
+        tmpLabel.setMaximumWidth(150)
         tmpLabel.setText(text)
 
-        self.labelDict.update({text: tmpLabel})
-        self.presetDict.update({text: color})
+        self.dictLabel.update({text: tmpLabel})
+        self.dictPreset.update({text: color})
         #self.lineEditList.append(tmpLabel)
-        self.ui.widget_3.layout().insertWidget(len(self.labelDict) - 1, tmpLabel)
+        scrollAreaSize = min((self.ui.scrollArea.size() + QSize(0, 35)).height(), 350)
+        self.ui.scrollArea.setMinimumHeight(scrollAreaSize)
+        self.ui.scrollArea.setMaximumHeight(scrollAreaSize)
+        self.ui.scrollAreaWidgetContents.layout().insertWidget(len(self.dictLabel) - 1, tmpLabel)
 
     def loadPresetMarkers(self):
         if self.dictMarker:
@@ -128,6 +163,7 @@ class SelectMarkerWindow(QWidget):
     def loadAllMarkers(self):
 
         self.ui.comboBox.currentIndexChanged.connect(self.onIndexChange)
+        self.ui.comboBox.addItem("Add existing marker")
         for key, value in self.allMarkerDict.items():
             pixmap = QPixmap(30, 30)
             pixmap.fill(QColor(value))
