@@ -13,7 +13,7 @@ from PySide6.QtWidgets import QApplication, QWidget, QComboBox, QVBoxLayout, QSp
 #     pyside6-uic form.ui -o ui_form.py, or
 #     pyside2-uic form.ui -o ui_form.py
 from ui_files.ui_form import Ui_SelectMarkerWindow
-from selectmarkerwindow import SelectMarkerWindow
+from editMarkerPreset import SelectMarkerWindow
 
 
 class MarkerPresetWindow(QWidget):

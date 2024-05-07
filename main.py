@@ -24,10 +24,10 @@ from PySide6.QtWidgets import (QApplication, QHBoxLayout, QListView, QListWidget
                                QVBoxLayout, QWidget)
 
 import markerpresetwindow
-import widgetGraph
+from widgetGraph import WidgetGraph
 from ui_files.ui_mainwindow import Ui_MainWindow
 from markerpresetwindow import MarkerPresetWindow
-from selectmarkerwindow import SelectMarkerWindow
+from editMarkerPreset import SelectMarkerWindow
 
 
 class MplCanvas(FigureCanvasQTAgg):
@@ -59,7 +59,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # @currentTargetRect variable that holds a rectangle if it has been clicked on
         self.markerWindow = None
 
-        self.vLineRect = Rectangle((-5, 0), 0.0005, 1)
+        self.vLineRect = Rectangle((-5, 0), 0.05, 120)
         self.focusRect = None
 
         # data
@@ -156,7 +156,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if (event.inaxes is None):
             return
 
-        print(event.canvas)
+        print(event.canvas.parent)
 
         self.flagMouseClicked = True
 
@@ -249,10 +249,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # @todo on click open x files and read the data into specific array indicies
     def openButtonClicked(self):
 
+        x, y = self.generate_curve_points(40)
+
         #layout = self.makeStupidGraph()
 
-        widget = widgetGraph.WidgetGraph(self)
+        widget = WidgetGraph(self, [x, y])
+
         self.ui.tabWidget.addTab(widget, "Graph?")
+        print(self.ui.tabWidget.currentWidget().canvasGraph)
 
     # functionality for the pushButtonSave QPushButton
     # @todo save stuff, duh
@@ -389,14 +393,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # else select the already existing list
         tmpListRect = self.dictCanvasToRectList[event.canvas]
 
-        tmpRect = Rectangle((anchorX, -axisHeight*0.005), width, - axisHeight * self.heightRectMarkPerc / 100)
+        tmpRect = Rectangle((anchorX, -axisHeight*1/100), width, - axisHeight * self.heightRectMarkPerc / 100)
         tmpRect.set_color(self.colorRect)
         tmpListRect.append(tmpRect)
 
-        #self.listRectByCanvInd[self.currentCanvasInd] = tmpListRect
-
         event.canvas.axes.add_patch(tmpRect)
         event.canvas.draw()
+
+
+# TDL functions I use for things
+
+    def generate_curve_points(self, end=10, step=0.1):
+        x = np.arange(0, end, step)
+        y = np.sin(x) + 1
+        return x.tolist(), y.tolist()
 
 
 app = QtWidgets.QApplication(sys.argv)
