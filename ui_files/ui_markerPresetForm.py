@@ -16,8 +16,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QAbstractButton, QApplication, QComboBox, QDialogButtonBox,
-    QHBoxLayout, QLineEdit, QPushButton, QScrollArea,
-    QSizePolicy, QSpacerItem, QVBoxLayout, QWidget)
+                               QHBoxLayout, QLineEdit, QPushButton, QScrollArea,
+                               QSizePolicy, QSpacerItem, QVBoxLayout, QWidget, QLabel)
 
 class Ui_markerPresetWindow(object):
     def setupUi(self, markerPresetWindow):
@@ -145,6 +145,21 @@ class Ui_markerPresetWindow(object):
 "}")
         self.horizontalLayout_3 = QHBoxLayout(self.widget_3)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+
+        self.lineEditPresetName = QLineEdit(self.widget_3)
+        self.lineEditPresetName.setObjectName(u"lineEditPresetName")
+        sizePolicy3 = QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding)
+        sizePolicy3.setHorizontalStretch(0)
+        sizePolicy3.setVerticalStretch(0)
+        #sizePolicy3.setHeightForWidth(self.labelPresetName.sizePolicy().hasHeightForWidth())
+        self.lineEditPresetName.setSizePolicy(sizePolicy3)
+        self.lineEditPresetName.setMaximumSize(5000, 100)
+        self.lineEditPresetName.setStyleSheet(u"font: 700 40pt \"Bahnschrift\";\n"
+                                              "border: none;\n"
+                                              "background-color: transparent")
+
+        self.horizontalLayout_3.addWidget(self.lineEditPresetName)
+
         self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout_3.addItem(self.horizontalSpacer)
@@ -165,6 +180,8 @@ class Ui_markerPresetWindow(object):
         self.verticalLayout_2 = QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalSpacer = QSpacerItem(20, 27, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.scrollArea.setStyleSheet(u"QScrollArea {border: none;}\n")
+
 
         self.verticalLayout_2.addItem(self.verticalSpacer)
 

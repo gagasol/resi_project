@@ -2,9 +2,9 @@
 import sys
 
 from PySide6.QtWidgets import QApplication, QWidget, QDialog, QMainWindow, QPushButton, QVBoxLayout, QLineEdit, \
-    QInputDialog, QLabel
-from PySide6.QtGui import QColor, QPixmap, QIcon
-from PySide6.QtCore import Qt, QSize
+    QInputDialog, QLabel, QMessageBox
+from PySide6.QtGui import QColor, QPixmap, QIcon, QDrag, QCursor
+from PySide6.QtCore import Qt, QSize, QMimeData
 from PySide6 import QtWidgets
 # Important:
 # You need to run the following command to generate the ui_form.py file
@@ -37,23 +37,61 @@ class ClickableLabel(QtWidgets.QLabel):
 '''
 # @todo implement the text fields as the input after the button is clicked, check if fields are not None and if color is a hex nr
 
+
+class TextEntryDialog(QDialog):
+    def __init__(self, parent=None):
+        super(TextEntryDialog, self).__init__(parent)
+
+        self.setWindowTitle("New Preset Name")
+        self.layout = QVBoxLayout(self)
+
+        self.label = QLabel(self)
+        self.label.setText("Name :")
+        self.text_entry = QLineEdit(self)
+        self.layout.addWidget(self.text_entry)
+
+        self.ok_button = QPushButton('OK', self)
+        self.ok_button.clicked.connect(self.accept)
+        self.layout.addWidget(self.ok_button)
+
+
 class SelectMarkerWindow(QWidget):
-    def __init__(self, MarkerPresetWindow, argDictMarker=None, parent=None):
+    def __init__(self, MarkerPresetWindow, argDictMarker=None, presetInd=None, parent=None):
         super().__init__(parent)
         self.ui = Ui_markerPresetWindow()
         self.ui.setupUi(self)
 
         self.markerPresetWindow = MarkerPresetWindow
-
         self.allMarkerDict = self.markerPresetWindow.dictAllMarkers
-        # variable setup
-        self.dictLabel = {}
-        self.dictPreset = {}
+
+# variable setup
+        self.listLabel = []
         self.dictMarker = argDictMarker if argDictMarker else {}
+
+        self.dictMarkerList = []
+        print(self.dictMarker.items())
+        print(self.dictMarkerList)
+
+        if (self.dictMarker != None):
+            self.dictMarkerList.append(("_NameForPreset", self.dictMarker["_NameForPreset"]))
+            self.ui.lineEditPresetName.setText(self.dictMarker["_NameForPreset"])
+        else:
+            dialog = TextEntryDialog(self)
+            if dialog.exec():
+                text = dialog.text_entry.text()
+                self.dictMarkerList.append(("_NameForPreset", text))
+                self.ui.lineEditPresetName.setText(text)
+
+        self.presetInd = presetInd
+
+        self.flagDelete = False
 
         self.ui.pushButtonColorPick.clicked.connect(self.colorButtonClicked)
         self.ui.pushButtonChgMrk.clicked.connect(self.addButtonClicked)
         self.ui.pushButtonDelMrk.clicked.connect(self.delButtonClicked)
+
+        self.ui.buttonBox.accepted.connect(self.acceptButtonClicked)
+        self.ui.buttonBox.rejected.connect(self.rejectedButtonClicked)
 
         self.ui.lineEditColor.textChanged.connect(self.colorTextChanged)
 
@@ -62,6 +100,24 @@ class SelectMarkerWindow(QWidget):
 
 
 # event functions
+    '''
+    def dragEnterEvent(self, event):
+        event.accept()
+
+    def dropEvent(self, event):
+        pos = event.pos()
+        widget = event.source()
+        for n in range(self.ui.scrollAreaWidgetContents.layout().count()):
+            w = self.ui.scrollAreaWidgetContents.layout().itemAt(n).widget()
+            print(w)
+            wPos = w.mapTo(self.ui.widget_3, w.pos())
+            if w and pos.y()-20 < wPos.y():
+                self.ui.scrollAreaWidgetContents.layout().insertWidget(n-1, widget)
+                break
+
+        event.accept()
+    '''
+
     def mousePressEvent(self, event):
 
         widget = self.childAt(event.pos())
@@ -71,7 +127,7 @@ class SelectMarkerWindow(QWidget):
             col = widget.palette().color(widget.backgroundRole()).name()
             self.addOrChangeMarker(text, col, widget)
 
-
+# buttons clicked functions
     def colorButtonClicked(self):
 
         color = QtWidgets.QColorDialog.getColor().name()
@@ -80,30 +136,49 @@ class SelectMarkerWindow(QWidget):
 
     def addButtonClicked(self):
 
-        # dialog = QInputDialog()
-        # dialog.exec()
-        #
-        # text = dialog.textValue()
-        # color = QtWidgets.QColorDialog.getColor().name()
         text = self.ui.lineEditName.text()
         color = self.ui.lineEditColor.text()
+
+        if (text == ""):
+           QMessageBox.warning(self, "Warning", "Please enter a name")
+        if (color == ""):
+            QMessageBox.warning(self, "Warning", "Please enter a color")
+        if (text in self.dictMarker or any(text in tup for tup in self.dictMarkerList)):
+            QMessageBox.warning(self, "Warning", "The chosen Name is already in this preset")
+            return
+
         self.ui.lineEditName.setText("")
-        self.ui.lineEditName.setText("")
+        self.ui.lineEditColor.setText("")
+        self.ui.lineEditColor.setStyleSheet("color: #000000; background-color: #ffffff;")
         self.addOrChangeMarker(argText=text, argColor=color)
 
 
-    def chgButtonClicked(self):
-
-        print(self.ui.comboBox.currentText())
-
-
     def delButtonClicked(self):
+        self.flagDelete = not self.flagDelete
+        if(self.flagDelete):
+            self.setCursor(QCursor(Qt.PointingHandCursor))
+        else:
+            self.setCursor(QCursor(Qt.ArrowCursor))
 
-        layout = QVBoxLayout()
-        self.ui.widget_3.setLayout(layout)
-        print("DEATH AND DESTRUCTION")
+    def acceptButtonClicked(self):
+        if (self.presetInd is not None):
+            self.markerPresetWindow.listPresets[self.presetInd] = dict(self.dictMarkerList)
+        else:
+            self.markerPresetWindow.listPresets.append(dict(self.dictMarkerList))
+        self.markerPresetWindow.loadPresets()
+        self.close()
+
+
+    def rejectedButtonClicked(self):
+        self.close()
+
 
     def onIndexChange(self, index):
+        if (index == 0):
+            return
+
+        self.ui.lineEditName.setText(self.sender().currentText())
+        self.ui.lineEditColor.setText(self.allMarkerDict[self.ui.comboBox.currentText()])
         print(self.sender().currentText())
 
 
@@ -123,16 +198,35 @@ class SelectMarkerWindow(QWidget):
         argColor (str): the color of the marker
         widget (QLabel): the widget to change
         """
+        if (argText == "_NameForPreset"):
+            return
 
         if (widget != None):
-            dialog = QInputDialog()
-            dialog.exec()
+            if(not self.flagDelete):
+                dialog = QInputDialog()
+                dialog.exec()
 
-            text = dialog.textValue()
-            color = QtWidgets.QColorDialog.getColor().name()
-            color = argColor if color == "#ffffff" else color
-            text = argText if text == "" else text
-            print(self.dictLabel[argText])
+                text = dialog.textValue()
+                color = QtWidgets.QColorDialog.getColor().name()
+
+                color = argColor if color == "#ffffff" or color == "#000000" else color
+                text = argText if text == "" else text
+            print(self.dictMarkerList)
+            for i in range(len(self.dictMarkerList)):
+                if (argText == self.dictMarkerList[i][0]):
+                    if (self.flagDelete):
+                        print(self.dictMarkerList)
+                        del self.dictMarkerList[i]
+                        print(self.dictMarkerList)
+                        del self.listLabel[i-1]
+                        widget.hide()
+                        widget.setParent(None)
+                        self.delButtonClicked()
+                        return
+                    else:
+                        self.dictMarkerList[i] = (text, color)
+                        break
+
             widget.setText(text)
             widget.setStyleSheet("background-color:" + color)
             return
@@ -148,18 +242,19 @@ class SelectMarkerWindow(QWidget):
         tmpLabel.setMaximumWidth(150)
         tmpLabel.setText(text)
 
-        self.dictLabel.update({text: tmpLabel})
-        self.dictPreset.update({text: color})
+        self.listLabel.append(tmpLabel)
+        self.dictMarkerList.append((text, color))
         #self.lineEditList.append(tmpLabel)
         scrollAreaSize = min((self.ui.scrollArea.size() + QSize(0, 35)).height(), 350)
         self.ui.scrollArea.setMinimumHeight(scrollAreaSize)
         self.ui.scrollArea.setMaximumHeight(scrollAreaSize)
-        self.ui.scrollAreaWidgetContents.layout().insertWidget(len(self.dictLabel) - 1, tmpLabel)
+        self.ui.scrollAreaWidgetContents.layout().insertWidget(len(self.listLabel) - 1, tmpLabel)
 
     def loadPresetMarkers(self):
         if self.dictMarker:
             for key, value in self.dictMarker.items():
                 self.addOrChangeMarker(key, value)
+
     def loadAllMarkers(self):
 
         self.ui.comboBox.currentIndexChanged.connect(self.onIndexChange)

@@ -65,7 +65,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # data
         # @xDataForMarker variable that holds the first clicked position to draw a marker from that to the second click
         # @dict dictMarker dictionary containing a "String::Name: String::HexColor" pair to save all Marker
-        # @list listMarkerRect list that doesnt do anything I believe @todo check this variable
+        # @list listMarkerPreset list containing all named presets where <key>:"name" corresponds to the name
         # @colorRect variable set by selectMarkerWindow that determines the color of a rectangle
         # @nameRectMark variable set by selectMarkerWindow is the name of a marker rectangle
         # @heightRectMarkPerc sets the height of the marker as percent of the y-axis
@@ -77,10 +77,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.xDataForMarker = None
 
         self.dictMarker = {}
-        self.listMarkerRect = []
+        self.listMarkerPreset = []
         self.colorRect = "#000000"
         self.nameRectMark = ""
-        self.heightRectMarkPerc = 1
+        self.heightRectMarkPerc = 3
         self.percMarkerFocusHeight = 30
 
         self.dictCanvasToRectList = {}
@@ -97,15 +97,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.flagVerticalLine = True
 
 
-        # @todo delete the entire self.sc because the canvas will be generated programmatically
-        self.sc = MplCanvas(self, width=6, height=4, dpi=100)
-        #self.sc.axes.add_patch(self.rect)
-        #self.sc.axes.add_patch(self.test_rect)
-        self.sc.axes.plot([0, 0.1, 0.2, 0.3, 0.4, 0.5], [0, 0.1, 0.2, 0.3, 0.4, 0.5])
-        self.sc.draw()
-
-        self.sc.mpl_connect('motion_notify_event', self.onMouseMove)
-        self.sc.mpl_connect('button_press_event', self.onButtonPress)
     # button events
         # clicked events
         self.ui.pushButtonOpen.clicked.connect(self.openButtonClicked)
@@ -119,7 +110,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # draw vertical line
         if event.inaxes and self.flagVerticalLine:
-            #print(event.xdata, event.ydata)
             self.vLineRect.set_x(event.xdata)
 
         # test on how to move a rectangle
@@ -195,7 +185,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.clickCount = self.clickCount + 1 if (self.clickCount < 1) else 0
 
 
-
     def onButtonReleased(self, event):
 
         self.flagMouseClicked = False
@@ -204,22 +193,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.flagRectRightFocus = False
 
     def onAxesEnter(self, event):
-        print("ENTERED")
         self.vLineRect.set_visible(True)
         event.canvas.axes.add_patch(self.vLineRect)
-        #print(self.test_array_mplCanvas[self.currentCanvasInd].axes)
-    '''
-        if (self.currentCanvasInd is not None):
-            self.vLineRect.remove()
-            self.test_array_mplCanvas[self.currentCanvasInd].draw()
-
-        self.currentCanvasInd = self.test_map_title_to_ind.get(event.inaxes.get_title())
-
-        self.test_array_mplCanvas[self.currentCanvasInd].axes.add_patch(self.vLineRect)
-        #event.inaxes.add_patch(self.rect)
-        print(event.inaxes.get_title(), self.test_map_title_to_ind.get(event.inaxes.get_title()), self.currentCanvasInd)
-    '''
-
 
 
     def onAxesLeave(self, event):
@@ -240,8 +215,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.focusRect = None
 
     def onResize(self, event):
-        print("RESIZED")
-        #self.test_array_mplCanvas[self.test_currentCanvasInd].draw()
+        pass
 
     # functionality for QPushButtons
 
@@ -249,11 +223,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # @todo on click open x files and read the data into specific array indicies
     def openButtonClicked(self):
 
-        x, y = self.generate_curve_points(40)
-
-        #layout = self.makeStupidGraph()
-
-        widget = WidgetGraph(self, [x, y])
+        widget = WidgetGraph(self, [])
 
         self.ui.tabWidget.addTab(widget, "Graph?")
         print(self.ui.tabWidget.currentWidget().canvasGraph)
@@ -261,7 +231,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # functionality for the pushButtonSave QPushButton
     # @todo save stuff, duh
     def saveButtonClicked(self):
-
+        print(self.dictMarker)
+        print(self.listMarkerPreset)
         print("saveButtonClicked")
 
     # functionality for the pushButtonTabView QPushButton
@@ -276,10 +247,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # event listener handling
     def windowClosedByUser(self):
         self.flagWindowClosedByUserSignal = True
-        print("TRUE")
     def windowClosedProgrammatically(self):
         self.flagWindowClosedByUserSignal = False
-        print("FALSE")
 
     # algorithms
 
@@ -393,7 +362,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # else select the already existing list
         tmpListRect = self.dictCanvasToRectList[event.canvas]
 
-        tmpRect = Rectangle((anchorX, -axisHeight*1/100), width, - axisHeight * self.heightRectMarkPerc / 100)
+        tmpRect = Rectangle((anchorX, -axisHeight*0.8/100), width, - axisHeight * self.heightRectMarkPerc / 100)
         tmpRect.set_color(self.colorRect)
         tmpListRect.append(tmpRect)
 
@@ -402,11 +371,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
 # TDL functions I use for things
-
-    def generate_curve_points(self, end=10, step=0.1):
-        x = np.arange(0, end, step)
-        y = np.sin(x) + 1
-        return x.tolist(), y.tolist()
 
 
 app = QtWidgets.QApplication(sys.argv)

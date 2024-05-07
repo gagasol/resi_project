@@ -19,21 +19,26 @@ from editMarkerPreset import SelectMarkerWindow
 class MarkerPresetWindow(QWidget):
     closedByUser = Signal()
     closedProgrammatically = Signal()
-    def __init__(self, MainWindow, flagChange=False, listPresets=None, parent=None):
+
+    def __init__(self, MainWindow, parent=None):
         super().__init__(parent)
         self.ui = Ui_SelectMarkerWindow()
         self.ui.setupUi(self)
 
         self.mainWindow = MainWindow
-        self.dictAllMarkers = {}
+        self.dictAllMarkers = self.mainWindow.dictMarker
 
+        self.flagDelete = False
 
-        self. flagChange = flagChange
-        self.listPresets = listPresets if listPresets else []
+        self.listPresets = self.mainWindow.listMarkerPreset
+
+        self.comboBoxCount = 0
+        self.comboBoxInd = 0
 
         # bunch of stuff for trying stuff out
-        self.listPresets = [
+        self.listPreset = [
             {
+                "_NameForPreset": "Preset_1",
                 "Red": "#FF0000",
                 "Green": "#008000",
                 "Blue": "#0000FF",
@@ -42,22 +47,31 @@ class MarkerPresetWindow(QWidget):
                 "White": "#FFFFFF"
             },
             {
+                "_NameForPreset": "Preset_2",
                 "Aloof": "#7B68EE",
                 "Cherish": "#FFB6C1",
                 "Divine": "#FFA07A",
                 "Elapse": "#8B0000",
                 "Green": "#00FF00"
             },
-            {"Coral": "#FF7F50",
-             "Cyan": "#00FFFF",
-             "Chocolate": "#D2691E",
-             "Crimson": "#DC143C"}
+            {
+                "_NameForPreset": "Preset_3",
+                "Coral": "#FF7F50",
+                "Cyan": "#00FFFF",
+                "Chocolate": "#D2691E",
+                "Crimson": "#DC143C"}
         ]
+
+        if not self.listPresets:
+            for dic in self.listPreset:
+                self.listPresets.append(dic)
+        if not self.dictAllMarkers:
+            self.listPresetToFlatList()
 
         self.listComboBoxPresets = []
 
         self.loadPresets()
-        self.ui.pushButtonAddPreset.clicked.connect(self.manipulatePresets)
+        self.ui.pushButtonAddPreset.clicked.connect(self.addPreset)
 
     def closeEvent(self, event):
         if self.sender() is None:
@@ -65,43 +79,44 @@ class MarkerPresetWindow(QWidget):
         else:
             self.closedProgrammatically.emit()
 
-
     def onComboBoxItemChanged(self, index):
-        if (index == 0):
+
+        textCurrentItem = self.sender().currentText()
+        if (index == 0 or textCurrentItem == "_NameForPreset"):
             return
-        if (self.sender().currentText() == "Add Marker"):
-            self.listPresetToFlatList()
-            self.selectMarkerWindow = SelectMarkerWindow(self, self.listPresets[0])
-            self.selectMarkerWindow.setAttribute(Qt.WA_DeleteOnClose)
-            self.selectMarkerWindow.show()
+        if (textCurrentItem == "Add Marker"):
+            selectMarkerWindow = SelectMarkerWindow(self,
+                                                    self.listPresets[self.sender().id_number],
+                                                    self.sender().id_number)
+            selectMarkerWindow.setAttribute(Qt.WA_DeleteOnClose)
+            selectMarkerWindow.show()
 
             waitForMarkerInputLoop = QEventLoop()
-            self.selectMarkerWindow.destroyed.connect(waitForMarkerInputLoop.quit)
+            selectMarkerWindow.destroyed.connect(waitForMarkerInputLoop.quit)
             waitForMarkerInputLoop.exec()
-            print("Create new life!!!")
-
 
         for preset in self.listPresets:
-            if self.sender().currentText() in preset:
-                self.mainWindow.colorRect = preset[self.sender().currentText()]
-                self.mainWindow.nameRectMark = self.sender().currentText()
+            if (textCurrentItem in preset):
+                self.mainWindow.colorRect = preset[textCurrentItem]
+                self.mainWindow.nameRectMark = textCurrentItem
                 self.close()
 
+    def onComboBoxActivated(self, index):
+        print(self.sender().id_number)
 
-        print(self.sender().currentText())
+    def addPreset(self):
+        selectMarkerWindow = SelectMarkerWindow(self)
+        selectMarkerWindow.setAttribute(Qt.WA_DeleteOnClose)
+        selectMarkerWindow.show()
 
-    def manipulatePresets(self):
-
-        if (self.flagChange):
-            print("I will change")
-        else:
-            tmpComboBox = self.makeComboBox()
-            self.loadPresets()
-
+        waitForMarkerInputLoop = QEventLoop()
+        selectMarkerWindow.destroyed.connect(waitForMarkerInputLoop.quit)
+        waitForMarkerInputLoop.exec()
 
     def loadPresets(self):
 
         if (self.listComboBoxPresets):
+            self.comboBoxCount = 0
             for comboBox in self.listComboBoxPresets:
                 self.ui.scrollAreaWidgetContents.layout().removeWidget(comboBox)
 
@@ -109,9 +124,13 @@ class MarkerPresetWindow(QWidget):
 
         for preset in self.listPresets:
             tmpComboBox = QComboBox(self)
+            tmpComboBox.id_number = self.comboBoxCount
+            self.comboBoxCount += 1
             tmpComboBox.addItem("Pick a Marker")
             i = 1
             for marker in preset:
+                if (marker == "_NameForPreset"):
+                    continue
                 pixmap = QPixmap(30, 30)
                 pixmap.fill(QColor(preset.get(marker)))
                 icon = QIcon(pixmap)
@@ -122,23 +141,25 @@ class MarkerPresetWindow(QWidget):
             self.ui.scrollAreaWidgetContents.layout().insertWidget(len(tmpComboBoxMarker), tmpComboBox)
             tmpComboBox.addItem("Add Marker")
             tmpComboBox.currentIndexChanged.connect(self.onComboBoxItemChanged)
+            tmpComboBox.activated.connect(self.onComboBoxActivated)
             tmpComboBoxMarker.append(tmpComboBox)
 
-
-        self.listComboBoxPresets.append(tmpComboBoxMarker)
-
+        self.listComboBoxPresets = tmpComboBoxMarker
+        print(self.listComboBoxPresets)
+        print(self.comboBoxCount)
 
     def listPresetToFlatList(self):
         for preset in self.listPresets:
             self.dictAllMarkers.update(preset)
 
-
+        self.dictAllMarkers.pop("_NameForPreset")
 
     def makeComboBox(self):
         tmpComboBox = QComboBox(self)
         tmpComboBox.addItems(["A", "B", "C", "D", "E", "F"])
 
         return tmpComboBox
+
 
 # useless functions
 
