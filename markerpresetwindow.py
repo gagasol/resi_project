@@ -85,8 +85,7 @@ class MarkerPresetWindow(QWidget):
         if (index == 0 or textCurrentItem == "_NameForPreset"):
             return
         if (textCurrentItem == "Add Marker"):
-            selectMarkerWindow = SelectMarkerWindow(self,
-                                                    self.listPresets[self.sender().id_number],
+            selectMarkerWindow = SelectMarkerWindow(self, self.listPresets[self.sender().id_number],
                                                     self.sender().id_number)
             selectMarkerWindow.setAttribute(Qt.WA_DeleteOnClose)
             selectMarkerWindow.show()

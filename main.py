@@ -1,6 +1,8 @@
 # This Python file uses the following encoding: utf-8
 import sys
-from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, QWidget
+
+from PySide6.QtCore import Qt, QEventLoop
+from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, QWidget, QFileDialog
 from PySide6 import QtWidgets
 
 import numpy as np
@@ -10,18 +12,6 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationTool
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 from matplotlib.backend_bases import MouseButton
-
-# this ist stuff only used for the stpuidGraphFunction, should probably source that one out
-from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
-                            QMetaObject, QObject, QPoint, QRect,
-                            QSize, QTime, QUrl, Qt, QEventLoop)
-from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
-                           QFont, QFontDatabase, QGradient, QIcon,
-                           QImage, QKeySequence, QLinearGradient, QPainter,
-                           QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QHBoxLayout, QListView, QListWidget,
-                               QListWidgetItem, QSizePolicy, QSpacerItem, QTextEdit,
-                               QVBoxLayout, QWidget)
 
 import markerpresetwindow
 from widgetGraph import WidgetGraph
@@ -40,6 +30,11 @@ class MplCanvas(FigureCanvasQTAgg):
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self):
+        """
+        Initializes the MainWindow class.
+
+        :return: None
+        """
         super(MainWindow, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -71,9 +66,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # @heightRectMarkPerc sets the height of the marker as percent of the y-axis
         # @percMarkerFocusHeight sets the height of the focus for the marker as a percent of the y-axis
 
-        # @int currentCanvasInd variable that saves the Index of the focus Canvas
-        # @list listRectByCanvInd a list of lists of rectangles each i_ind points to the canvas, j_ind to the rect
-            # listRectCanvInd[canvasIndex][rectangleIndex] -> Rectangle
+        self.dictMarkerRectSetupData = {}
         self.xDataForMarker = None
 
         self.dictMarker = {}
@@ -155,10 +148,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # check if any marker rectangle is close by
         # @todo add the loop to the function and just call the function
-        for rect in self.dictCanvasToRectList[event.canvas]:
-            if self.checkIfClickByRect(event, rect):
-                self.focusRect = rect
-                return
+        if (self.dictCanvasToRectList[event.canvas] is not []):
+            for rect, color in self.dictCanvasToRectList[event.canvas]:
+                if self.checkIfClickByRect(event, rect):
+                    self.focusRect = rect
+                    return
 
         # logic for creating markers with addRectToCurrentCanv
         if (not (self.flagRectFocus or self.flagRectLeftFocus or self.flagRectRightFocus)):
@@ -223,10 +217,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # @todo on click open x files and read the data into specific array indicies
     def openButtonClicked(self):
 
-        widget = WidgetGraph(self, [])
-
-        self.ui.tabWidget.addTab(widget, "Graph?")
-        print(self.ui.tabWidget.currentWidget().canvasGraph)
+        fileName, _ = QFileDialog.getOpenFileName(None, "Select File", "", "*.rgp")
+        widget = WidgetGraph(self, fileName)
+        self.ui.tabWidget.addTab(widget, widget.name)
 
     # functionality for the pushButtonSave QPushButton
     # @todo save stuff, duh
@@ -272,7 +265,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         rectX = rect.get_x()
 
         xRange = True if (rectX < event.xdata < rectX + rectWidth) else False
-        yRange = True if (-0.1 < event.ydata <= axisHeight*self.percMarkerFocusHeight/100) else False
+        yRange = True if (-20 < event.ydata <= axisHeight*self.percMarkerFocusHeight/100) else False
         print(xRange, yRange)
         self.flagRectLeftFocus = True if ((disLeft < epsilonSides) and yRange) else False
         self.flagRectRightFocus = True if ((disRight < epsilonSides) and yRange) else False
@@ -282,78 +275,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         return self.flagRectLeftFocus or self.flagRectRightFocus or self.flagRectFocus
 
 
-    # testing for the stupid graph widget
-    def makeStupidGraph(self):
-
-        verticalLayout_2 = QVBoxLayout()
-        widgetTop = QWidget()
-        widgetTop.setObjectName(u"widgetTop")
-        widgetTop.setMaximumSize(QSize(16777215, 120))
-        widgetTop.setStyleSheet(u"QListWidget{background:lightblue; spacing: 0;}")
-        horizontalLayout = QHBoxLayout(widgetTop)
-        horizontalLayout.setObjectName(u"horizontalLayout")
-        listWidgetData = QListWidget(widgetTop)
-        listWidgetData.setObjectName(u"listWidgetData")
-        listWidgetData.setAutoScroll(False)
-        listWidgetData.setMovement(QListView.Snap)
-        listWidgetData.setFlow(QListView.LeftToRight)
-        listWidgetData.setProperty("isWrapping", True)
-        listWidgetData.setResizeMode(QListView.Fixed)
-        listWidgetData.setLayoutMode(QListView.SinglePass)
-        listWidgetData.setSpacing(1)
-
-        horizontalLayout.addWidget(listWidgetData)
-
-        horizontalSpacer = QSpacerItem(472, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-
-        horizontalLayout.addItem(horizontalSpacer)
-
-        verticalLayout_2.addWidget(widgetTop)
-
-        test_canvas = MplCanvas(self, width=6, height=4, dpi=100)
-        test_canvas.axes.plot([0, 0.1, 0.2, 0.3, 0.4, 0.5], [0, 0.1, 0.2, 0.3, 0.4, 0.5])
-        test_canvas.draw()
-
-        test_canvas.mpl_connect('motion_notify_event', self.onMouseMove)
-        test_canvas.mpl_connect('button_press_event', self.onButtonPress)
-        test_canvas.mpl_connect('button_release_event', self.onButtonReleased)
-        test_canvas.mpl_connect('axes_enter_event', self.onAxesEnter)
-        #test_canvas.mpl_connect('axes_leave_event', self.onAxesLeave)
-        test_canvas.mpl_connect('figure_leave_event', self.onAxesLeave)
-        test_canvas.mpl_connect('resize_event', self.onResize)
-
-        self.dictCanvasToRectList.update({test_canvas: []})
-
-        widgetGraph = test_canvas
-        widgetGraph.setObjectName(u"widgetGraph")
-
-        verticalLayout_2.addWidget(widgetGraph)
-
-        widgetBottom = QWidget()
-        widgetBottom.setObjectName(u"widgetBottom")
-        widgetBottom.setMaximumSize(QSize(16777215, 120))
-        horizontalLayout_2 = QHBoxLayout(widgetBottom)
-        horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        listWidgetAnalysis = QListWidget(widgetBottom)
-        listWidgetAnalysis.setObjectName(u"listWidgetAnalysis")
-
-        horizontalLayout_2.addWidget(listWidgetAnalysis)
-
-        horizontalSpacer_2 = QSpacerItem(369, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-
-        horizontalLayout_2.addItem(horizontalSpacer_2)
-
-        textEditComment = QTextEdit(widgetBottom)
-        textEditComment.setObjectName(u"textEditComment")
-        textEditComment.setMaximumSize(QSize(200, 16777215))
-
-        horizontalLayout_2.addWidget(textEditComment)
-
-        verticalLayout_2.addWidget(widgetBottom)
-
-        return verticalLayout_2
-
     def addRectToCurrentCanv(self, event):
+
 
         anchorX = self.xDataForMarker
         width = event.xdata - self.xDataForMarker
@@ -364,10 +287,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         tmpRect = Rectangle((anchorX, -axisHeight*0.8/100), width, - axisHeight * self.heightRectMarkPerc / 100)
         tmpRect.set_color(self.colorRect)
-        tmpListRect.append(tmpRect)
+        tmpListRect.append((tmpRect, self.nameRectMark))
+
+        # self.updateMarkerRectSave(event.canvas, tmpRect, argColorName=self.colorRect)
+        self.dictMarkerRectSetupData.update({tmpRect: [[tmpRect.xy, tmpRect.get_width()], [self.nameRectMark]]})
 
         event.canvas.axes.add_patch(tmpRect)
         event.canvas.draw()
+
+        event.canvas.parent().addTableMarkerEntry(len(tmpListRect)-1, self.nameRectMark,
+                                                  self.colorRect, round(anchorX, 2), round(event.xdata, 2))
+
+
+    def addMarkerToTable(self, currentCanvas):
+        ind = len(self.dictCanvasToRectList[currentCanvas])
+
 
 
 # TDL functions I use for things
