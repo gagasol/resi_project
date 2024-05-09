@@ -7,7 +7,6 @@ from PySide6 import QtWidgets
 import numpy as np
 import matplotlib
 from matplotlib import pyplot
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
@@ -100,7 +99,7 @@ class WidgetGraph(QWidget):
 
         charsRedFlags = ("{", "}", "wi", "\"dd\"", "pole", "\"set\"", "p2", "\"res\"", "ssd", "p1",
                          "profile", "checksum", "wiPoleResult", "app", "assessment")
-        with open(file, 'r') as f:
+        with open(file, 'r',errors="ignore") as f:
             line = f.readline()
             while line:
                 if (any (flag in line for flag in charsRedFlags)):
@@ -132,7 +131,6 @@ class WidgetGraph(QWidget):
 
 
     def setupTable(self):
-        print(self.dictMeasurementData)
         self.tableWidgetData.setItem(0, 0, QTableWidgetItem("Messung Nr.\t: " + self.dictMeasurementData["number"]))
         self.tableWidgetData.setItem(1, 0, QTableWidgetItem("ID-Nummer\t: " + self.dictMeasurementData["idNumber"]))
         self.tableWidgetData.setItem(2, 0, QTableWidgetItem("Bohrtiefe\t: " + self.dictMeasurementData["depthMsmt"] + " cm"))
@@ -186,7 +184,7 @@ class WidgetGraph(QWidget):
         self.labelData = QLabel(self.widgetDataTop)
         self.labelData.setObjectName(u"labelData")
         self.labelData.setText("Mess- / Objektdaten")
-        self.labelData.setMaximumSize(QSize(10000000, 45))
+        self.labelData.setMaximumSize(QSize(10000000, 20))
 
         self.tableWidgetData = AutoSizedTable(self.widgetDataTop)
         self.tableWidgetData.setObjectName(u"tableWidgetData")
@@ -353,10 +351,26 @@ class WidgetGraph(QWidget):
         self.tableWidgetMarker.setItem(index % 6, int(index/6), item)
 
 
+    def updateTableMarkerEntry(self, index, name, x, dx, ):
+        try:
+            color = self.mainWindow.dictMarker(name)
+            pixmap = QPixmap(30, 30)
+            pixmap.fill(QColor(color))
+            icon = QIcon(pixmap)
+
+            item = QTableWidgetItem(name + "\t: {0} - {1}".format(x, dx))
+            item.setIcon(icon)
+            self.tableWidgetMarker.setItem(index % 6, index // 6, item)
+
+
+        except KeyError:
+            print("Not in dic")
+
+
+
     def toggleHideTop(self):
         rndmBool = (self.checkBoxHideTop.checkState() == Qt.Checked)
         self.widgetTop.hide() if rndmBool else self.widgetTop.show()
-        print("BLABALBLA")
 
     def toggleHideBot(self):
         rndmBool = (self.checkBoxHideBot.checkState() == Qt.Checked)
@@ -365,7 +379,6 @@ class WidgetGraph(QWidget):
     def hideEverything(self):
         self.widgetTop.hide()
         self.widgetBottom.hide()
-        self.widgetRight.hide()
 
     def showEverything(self):
         self.widgetTop.show()

@@ -21,6 +21,37 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QGridLayout,
     QVBoxLayout, QWidget)
 import rc_icons
 
+
+class CustomQMdiArea(QMdiArea):
+    def tileSubWindowsH(self):
+        if len(self.subWindowList()) == 0:
+            return
+
+        position = QPoint(0, 0)
+        windowWidth = self.width() // 2
+        for window in self.subWindowList():
+            rect = QRect(0, 0, self.height(), windowWidth)
+            window.setGeometry(rect)
+            window.move(position)
+            position.setX(position.x() + windowWidth)
+
+    def tileSubWindowsV(self):
+        if len(self.subWindowList()) == 0:
+            return
+
+        position = QPoint(0, 0)
+        windowHeight = self.height() // 3
+        for window in self.subWindowList():
+            rect = QRect(0, 0, self.width(), windowHeight)
+            window.setGeometry(rect)
+            window.move(position)
+            position.setY(position.y() + windowHeight)
+
+    def resizeEvent(self, event):
+        print(f"New size: {self.size()}")
+        super().resizeEvent(event)
+
+
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
@@ -169,7 +200,7 @@ class Ui_MainWindow(object):
         self.page_2.setObjectName(u"page_2")
         self.horizontalLayout_3 = QHBoxLayout(self.page_2)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.mdiArea = QMdiArea(self.page_2)
+        self.mdiArea = CustomQMdiArea(self.page_2)
         self.mdiArea.setObjectName(u"mdiArea")
 
         self.horizontalLayout_3.addWidget(self.mdiArea)

@@ -144,8 +144,6 @@ class MarkerPresetWindow(QWidget):
             tmpComboBoxMarker.append(tmpComboBox)
 
         self.listComboBoxPresets = tmpComboBoxMarker
-        print(self.listComboBoxPresets)
-        print(self.comboBoxCount)
 
     def listPresetToFlatList(self):
         for preset in self.listPresets:

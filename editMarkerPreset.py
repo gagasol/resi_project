@@ -69,10 +69,8 @@ class SelectMarkerWindow(QWidget):
         self.dictMarker = argDictMarker if argDictMarker else {}
 
         self.dictMarkerList = []
-        print(self.dictMarker.items())
-        print(self.dictMarkerList)
 
-        if (self.dictMarker != None):
+        if (self.dictMarker != {}):
             self.dictMarkerList.append(("_NameForPreset", self.dictMarker["_NameForPreset"]))
             self.ui.lineEditPresetName.setText(self.dictMarker["_NameForPreset"])
         else:
@@ -179,7 +177,6 @@ class SelectMarkerWindow(QWidget):
 
         self.ui.lineEditName.setText(self.sender().currentText())
         self.ui.lineEditColor.setText(self.allMarkerDict[self.ui.comboBox.currentText()])
-        print(self.sender().currentText())
 
 
     def colorTextChanged(self):
@@ -211,13 +208,10 @@ class SelectMarkerWindow(QWidget):
 
                 color = argColor if color == "#ffffff" or color == "#000000" else color
                 text = argText if text == "" else text
-            print(self.dictMarkerList)
             for i in range(len(self.dictMarkerList)):
                 if (argText == self.dictMarkerList[i][0]):
                     if (self.flagDelete):
-                        print(self.dictMarkerList)
                         del self.dictMarkerList[i]
-                        print(self.dictMarkerList)
                         del self.listLabel[i-1]
                         widget.hide()
                         widget.setParent(None)
