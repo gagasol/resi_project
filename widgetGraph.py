@@ -348,9 +348,6 @@ class WidgetGraph(QWidget):
 
     def updateTableMarkerEntry(self, index, name, x, dx):
         try:
-            if(type(name) != str):
-                print("warum du penis")
-                return
             color = self.mainWindow.dictMarker[name]
             pixmap = QPixmap(30, 30)
             pixmap.fill(QColor(color))
