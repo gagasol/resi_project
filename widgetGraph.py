@@ -331,6 +331,7 @@ class WidgetGraph(QWidget):
 
 
     def addTableMarkerEntry(self, index, name, color, x, dx):
+        # @todo overload class to get a on_item_changed(self, item) signal and use it to change the markers
         pixmap = QPixmap(30, 30)
         pixmap.fill(QColor(color))
         icon = QIcon(pixmap)
@@ -345,14 +346,17 @@ class WidgetGraph(QWidget):
         self.tableWidgetMarker.setItem(index % 6, int(index/6), item)
 
 
-    def updateTableMarkerEntry(self, index, name, x, dx, ):
+    def updateTableMarkerEntry(self, index, name, x, dx):
         try:
-            color = self.mainWindow.dictMarker(name)
+            if(type(name) != str):
+                print("warum du penis")
+                return
+            color = self.mainWindow.dictMarker[name]
             pixmap = QPixmap(30, 30)
             pixmap.fill(QColor(color))
             icon = QIcon(pixmap)
 
-            item = QTableWidgetItem(name + "\t: {0} - {1}".format(x, dx))
+            item = QTableWidgetItem(name + "\t: {0} - {1}".format(round(x, 2), round(dx, 2)))
             item.setIcon(icon)
             self.tableWidgetMarker.setItem(index % 6, index // 6, item)
 

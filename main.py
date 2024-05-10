@@ -7,9 +7,6 @@ from PySide6 import QtWidgets
 
 import numpy as np
 import matplotlib
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
-from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 from matplotlib.backend_bases import MouseButton
 
@@ -21,10 +18,13 @@ from editMarkerPreset import SelectMarkerWindow
 
 
 class CustomRectangle(matplotlib.patches.Rectangle):
-    def __init__(self, xy, width, height, index, name):
+    # @todo add a saveDelete that accounts for the deleted element by adjusting the index and sets the new links
+    def __init__(self, xy, width, height, index, name, canvas):
         super().__init__(xy, width, height)
         self.index = index
         self.name = name
+        self.canvas = canvas
+
         self.lastXPos = xy[0]
 
         self._rightRect = None
@@ -38,7 +38,8 @@ class CustomRectangle(matplotlib.patches.Rectangle):
         print("Right set " + custRect.name)
         if (type(custRect) != CustomRectangle):
             raise Exception("rightRect must be of type CustomRectangle")
-
+        if (self._rightRect):
+            raise Exception("rightRect already set")
         self._rightRect = custRect
 
     def getLeftRect(self):
@@ -48,6 +49,8 @@ class CustomRectangle(matplotlib.patches.Rectangle):
         print("Left set " + custRect.name)
         if (type(custRect) != CustomRectangle):
             raise Exception("leftRect must be of type CustomRectangle")
+        if (self._leftRect):
+            raise Exception("leftRect already set")
         self._leftRect = custRect
     # endregion
 
@@ -60,40 +63,53 @@ class CustomRectangle(matplotlib.patches.Rectangle):
         """
         self.lastXPos = self.get_x()
         self.set_x(self.get_x()+dx)
+        self.updateTableMarker()
         self.resizeLinks(True)
 
     def resizeWidth(self, dw, direction, calledByScript=False):
-        '''
+        """
         resizes a CustomRectangle by dw and corrects leftRect or rightRect if they are not None
         :param dw: change in width
         :param direction resize to the right, left
         :param calledByScript: boolean to make sure that the program doesn't change all rects but only a max of 3
         :return: None
-        '''
+        """
         if (direction == "r"):
             self.set_width(self.get_width() + dw)
+            self.updateTableMarker()
             self.resizeLinks(False, True)
             self.lastXPos = self.get_x()
         elif (direction == "l"):
             self.set_x(self.get_x() + dw)
             self.set_width(self.get_width() - dw)
             self.lastXPos = self.get_x()
+            self.updateTableMarker()
             self.resizeLinks()
+
+        print()
 
 
     def resizeLinks(self, flagMoves=False, flagSizeChanged=False):
             if (self._leftRect):
                 self._leftRect.set_width(self.get_x() - self._leftRect.get_x())
+                self._leftRect.updateTableMarker()
             if (self._rightRect):
                 if (flagSizeChanged):
                     newRectXEnd = self.get_x() + self.get_width()
                     oldRectXEnd = self._rightRect.get_x() + self._rightRect.get_width()
                     self._rightRect.set_width(oldRectXEnd - newRectXEnd)
                     self._rightRect.set_x(self.get_x() + self.get_width())
+                    self._rightRect.updateTableMarker()
                 elif (flagMoves):
                     self._rightRect.set_width(self._rightRect.get_width() - self.get_x() + self.lastXPos)
                     self._rightRect.set_x(self.get_x() + self.get_width())
+                    self._rightRect.updateTableMarker()
 
+
+
+    def updateTableMarker(self):
+        self.canvas.parent().updateTableMarkerEntry(self.index, self.name, self.get_x(),
+                                                    self.get_width() + self.get_x())
 
 
 
@@ -203,6 +219,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # functionality for the matplotlib canvas
 
     def onMouseMove(self, event):
+        # @todo create a global variable called backMarker and frontMarker which will be set with the next markers
+        # in each direction of focusMarker after a marker got focused
+        # then change snapOn() to check for 2 variables instead of the entire dict
+        # kinda useless for this application but save them bytes where you can
         if (event.inaxes):
             # Draw vertical line
             if (self.flagVerticalLine):
@@ -216,6 +236,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     self.clickCount = 0
                     self.focusRect.move(event.xdata - self.test_x_start)
                     self.snapOn(event.canvas, self.focusRect)
+                    event.canvas.parent().updateTableMarkerEntry(self.focusRect.index, self.focusRect.name,
+                                                                 self.focusRect.get_x(),
+                                                                 self.focusRect.get_width() + self.focusRect.get_x())
                     self.test_x_start = event.xdata
 
                 # If flag for rectangle being focused on right side is set, resize rectangle from right
@@ -396,8 +419,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         return self.flagRectLeftFocus or self.flagRectRightFocus or self.flagRectFocus
 
 
-    # @todo fix the potential problem when a marker gets draged over another completly
-    # this leads tho those markers eating themselves
     def snapOn(self, canvas, focusRect):
         if (focusRect.getLeftRect() and focusRect.getRightRect()):
             return
@@ -419,7 +440,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
 
-
     def addRectToCurrentCanv(self, event):
 
         width = event.xdata - self.xDataForMarker
@@ -431,9 +451,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
         tmpRect = CustomRectangle((anchorX, -axisHeight*0.8/100), width,
-                                  - axisHeight * self.heightRectMarkPerc / 100, len(tmpListRect), self.nameRectMark)
+                                  - axisHeight * self.heightRectMarkPerc / 100, len(tmpListRect),
+                                  self.nameRectMark, event.canvas)
 
-        # @todo put this in a correctOverlap() function
         if (not self.adjustOverlay(event, tmpRect)):
             return
 
@@ -447,7 +467,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         event.canvas.parent().addTableMarkerEntry(len(tmpListRect)-1, self.nameRectMark,
                                                   self.colorRect, round(anchorX, 2), round(event.xdata, 2))
-
 
 
     # 90% of this function is actually redundant because CustomRectangles resizeLinks() can take of most of it
@@ -472,19 +491,28 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
                     if (startInOld):
                         tupleCanv[0].set_width(newRectXStart-oldRectXStart)
+                        tupleCanv[0]._rightRect = None
                         tupleCanv[0].setRightRect(tmpRect)
+                        tmpRect._leftRect = None
                         tmpRect.setLeftRect(tupleCanv[0])
                     if (endInOld):
                         #tupleCanv[0].set_width(tupleCanv[0].get_width() - newRectXEnd - tupleCanv[0].get_x())
                         tupleCanv[0].set_width(oldRectXEnd-newRectXEnd)
                         tupleCanv[0].set_x(newRectXEnd)
+                        tupleCanv[0]._leftRect = None
                         tupleCanv[0].setLeftRect(tmpRect)
+                        tmpRect._rightRect = None
                         tmpRect.setRightRect(tupleCanv[0])
 
                 elif (startInOld and endInOld):
                     return False
 
                 elif (newRectXStart < oldRectXStart and oldRectXEnd < newRectXEnd):
+                    if (tupleCanv[0].getRightRect()):
+                        tupleCanv[0]._rightRect._leftRect = None
+                    if (tupleCanv[0].getLeftRect()):
+                        tupleCanv[0]._leftRect._rightRect = None
+
                     tupleCanv[0].remove()
                     self.dictCanvasToRectList[event.canvas].remove(tupleCanv)
                     return True
@@ -498,7 +526,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def addMarkerToTable(self, currentCanvas):
         ind = len(self.dictCanvasToRectList[currentCanvas])
 
-
+    def updateTableMarker(self, canvas, focusRect, index, name, x, dx):
+        pass
 
 # TDL functions I use for things
 
