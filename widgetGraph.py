@@ -23,6 +23,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
 from PySide6.QtWidgets import (QApplication, QHBoxLayout, QListView, QListWidget,
                                QListWidgetItem, QSizePolicy, QSpacerItem, QTextEdit,
                                QVBoxLayout, QWidget)
+
+from dataModel import DataModel
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
@@ -79,7 +81,7 @@ class WidgetGraph(QWidget):
         self.horizontalSpacer0 = None
         # endregion
 # data variables setup
-        self.name = None
+        self._name = None
 
         self.dataDrill = []
         self.dataFeed = []
@@ -98,8 +100,7 @@ class WidgetGraph(QWidget):
 
 # initialize Data and Ui
         if (self.mainWindow):
-            self.getDataFromRGP(pathToFile)
-
+            self.data = DataModel(pathToFile, self.mainWindow.listNameKeys)
             pyplot.style.use('ggplot')
             self.setUpUi()
             self.setupTable()
@@ -118,6 +119,8 @@ class WidgetGraph(QWidget):
 
 
     def setUpUi(self):
+
+        self._name, deviceLength, dataDrill, dataFeed = self.data.getGraphData()
 
         self.verticalLayout_2 = QVBoxLayout()
         self.widgetTop = QWidget()
@@ -193,12 +196,12 @@ class WidgetGraph(QWidget):
         self.canvasGraph.axes.set_xlabel('Depth')
         self.canvasGraph.axes.set_ylabel('Data')
         # @todo remove later
-        self.measurementDrillDepth = float(self.dictMeasurementData["deviceLength"])
-        self.canvasGraph.axes.set_xlim(0, self.measurementDrillDepth+0.1)
-        step = self.measurementDrillDepth / len(self.dataDrill)
-        x = np.arange(0, self.measurementDrillDepth, step)
-        self.canvasGraph.axes.plot(x, self.dataDrill, linewidth=0.7)
-        self.canvasGraph.axes.plot(x, self.dataFeed, linewidth=0.7)
+        deviceLength = float(deviceLength)
+        self.canvasGraph.axes.set_xlim(0, deviceLength+0.1)
+        step = deviceLength / len(dataDrill)
+        x = np.arange(0, deviceLength, step)
+        self.canvasGraph.axes.plot(x, dataDrill, linewidth=0.7)
+        self.canvasGraph.axes.plot(x, dataFeed, linewidth=0.7)
         self.canvasGraph.figure.subplots_adjust(left=0.036, bottom=0.2490168523424322, right=0.98, top=0.98)
         # left on start left=0.049 ; bottom=0.155 1277 1920
         # Coordinates left : 1920/0.035 1277/0.049 265/0.28
@@ -332,66 +335,11 @@ class WidgetGraph(QWidget):
         self.setLayout(self.verticalLayout_2)
 
 
-    def getDataFromRGP(self, file):
-
-        charsRedFlags = ("{", "}", "wi", "\"dd\"", "pole", "\"set\"", "p2", "\"res\"", "ssd", "p1",
-                         "profile", "checksum", "wiPoleResult", "app", "assessment")
-        with open(file, 'r',errors="ignore") as f:
-            line = f.readline()
-            while line:
-                if (any (flag in line for flag in charsRedFlags)):
-                    line = f.readline()
-                    continue
-                if ("\"drill\"" in line):
-                    strList = line.split("[")[1].replace("]","").strip().split(",")[0:-1]
-                    self.dataDrill = [float(num) for num in strList]
-                    line = f.readline()
-                    continue
-                elif ("\"feed\"" in line):
-                    strList = line.split("[")[1].replace("]", "").strip().split(",")[0:-1]
-                    self.dataFeed = [float(num) for num in strList]
-                    line = f.readline()
-                    continue
-
-                self.listDataAll.append(line.replace("\"","").replace(",",""))
-                line = f.readline()
-
-        self.formatListToDict()
-
-
-    def formatListToDict(self):
-        self.dictMeasurementData = dict((x.strip(), y.strip())
-                                        for x, y in (element.split(":")
-                                                     for element in self.listDataAll))
-
-        self.name = self.dictMeasurementData["idNumber"] + self.dictMeasurementData["number"]
-
-
     def setupTable(self):
-        self.tableWidgetData.setItem(0, 0, QTableWidgetItem("Messung Nr.\t: " + self.dictMeasurementData["number"]))
-        self.tableWidgetData.setItem(1, 0, QTableWidgetItem("ID-Nummer\t: " + self.dictMeasurementData["idNumber"]))
-        self.tableWidgetData.setItem(2, 0, QTableWidgetItem("Bohrtiefe\t: " + self.dictMeasurementData["depthMsmt"] + " cm"))
-        self.tableWidgetData.setItem(3, 0, QTableWidgetItem("Datum\t: " + self.dictMeasurementData["dateDay"] + "." +
-                                     self.dictMeasurementData["dateMonth"] + "." + self.dictMeasurementData["dateYear"]) )
-        self.tableWidgetData.setItem(4, 0,QTableWidgetItem("Uhrzeit\t: " + self.dictMeasurementData["timeHour"] + "." +
-                                     self.dictMeasurementData["timeMinute"] + "." + self.dictMeasurementData["timeSecond"]))
-        self.tableWidgetData.setItem(5, 0, QTableWidgetItem("Vorschub\t: " + self.dictMeasurementData["speedFeed"] +
-                                                            " cm/min"))
-
-        self.tableWidgetData.setItem(0, 1, QTableWidgetItem("Drehzahl\t: " + self.dictMeasurementData["speedDrill"] +
-                                                            " U/min"))
-        self.tableWidgetData.setItem(1, 1, QTableWidgetItem("Nadelstatus\t: ---"))
-        self.tableWidgetData.setItem(2, 1, QTableWidgetItem("Neigung\t: " + self.dictMeasurementData["tiltAngle"]))
-        self.tableWidgetData.setItem(3, 1, QTableWidgetItem("Offset\t: " + self.dictMeasurementData["offsetFeed"] +
-                                                    " / " + self.dictMeasurementData["offsetDrill"]))
-        self.tableWidgetData.setItem(4, 1, QTableWidgetItem("Mitteilung\t: " + self.dictMeasurementData["remark"]))
-
-        self.tableWidgetData.setItem(0, 2, QTableWidgetItem("Durchmesser\t: "))
-        self.tableWidgetData.setItem(1, 2, QTableWidgetItem("Messhöhe\t: "))
-        self.tableWidgetData.setItem(2, 2, QTableWidgetItem("Messrichtung\t: "))
-        self.tableWidgetData.setItem(3, 2, QTableWidgetItem("Objektart\t: "))
-        self.tableWidgetData.setItem(4, 2, QTableWidgetItem("Standort\t: "))
-        self.tableWidgetData.setItem(5, 2, QTableWidgetItem("Name\t: "))
+        i, j = 0, 0
+        for entry in self.data.getTablaTopData():
+            self.tableWidgetData.setItem(i % 6, j // 6, entry)
+            i, j = i + 1, j + 1
 
 
     def addTableMarkerEntry(self, index, name, color, x, dx):
@@ -407,7 +355,7 @@ class WidgetGraph(QWidget):
 
         item = QTableWidgetItem(name + "\t: {0} - {1}".format(x, dx))
         item.setIcon(icon)
-        self.tableWidgetMarker.setItem(index % 6, int(index/6), item)
+        self.tableWidgetMarker.setItem(index % 6, index // 6, item)
 
 
     def updateTableMarkerEntry(self, index, name, x, dx):

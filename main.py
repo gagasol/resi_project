@@ -169,6 +169,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.vLineRect = Rectangle((-5, 0), 0.05, 120)
         self.focusRect = None
 
+
+        # region global variables for settings
+        self.listNameKeys = ["idNumber", "date"]
+
+        # endregion
+
         # region data, counter, flags
         # @xDataForMarker variable that holds the first clicked position to draw a marker from that to the second click
         # @dict dictMarker dictionary containing a "String::Name: String::HexColor" pair to save all Marker
@@ -353,7 +359,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         widget = WidgetGraph(self, fileName)
         print(fileName)
         self.listGraphWidgets.append(widget)
-        self.ui.tabWidget.addTab(widget, widget.name)
+        self.ui.tabWidget.addTab(widget, widget._name)
 
         #self.ui.tabWidget.addTab(widget, widget.name)
 
