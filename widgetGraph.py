@@ -25,12 +25,109 @@ from PySide6.QtWidgets import (QApplication, QHBoxLayout, QListView, QListWidget
                                QVBoxLayout, QWidget)
 
 from dataModel import DataModel
+from markerpresetwindow import MarkerPresetWindow
+
+
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
         fig.subplots_adjust(left=0.03, right=0.97, top=0.99, bottom=0.07)
         self.axes = fig.add_subplot(111)
         super(MplCanvas, self).__init__(fig)
+
+
+class CustomRectangle(matplotlib.patches.Rectangle):
+    # @todo add a saveDelete that accounts for the deleted element by adjusting the index and sets the new links
+    # @todo while moving checkc if left or right marker gets to zero, if so stop
+    def __init__(self, xy, width, height, index, name, canvas):
+        super().__init__(xy, width, height)
+        self.index = index
+        self.name = name
+        self.canvas = canvas
+
+        self.lastXPos = xy[0]
+
+        self._rightRect = None
+        self._leftRect = None
+
+    # region getter and setter
+    def getRightRect(self):
+        return self._rightRect
+
+    def setRightRect(self, custRect):
+        self._rightRect = custRect
+        if (type(custRect) != CustomRectangle):
+            pass#raise Exception("rightRect must be of type CustomRectangle")
+        if (self._rightRect):
+            pass#raise Exception("rightRect already set")
+        self._rightRect = custRect
+
+    def getLeftRect(self):
+        return self._leftRect
+
+    def setLeftRect(self, custRect):
+        self._leftRect = custRect
+        if (type(custRect) != CustomRectangle):
+            pass#raise Exception("leftRect must be of type CustomRectangle")
+        if (self._leftRect):
+            pass#raise Exception("leftRect already set")
+        self._leftRect = custRect
+    # endregion
+
+    def move(self, dx, calledByScript=False):
+        """
+        moves a CustomRectangle by dx and corrects leftRect or rightRect if they're not None
+        :param dx: the amount to move the x position
+        :param calledByScript: boolean to make sure that the program doesn't change all rects but only a max of 3
+        :return: None
+        """
+        self.lastXPos = self.get_x()
+        self.set_x(self.get_x()+dx)
+        self.updateTableMarker()
+        self.resizeLinks(True)
+
+    def resizeWidth(self, dw, direction, calledByScript=False):
+        """
+        resizes a CustomRectangle by dw and corrects leftRect or rightRect if they are not None
+        :param dw: change in width
+        :param direction resize to the right, left
+        :param calledByScript: boolean to make sure that the program doesn't change all rects but only a max of 3
+        :return: None
+        """
+        if (direction == "r"):
+            self.set_width(self.get_width() + dw)
+            self.updateTableMarker()
+            self.resizeLinks(False, True)
+            self.lastXPos = self.get_x()
+        elif (direction == "l"):
+            self.set_x(self.get_x() + dw)
+            self.set_width(self.get_width() - dw)
+            self.lastXPos = self.get_x()
+            self.updateTableMarker()
+            self.resizeLinks()
+
+
+    def resizeLinks(self, flagMoves=False, flagSizeChanged=False):
+            if (self._leftRect):
+                self._leftRect.set_width(self.get_x() - self._leftRect.get_x())
+                self._leftRect.updateTableMarker()
+            if (self._rightRect):
+                if (flagSizeChanged):
+                    newRectXEnd = self.get_x() + self.get_width()
+                    oldRectXEnd = self._rightRect.get_x() + self._rightRect.get_width()
+                    self._rightRect.set_width(oldRectXEnd - newRectXEnd)
+                    self._rightRect.set_x(self.get_x() + self.get_width())
+                    self._rightRect.updateTableMarker()
+                elif (flagMoves):
+                    self._rightRect.set_width(self._rightRect.get_width() - self.get_x() + self.lastXPos)
+                    self._rightRect.set_x(self.get_x() + self.get_width())
+                    self._rightRect.updateTableMarker()
+
+
+
+    def updateTableMarker(self):
+        self.canvas.parent().parent().updateTableMarkerEntry(self.index, self.name, self.get_x(),
+                                                    self.get_width() + self.get_x())
 
 
 class AutoSizedTable(QTableWidget):
@@ -54,8 +151,33 @@ class WidgetGraph(QWidget):
         self.heightWidgetTopPerc = 15
         self.heightWidgetGraphPerc = 75
         self.heightWidgetBottomPerc = 10
+        self.heightRectMarkPerc = 3
+        self.percMarkerFocusHeight = 20
         # endregion
 
+        # marker variables
+        self.dictCanvasToRectList = {}
+        self.markerList = []
+
+        self.vLineRect = Rectangle((-5, 0), 0.05, 120)
+        self.flagVerticalLine = True
+
+        self.focusedMarker = None
+        self.lastXPos = 0
+        self.clickCount = 0
+
+        self.markerName = None
+        self.markerColor = None
+
+
+        self.flagMarkerFocus = False
+        self.flagMarkerRightFocus = False
+        self.flagMarkerLeftFocus = False
+
+        self.flagMarkerDragged = False
+        self.flagMouseClicked = False
+
+        self.flagWindowClosedByUserSignal = False
         # region tons of variables for the QTWidget
         self.labelData = None
         self.horizontalSpacer_3 = None
@@ -90,9 +212,6 @@ class WidgetGraph(QWidget):
         self.dictMeasurementData = {}
 
         self.strsToShowInGraph = []
-
-        self.lastLeftAdjust = None
-        self.lastBottomAdjust = None
 
 # arg variables
         self.mainWindow = MainWindow
@@ -209,15 +328,15 @@ class WidgetGraph(QWidget):
         self.canvasGraph.draw()
 
         if (self.mainWindow):
-            self.canvasGraph.mpl_connect('motion_notify_event', self.mainWindow.onMouseMove)
-            self.canvasGraph.mpl_connect('button_press_event', self.mainWindow.onButtonPress)
-            self.canvasGraph.mpl_connect('button_release_event', self.mainWindow.onButtonReleased)
-            self.canvasGraph.mpl_connect('axes_enter_event', self.mainWindow.onAxesEnter)
+            self.canvasGraph.mpl_connect('motion_notify_event', self.onMouseMove)
+            self.canvasGraph.mpl_connect('button_press_event', self.onButtonPress)
+            self.canvasGraph.mpl_connect('button_release_event', self.onButtonReleased)
+            self.canvasGraph.mpl_connect('figure_enter_event', self.onAxesEnter)
             #self.test_canvas.mpl_connect('axes_leave_event', self.onAxesLeave)
-            self.canvasGraph.mpl_connect('figure_leave_event', self.mainWindow.onAxesLeave)
-            self.canvasGraph.mpl_connect('resize_event', self.mainWindow.onResize)
+            self.canvasGraph.mpl_connect('figure_leave_event', self.onAxesLeave)
+            #self.canvasGraph.mpl_connect('resize_event', self.onResize)
 
-            self.mainWindow.dictCanvasToRectList.update({self.canvasGraph: []})
+            #self.dictCanvasToRectList.update({self.canvasGraph: []})
 
         self.widgetGraph = QWidget()
         self.widgetGraph.setObjectName(u"widgetGraph")
@@ -340,6 +459,262 @@ class WidgetGraph(QWidget):
         for entry in self.data.getTablaTopData():
             self.tableWidgetData.setItem(i % 6, j // 6, entry)
             i, j = i + 1, j + 1
+
+
+    # functionality for the matplotlib canvas
+    def onMouseMove(self, event):
+        # @todo create a global variable called backMarker and frontMarker which will be set with the next markers
+        # in each direction of focusMarker after a marker got focused
+        # then change snapOn() to check for 2 variables instead of the entire dict
+        # kinda useless for this application but save them bytes where you can
+        if (event.inaxes):
+            # Draw vertical line
+            if (self.flagVerticalLine):
+                self.vLineRect.set_x(event.xdata)
+
+            # If left mouse button is clicked
+            if (event.button == MouseButton.LEFT):
+                # If flag for rectangle being focused is set, move the rectangle
+                if (self.flagMarkerFocus):
+                    self.flagMarkerDragged = True
+                    self.clickCount = 0
+                    self.focusedMarker.move(event.xdata - self.lastXPos)
+                    self.snapOn(event.canvas, self.focusedMarker)
+                    self.updateTableMarkerEntry(self.focusedMarker.index, self.focusedMarker.name, self.focusedMarker.get_x(),
+                                                self.focusedMarker.get_width() + self.focusedMarker.get_x())
+                    self.lastXPos = event.xdata
+
+                # If flag for rectangle being focused on right side is set, resize rectangle from right
+                elif (self.flagMarkerRightFocus):
+                    self.clickCount = 0
+                    self.focusedMarker.resizeWidth(event.xdata - self.lastXPos, "r")
+                    self.snapOn(event.canvas, self.focusedMarker)
+                    self.lastXPos = event.xdata
+
+                # If flag for rectangle being focused on left side is set, resize rectangle from left
+                elif (self.flagMarkerLeftFocus):
+                    self.clickCount = 0
+                    self.focusedMarker.resizeWidth(event.xdata - self.lastXPos, "l")
+                    self.snapOn(event.canvas, self.focusedMarker)
+                    self.lastXPos = event.xdata
+
+            # Redraw canvas after processing actions
+            event.canvas.draw()
+
+    def onButtonPress(self, event):
+
+        if (event.inaxes is None):
+            return
+
+        if (event.button == MouseButton.LEFT):
+            self.flagMouseClicked = True
+
+            self.lastXPos = event.xdata
+
+            # check if any marker rectangle is close by
+            # @todo add the loop to the function and just call the function
+            if (self.markerList is not []):
+                for marker in self.markerList:
+                    if self.checkIfClickByRect(event, marker):
+                        self.focusedMarker = marker
+                        return
+
+        # logic for creating markers with addRectToCurrentCanv
+        if (not (self.flagMarkerFocus or self.flagMarkerLeftFocus or self.flagMarkerRightFocus)):
+
+            if (self.clickCount == 0):
+                self.xPosMarkerStart = event.xdata
+
+            elif (self.clickCount == 1):
+                markerWindow = MarkerPresetWindow(self, {})
+                markerWindow.setAttribute(Qt.WA_DeleteOnClose)
+                markerWindow.show()
+                markerWindow.destroyed.emit()
+
+                waitForMarkerInputLoop = QEventLoop()
+                markerWindow.closedByUser.connect(self.windowClosedByUser)
+                markerWindow.closedProgrammatically.connect(self.windowClosedProgrammatically)
+                markerWindow.destroyed.connect(waitForMarkerInputLoop.quit)
+                waitForMarkerInputLoop.exec()
+
+                if (not self.flagWindowClosedByUserSignal):
+                    self.addRectToCurrentCanv(event)
+
+                self.flagMouseClicked = False
+
+            self.clickCount = self.clickCount + 1 if (self.clickCount < 1) else 0
+
+    def onButtonReleased(self, event):
+
+        if (self.flagMarkerDragged):
+            self.flagMarkerDragged = False
+            event.canvas.draw()
+
+        self.flagMouseClicked = False
+        self.flagMarkerFocus = False
+        self.focusedMarker = None
+        self.flagMarkerLeftFocus = False
+        self.flagMarkerRightFocus = False
+
+    def onAxesEnter(self, event):
+        self.vLineRect.set_visible(True)
+        event.canvas.axes.add_patch(self.vLineRect)
+        event.canvas.draw()
+
+    def onAxesLeave(self, event):
+
+        if (event is None
+                or event.canvas is None
+                or self.flagMouseClicked
+                or self.clickCount == 1):
+            return
+
+        self.vLineRect.remove()
+        event.canvas.draw()
+        self.flagMarkerFocus = False
+        self.flagMarkerLeftFocus = False
+        self.flagMarkerRightFocus = False
+        self.focusedMarker = None
+
+
+    def windowClosedByUser(self):
+        self.flagWindowClosedByUserSignal = True
+    def windowClosedProgrammatically(self):
+        self.flagWindowClosedByUserSignal = False
+
+
+    # function to check if event coordinates are close to a Rectangle and/or close to either side of that Rectangle
+    # if close to Rectangle and not close to either side make that rectangle movable
+    # if close to either side expand or shrink from respective side
+    # @todo highlight either side if hovered or change mouse
+    def checkIfClickByRect(self, event, rect):
+
+        axisHeight = event.canvas.axes.get_ylim()[1]
+
+        rectCent = rect.get_center()
+        rectWidth = rect.get_width()
+
+        epsilonSides = rectWidth * 0.10
+
+        rightEndX, leftEndX = rectCent[0] + rectWidth / 2, rectCent[0] - rectWidth / 2
+        disRight = np.sqrt((rightEndX - event.xdata) ** 2)
+        disLeft = np.sqrt((leftEndX - event.xdata) ** 2)
+
+        rectX = rect.get_x()
+
+        xRange = True if (rectX < event.xdata < rectX + rectWidth) else False
+        yRange = True if (-20 < event.ydata <= axisHeight*self.percMarkerFocusHeight/100) else False
+        self.flagMarkerLeftFocus = True if ((disLeft < epsilonSides) and yRange) else False
+        self.flagMarkerRightFocus = True if ((disRight < epsilonSides) and yRange) else False
+        self.flagMarkerFocus = (
+                xRange and yRange and not self.flagMarkerLeftFocus and not self.flagMarkerRightFocus)
+
+        return self.flagMarkerLeftFocus or self.flagMarkerRightFocus or self.flagMarkerFocus
+
+
+    def snapOn(self, canvas, focusRect):
+        if (focusRect.getLeftRect() and focusRect.getRightRect()):
+            return
+
+        for marker in self.markerList:
+            if (marker == focusRect.getRightRect() or marker == focusRect.getLeftRect()):
+                return
+            fixedRectXStart = marker.get_x()
+            fixedRectRectXEnd = marker.get_x() + marker.get_width()
+            focusRectXStart = focusRect.get_x()
+            focusRectXEnd = focusRectXStart + focusRect.get_width()
+
+            if (focusRect.getRightRect() is None and focusRectXEnd >= fixedRectXStart > focusRectXStart):
+                focusRect.setRightRect(marker)
+                marker.setLeftRect(focusRect)
+            elif (focusRect.getLeftRect() is None and focusRect.get_x() <= fixedRectRectXEnd < focusRectXEnd):
+                focusRect.setLeftRect(marker)
+                marker.setRightRect(focusRect)
+
+
+    # @todo handle the marker setup in the widget graph because its the only place its used
+    def addRectToCurrentCanv(self, event):
+
+        width = event.xdata - self.xPosMarkerStart
+        anchorX = self.xPosMarkerStart if width > 0 else event.xdata
+        width = abs(width)
+        axisHeight = event.canvas.axes.get_ylim()[1]
+        tmpListRect = self.markerList
+
+
+
+        tmpRect = CustomRectangle((anchorX, -axisHeight*0.8/100), width,
+                                  - axisHeight * self.heightRectMarkPerc / 100, len(tmpListRect),
+                                  self.markerName, event.canvas)
+
+        if (not self.adjustOverlay(event, tmpRect)):
+            return
+
+        tmpRect.set_color(self.markerColor)
+        tmpListRect.append(tmpRect)
+
+        # self.updateMarkerRectSave(event.canvas, tmpRect, argColorName=self.colorRect)
+
+        event.canvas.axes.add_patch(tmpRect)
+        event.canvas.draw()
+
+        self.addTableMarkerEntry(len(tmpListRect) - 1, self.markerName, self.markerColor, round(anchorX, 2),
+                                 round(event.xdata, 2))
+
+
+    # 90% of this function is actually redundant because CustomRectangles resizeLinks() can take of most of it
+    # not gonna change that though.
+    # also @todo add this to widgetGraph as well
+    def adjustOverlay(self, event, tmpRect):
+        try:
+            newRectXStart = tmpRect.get_x()
+            newRectXEnd = tmpRect.get_x()+tmpRect.get_width()
+
+            for marker in self.markerList:
+
+                if (tmpRect.get_width() < 0 or marker.get_width() < 0):
+                    print("ERROR: the width of a rect is negative, something went horrible wrong!!!!")
+                    return False
+
+                oldRectXStart = marker.get_x()
+                oldRectXEnd = marker.get_x()+marker.get_width()
+
+                startInOld = oldRectXStart < newRectXStart <= oldRectXEnd
+                endInOld = oldRectXStart < newRectXEnd <= oldRectXEnd
+                if (startInOld ^ endInOld):
+
+                    if (startInOld):
+                        marker.set_width(newRectXStart-oldRectXStart)
+                        marker._rightRect = None
+                        marker.setRightRect(tmpRect)
+                        tmpRect._leftRect = None
+                        tmpRect.setLeftRect(marker)
+                    if (endInOld):
+                        # marker.set_width(marker.get_width() - newRectXEnd - marker.get_x())
+                        marker.set_width(oldRectXEnd - newRectXEnd)
+                        marker.set_x(newRectXEnd)
+                        marker.setLeftRect(None)
+                        marker.setLeftRect(tmpRect)
+                        tmpRect._rightRect = None
+                        tmpRect.setRightRect(marker)
+
+                elif (startInOld and endInOld):
+                    return False
+
+                elif (newRectXStart < oldRectXStart and oldRectXEnd < newRectXEnd):
+                    if (marker.getRightRect()):
+                        marker.getRightRect().setLeftRect(None)
+                    if (marker.getLeftRect()):
+                        marker.getLeftRect().setRightRect(None)
+
+                    marker.remove()
+                    self.markerList.remove(marker)
+                    return True
+
+        except IndexError:
+            print("Index Error: Canvas list is empty.")
+
+        return True
 
 
     def addTableMarkerEntry(self, index, name, color, x, dx):

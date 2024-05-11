@@ -20,20 +20,26 @@ class MarkerPresetWindow(QWidget):
     closedByUser = Signal()
     closedProgrammatically = Signal()
 
-    def __init__(self, MainWindow, parent=None):
+    def __init__(self, MainWindow, markerDict=None, markerPresets=None, parent=None):
         super().__init__(parent)
+        if markerPresets is None:
+            markerPresets = []
+        if markerDict is None:
+            markerDict = {}
         self.ui = Ui_SelectMarkerWindow()
         self.ui.setupUi(self)
 
         self.mainWindow = MainWindow
-        self.dictAllMarkers = self.mainWindow.dictMarker
+        self.dictAllMarkers = markerDict
+        self.listPresets = markerPresets
 
         self.flagDelete = False
 
-        self.listPresets = self.mainWindow.listMarkerPreset
-
         self.comboBoxCount = 0
         self.comboBoxInd = 0
+
+        self.markerColor = None
+        self.markerName = None
 
         # bunch of stuff for trying stuff out
         self.listPreset = [
@@ -78,6 +84,7 @@ class MarkerPresetWindow(QWidget):
             self.closedByUser.emit()
         else:
             self.closedProgrammatically.emit()
+            return
 
     def onComboBoxItemChanged(self, index):
 
@@ -96,8 +103,8 @@ class MarkerPresetWindow(QWidget):
 
         for preset in self.listPresets:
             if (textCurrentItem in preset):
-                self.mainWindow.colorRect = preset[textCurrentItem]
-                self.mainWindow.nameRectMark = textCurrentItem
+                self.mainWindow.markerColor = preset[textCurrentItem]
+                self.mainWindow.markerName = textCurrentItem
                 self.close()
 
     def onComboBoxActivated(self, index):
