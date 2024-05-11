@@ -1,7 +1,8 @@
 # This Python file uses the following encoding: utf-8
 import sys
 
-from PySide6.QtCore import Qt, QEventLoop, QPoint, QRect
+from PySide6.QtCore import Qt, QEventLoop, QPoint, QRect, QSize, QSizeF, QMarginsF
+from PySide6.QtGui import QIcon, QPdfWriter, QPageSize, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, QWidget, QFileDialog, QMdiArea, QMdiSubWindow
 from PySide6 import QtWidgets
 
@@ -19,6 +20,7 @@ from editMarkerPreset import SelectMarkerWindow
 
 class CustomRectangle(matplotlib.patches.Rectangle):
     # @todo add a saveDelete that accounts for the deleted element by adjusting the index and sets the new links
+    # @todo while moving checkc if left or right marker gets to zero, if so stop
     def __init__(self, xy, width, height, index, name, canvas):
         super().__init__(xy, width, height)
         self.index = index
@@ -86,8 +88,6 @@ class CustomRectangle(matplotlib.patches.Rectangle):
             self.updateTableMarker()
             self.resizeLinks()
 
-        print()
-
 
     def resizeLinks(self, flagMoves=False, flagSizeChanged=False):
             if (self._leftRect):
@@ -108,11 +108,8 @@ class CustomRectangle(matplotlib.patches.Rectangle):
 
 
     def updateTableMarker(self):
-        self.canvas.parent().updateTableMarkerEntry(self.index, self.name, self.get_x(),
+        self.canvas.parent().parent().updateTableMarkerEntry(self.index, self.name, self.get_x(),
                                                     self.get_width() + self.get_x())
-
-
-
 
 
 class CustomQMdiArea(QMdiArea):
@@ -159,9 +156,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # testing area TBD!!!
 
-        self.test_x_start = 0
-
-        self.flagWindowClosedByUserSignal = False
+        self.test_file_path = "C:/Users/Heisenberg/Documents/Programming/Python/resi_project/resi/resiProject/Ka_Adl2M001.rgp"
 
     # variable setup
 
@@ -197,7 +192,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # counter
         # @variable clickCount counts to a max of 1, on 0 it sets the xDataForMarker var
+        # @variable test_x_start is set on mouse click to determine the width of the marker
         self.clickCount = 0
+        self.test_x_start = 0
 
         # flags
         self.flagRectFocus = False
@@ -207,6 +204,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.flagVerticalLine = True
         self.flagMarkerDragged = False
         self.flagMarkerChanges = False
+        self.flagWindowClosedByUserSignal = False
         # endregion
 
     # button events
@@ -215,8 +213,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ui.pushButtonSave.clicked.connect(self.saveButtonClicked)
         self.ui.pushButtonTabView.clicked.connect(self.tabButtonClicked)
         self.ui.pushButtonWindowView.clicked.connect(self.windowButtonClicked)
+        self.ui.pushButtonPdf.clicked.connect(self.pdfButtonClicked)
+        self.ui.pushButtonToggleOverlay.clicked.connect(self.toggleOverlayButtonClicked)
+        self.ui.pushButtonPng.clicked.connect(self.pngButtonClicked)
+
+    #TDL!!!!
+
+        self.openButtonClicked(self.test_file_path)
 
     # functionality for the matplotlib canvas
+
 
     def onMouseMove(self, event):
         # @todo create a global variable called backMarker and frontMarker which will be set with the next markers
@@ -236,7 +242,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     self.clickCount = 0
                     self.focusRect.move(event.xdata - self.test_x_start)
                     self.snapOn(event.canvas, self.focusRect)
-                    event.canvas.parent().updateTableMarkerEntry(self.focusRect.index, self.focusRect.name,
+                    event.canvas.parent().parent().updateTableMarkerEntry(self.focusRect.index, self.focusRect.name,
                                                                  self.focusRect.get_x(),
                                                                  self.focusRect.get_width() + self.focusRect.get_x())
                     self.test_x_start = event.xdata
@@ -300,7 +306,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
             self.clickCount = self.clickCount + 1 if (self.clickCount < 1) else 0
 
-
     def onButtonReleased(self, event):
 
         if (self.flagMarkerDragged):
@@ -340,12 +345,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # functionality for QPushButtons
 
     # functionality for the pushButtonOpen QPushButton
-    # @todo on click open x files and read the data into specific array indicies
-    def openButtonClicked(self):
+    # @todo add multiple file input
+    # @todo get rid of the fileName argument befeore release
+    def openButtonClicked(self, fileName=None):
 
-        fileName, _ = QFileDialog.getOpenFileName(None, "Select File", "", "*.rgp")
+        #fileName, _ = QFileDialog.getOpenFileName(None, "Select File", "", "*.rgp")
         widget = WidgetGraph(self, fileName)
+        print(fileName)
         self.listGraphWidgets.append(widget)
+        self.ui.tabWidget.addTab(widget, widget.name)
+
         #self.ui.tabWidget.addTab(widget, widget.name)
 
     # functionality for the pushButtonSave QPushButton
@@ -357,7 +366,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     # functionality for the pushButtonTabView QPushButton
     def tabButtonClicked(self):
-        if(self.ui.stackedWidgetWorkArea.currentIndex() != 0):
+        if (self.ui.stackedWidgetWorkArea.currentIndex() != 0):
             for graphWidget in self.listGraphWidgets:
                 graphWidget.setParent(None)
                 self.ui.mdiArea.closeAllSubWindows()
@@ -382,12 +391,79 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ui.mdiArea.tileSubWindowsV()
 
 
+    def pdfButtonClicked(self):
+        self.saveGraphWidgetAs("pdf")
+
+
+    def pngButtonClicked(self):
+        self.saveGraphWidgetAs("png")
+
+
+    def saveGraphWidgetAs(self, suffix):
+        for graphWidget in self.listGraphWidgets:
+            # @todo add globally
+            filename = "test_output"
+            printWidth = 1906
+            printHeight = 1000
+            scaledPixmap = QPixmap(QSize(printWidth, printHeight))
+            print(scaledPixmap.size())
+
+            printWidget = WidgetGraph()
+            # @todo as soon as I have a load function in widgetGraph I can change the way I take an image
+            # instead of printWidget = graphWidget I copy the state not the instance (maybe add load state? overkill..)
+            # printWidget.setAttribute(Qt.WA_DontShowOnScreen, True)
+            # printWidget.setAttribute(Qt.WA_Mapped, True)
+            printWidget = graphWidget
+
+            printWidget.resize(printWidth, printHeight)
+            printWidget.render(scaledPixmap)
+
+            if (suffix == "png"):
+                print("printing to png")
+                filename = filename + ".png"
+                scaledPixmap.save(filename)
+                return
+
+            elif (suffix == "pdf"):
+                print("printing to pdf")
+                filename = filename.strip() + ".pdf"
+                pdfWriter = QPdfWriter(filename)
+                pageSize = QPageSize(QSizeF(210, 297), QPageSize.Millimeter)
+                pdfWriter.setPageSize(pageSize)
+                pdfWriter.setResolution(230)
+                pdfWriter.setPageMargins(QMarginsF(0, 0, 0, 0))
+
+                pdfPainter = QPainter(pdfWriter)
+                pdfPainter.drawPixmap(0, 0, scaledPixmap)
+                pdfPainter.drawPixmap(0, 960, scaledPixmap)
+                pdfPainter.end()
+
+    def toggleOverlayButtonClicked(self):
+        # If overlay_widget visible, hide it, else show it
+        if self.ui.widgetOverlay.isVisible():
+            self.ui.widgetOverlay.hide()
+            self.ui.horizontalSpacerManual1.changeSize(0, 17)
+            icon_in = QIcon()
+            icon_in.addFile(u":/icons/icons/text-outdent.svg", QSize(), QIcon.Normal, QIcon.On)
+            self.ui.pushButtonToggleOverlay.setIcon(icon_in)
+            self.ui.pushButtonToggleOverlay.setIconSize(QSize(25, 25))
+        else:
+            self.ui.widgetOverlay.show()
+            spacerWidth = self.ui.widgetOverlay.width() - self.ui.pushButtonToggleOverlay.width()
+            self.ui.horizontalSpacerManual1.changeSize(spacerWidth, 17)
+            icon_in = QIcon()
+            icon_in.addFile(u":/icons/icons/text-indent.svg", QSize(), QIcon.Normal, QIcon.On)
+            self.ui.pushButtonToggleOverlay.setIcon(icon_in)
+            self.ui.pushButtonToggleOverlay.setIconSize(QSize(25, 25))
+
     # event listener handling
     def windowClosedByUser(self):
         self.flagWindowClosedByUserSignal = True
     def windowClosedProgrammatically(self):
         self.flagWindowClosedByUserSignal = False
 
+
+    # button functions
     # algorithms
 
     # function to check if event coordinates are close to a Rectangle and/or close to either side of that Rectangle
@@ -439,7 +515,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 tupleCanv[0].setRightRect(focusRect)
 
 
-
+    # @todo handle the marker setup in the widget graph because its the only place its used
     def addRectToCurrentCanv(self, event):
 
         width = event.xdata - self.xDataForMarker
@@ -465,12 +541,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         event.canvas.axes.add_patch(tmpRect)
         event.canvas.draw()
 
-        event.canvas.parent().addTableMarkerEntry(len(tmpListRect)-1, self.nameRectMark,
+        event.canvas.parent().parent().addTableMarkerEntry(len(tmpListRect)-1, self.nameRectMark,
                                                   self.colorRect, round(anchorX, 2), round(event.xdata, 2))
 
 
     # 90% of this function is actually redundant because CustomRectangles resizeLinks() can take of most of it
     # not gonna change that though.
+    # also @todo add this to widgetGraph as well
     def adjustOverlay(self, event, tmpRect):
         try:
             newRectXStart = tmpRect.get_x()
@@ -525,7 +602,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def addMarkerToTable(self, currentCanvas):
         ind = len(self.dictCanvasToRectList[currentCanvas])
-
     def updateTableMarker(self, canvas, focusRect, index, name, x, dx):
         pass
 

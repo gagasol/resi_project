@@ -56,7 +56,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1277, 626)
+        MainWindow.resize(1280, 902)
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -130,6 +130,17 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout.addWidget(self.pushButtonPdf)
 
+        self.pushButtonPng = QPushButton(self.frameTop)
+        self.pushButtonPng.setObjectName(u"pushButtonPng")
+        self.pushButtonPng.setMinimumSize(QSize(30, 30))
+        self.pushButtonPng.setMaximumSize(QSize(30, 30))
+        icon3 = QIcon()
+        icon3.addFile(u":/icons/icons/file-png.svg", QSize(), QIcon.Normal, QIcon.Off)
+        self.pushButtonPng.setIcon(icon3)
+        self.pushButtonPng.setIconSize(QSize(25, 25))
+
+        self.horizontalLayout.addWidget(self.pushButtonPng)
+
         self.pushButtonTabView = QPushButton(self.frameTop)
         self.pushButtonTabView.setObjectName(u"pushButtonTabView")
         self.pushButtonTabView.setMinimumSize(QSize(30, 30))
@@ -167,15 +178,34 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout.addItem(self.horizontalSpacer)
 
-        self.checkBoxVLine = QCheckBox(self.frameTop)
-        self.checkBoxVLine.setObjectName(u"checkBoxVLine")
+        self.pushButtonToggleOverlay = QPushButton(self.frameTop)
+        self.pushButtonToggleOverlay.setObjectName(u"pushButtonToggleOverlay")
+        self.pushButtonToggleOverlay.setAutoFillBackground(False)
+        icon6 = QIcon()
+        icon6.addFile(u":/icons/icons/text-outdent.svg", QSize(), QIcon.Normal, QIcon.Off)
+        self.pushButtonToggleOverlay.setIcon(icon6)
+        self.pushButtonToggleOverlay.setIconSize(QSize(25, 25))
 
-        self.horizontalLayout.addWidget(self.checkBoxVLine)
+        self.horizontalLayout.addWidget(self.pushButtonToggleOverlay)
 
+        self.horizontalSpacerManual1 = QSpacerItem(0, 17, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout.addItem(self.horizontalSpacerManual1)
 
         self.verticalLayout.addWidget(self.frameTop)
-
-        self.frameBottom = QFrame(self.centralwidget)
+        # this is newly edited may not work @todo delete comment if works
+        self.frame = QFrame(self.centralwidget)
+        self.frame.setObjectName(u"frame")
+        self.frame.setFrameShape(QFrame.NoFrame)
+        self.frame.setFrameShadow(QFrame.Raised)
+        self.frame.setLineWidth(3)
+        self.frame.setMidLineWidth(1)
+        self.horizontalLayout_4 = QHBoxLayout(self.frame)
+        self.horizontalLayout_4.setSpacing(0)
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.horizontalLayout_4.setContentsMargins(3, 3, 3, 3)
+        # end
+        self.frameBottom = QFrame(self.frame)
         self.frameBottom.setObjectName(u"frameBottom")
         self.frameBottom.setFrameShape(QFrame.StyledPanel)
         self.frameBottom.setFrameShadow(QFrame.Raised)
@@ -187,7 +217,9 @@ class Ui_MainWindow(object):
         self.page = QWidget()
         self.page.setObjectName(u"page")
         self.horizontalLayout_2 = QHBoxLayout(self.page)
+        self.horizontalLayout_2.setSpacing(0)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.tabWidget = QTabWidget(self.page)
         self.tabWidget.setObjectName(u"tabWidget")
         self.tabWidget.setEnabled(True)
@@ -199,7 +231,9 @@ class Ui_MainWindow(object):
         self.page_2 = QWidget()
         self.page_2.setObjectName(u"page_2")
         self.horizontalLayout_3 = QHBoxLayout(self.page_2)
+        self.horizontalLayout_3.setSpacing(0)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
         self.mdiArea = CustomQMdiArea(self.page_2)
         self.mdiArea.setObjectName(u"mdiArea")
 
@@ -209,19 +243,31 @@ class Ui_MainWindow(object):
 
         self.gridLayout.addWidget(self.stackedWidgetWorkArea, 0, 0, 1, 1)
 
+        self.horizontalLayout_4.addWidget(self.frameBottom)
 
-        self.verticalLayout.addWidget(self.frameBottom)
+        self.widgetOverlay = QFrame(self.frame)
+        self.widgetOverlay.setObjectName(u"widgetOverlay")
+        self.widgetOverlay.setMinimumSize(QSize(150, 0))
+        self.widgetOverlay.setAutoFillBackground(True)
+
+        self.horizontalLayout_4.addWidget(self.widgetOverlay)
+        self.widgetOverlay.hide()
+        self.widgetOverlay.raise_()
+
+        self.verticalLayout.addWidget(self.frame)
 
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
 
-        self.stackedWidgetWorkArea.setCurrentIndex(1)
+        self.stackedWidgetWorkArea.setCurrentIndex(0)
         self.tabWidget.setCurrentIndex(-1)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
     # setupUi
+
+
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
@@ -230,7 +276,15 @@ class Ui_MainWindow(object):
         self.pushButtonPdf.setText("")
         self.pushButtonTabView.setText("")
         self.pushButtonWindowView.setText("")
-        self.pushButtonSettings.setText("")
-        self.checkBoxVLine.setText("")
+        self.pushButtonSettings.setText("")#if QT_CONFIG(tooltip)
+
+        self.pushButtonPdf.setToolTip(QCoreApplication.translate("MainWindow", u"save as pdf", None))
+        self.pushButtonPng.setToolTip(QCoreApplication.translate("MainWindow", u"save as png", None))
+        self.pushButtonWindowView.setToolTip(QCoreApplication.translate("MainWindow", u"show graphs as windows", None))
+        self.pushButtonTabView.setToolTip(QCoreApplication.translate("MainWindow", u"show graphs as tabs", None))
+        self.pushButtonOpen.setToolTip(QCoreApplication.translate("MainWindow", u"open file", None))
+        self.pushButtonSave.setToolTip(QCoreApplication.translate("MainWindow", u"save file", None))
+        self.pushButtonSettings.setToolTip(QCoreApplication.translate("MainWindow", u"settings", None))
+        self.pushButtonToggleOverlay.setToolTip(QCoreApplication.translate("MainWindow", u"Show/Hide Quick Access", None))
     # retranslateUi
 

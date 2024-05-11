@@ -14,11 +14,12 @@ from matplotlib.backend_bases import MouseButton
 
 from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
                             QMetaObject, QObject, QPoint, QRect,
-                            QSize, QTime, QUrl, Qt, QEventLoop)
+                            QSize, QTime, QUrl, Qt, QEventLoop, QSizeF, QMarginsF, )
 from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
                            QFont, QFontDatabase, QGradient, QIcon,
                            QImage, QKeySequence, QLinearGradient, QPainter,
-                           QPalette, QPixmap, QRadialGradient, QTransform)
+                           QPalette, QPixmap, QRadialGradient, QTransform,
+                           QPdfWriter, QPainter, QPageSize)
 from PySide6.QtWidgets import (QApplication, QHBoxLayout, QListView, QListWidget,
                                QListWidgetItem, QSizePolicy, QSpacerItem, QTextEdit,
                                QVBoxLayout, QWidget)
@@ -36,6 +37,7 @@ class AutoSizedTable(QTableWidget):
         vh = self.verticalHeader()
         vh.setSectionResizeMode(QHeaderView.Stretch)
 
+
     def resizeEvent(self, event):
         ratio = self.height() / self.rowCount() if self.rowCount() else 0
         for i in range(self.rowCount()):
@@ -45,6 +47,12 @@ class AutoSizedTable(QTableWidget):
 class WidgetGraph(QWidget):
     def __init__(self, MainWindow=None, pathToFile=None, parent=None):
         super().__init__(parent)
+
+        # region settings variable
+        self.heightWidgetTopPerc = 15
+        self.heightWidgetGraphPerc = 75
+        self.heightWidgetBottomPerc = 10
+        # endregion
 
         # region tons of variables for the QTWidget
         self.labelData = None
@@ -65,6 +73,10 @@ class WidgetGraph(QWidget):
         self.horizontalLayout = None
         self.widgetTop = None
         self.verticalLayout_2 = None
+        self.measurementDrillDepth = None
+        self.verticalLayout = None
+        self.widgetDataTop = None
+        self.horizontalSpacer0 = None
         # endregion
 # data variables setup
         self.name = None
@@ -77,78 +89,32 @@ class WidgetGraph(QWidget):
 
         self.strsToShowInGraph = []
 
+        self.lastLeftAdjust = None
+        self.lastBottomAdjust = None
+
 # arg variables
         self.mainWindow = MainWindow
         self.pathToFile = pathToFile
 
 # initialize Data and Ui
-        self.getDataFromRGP(pathToFile)
+        if (self.mainWindow):
+            self.getDataFromRGP(pathToFile)
 
-        pyplot.style.use('ggplot')
-        self.setUpUi()
-        self.setupTable()
-
-
-    def getDataFromRGP(self, file):
-
-        charsRedFlags = ("{", "}", "wi", "\"dd\"", "pole", "\"set\"", "p2", "\"res\"", "ssd", "p1",
-                         "profile", "checksum", "wiPoleResult", "app", "assessment")
-        with open(file, 'r',errors="ignore") as f:
-            line = f.readline()
-            while line:
-                if (any (flag in line for flag in charsRedFlags)):
-                    line = f.readline()
-                    continue
-                if ("\"drill\"" in line):
-                    strList = line.split("[")[1].replace("]","").strip().split(",")[0:-1]
-                    self.dataDrill = [float(num) for num in strList]
-                    line = f.readline()
-                    continue
-                elif ("\"feed\"" in line):
-                    strList = line.split("[")[1].replace("]", "").strip().split(",")[0:-1]
-                    self.dataFeed = [float(num) for num in strList]
-                    line = f.readline()
-                    continue
-
-                self.listDataAll.append(line.replace("\"","").replace(",",""))
-                line = f.readline()
-
-        self.formatListToDict()
+            pyplot.style.use('ggplot')
+            self.setUpUi()
+            self.setupTable()
 
 
-    def formatListToDict(self):
-        self.dictMeasurementData = dict((x.strip(), y.strip())
-                                        for x, y in (element.split(":")
-                                                     for element in self.listDataAll))
+    def resizeEvent(self, event):
+        # this is neccecary because matplotlib doesn't resize linear or whatever, need to look into that and find
+        # a better way to resize the window, right now using a fitted function is the best way to go I guess
+        # sorry for people that have a resolution wider than full HD LOL
+        leftMargin = self.reciprocal_func(self.mainWindow.width(), "l")
+        bottomMargin = self.reciprocal_func(self.mainWindow.height(), "b")
 
-        self.name = self.dictMeasurementData["idNumber"] + self.dictMeasurementData["number"]
-
-
-    def setupTable(self):
-        self.tableWidgetData.setItem(0, 0, QTableWidgetItem("Messung Nr.\t: " + self.dictMeasurementData["number"]))
-        self.tableWidgetData.setItem(1, 0, QTableWidgetItem("ID-Nummer\t: " + self.dictMeasurementData["idNumber"]))
-        self.tableWidgetData.setItem(2, 0, QTableWidgetItem("Bohrtiefe\t: " + self.dictMeasurementData["depthMsmt"] + " cm"))
-        self.tableWidgetData.setItem(3, 0, QTableWidgetItem("Datum\t: " + self.dictMeasurementData["dateDay"] + "." +
-                                     self.dictMeasurementData["dateMonth"] + "." + self.dictMeasurementData["dateYear"]) )
-        self.tableWidgetData.setItem(4, 0,QTableWidgetItem("Uhrzeit\t: " + self.dictMeasurementData["timeHour"] + "." +
-                                     self.dictMeasurementData["timeMinute"] + "." + self.dictMeasurementData["timeSecond"]))
-        self.tableWidgetData.setItem(5, 0, QTableWidgetItem("Vorschub\t: " + self.dictMeasurementData["speedFeed"] +
-                                                            " cm/min"))
-
-        self.tableWidgetData.setItem(0, 1, QTableWidgetItem("Drehzahl\t: " + self.dictMeasurementData["speedDrill"] +
-                                                            " U/min"))
-        self.tableWidgetData.setItem(1, 1, QTableWidgetItem("Nadelstatus\t: ---"))
-        self.tableWidgetData.setItem(2, 1, QTableWidgetItem("Neigung\t: " + self.dictMeasurementData["tiltAngle"]))
-        self.tableWidgetData.setItem(3, 1, QTableWidgetItem("Offset\t: " + self.dictMeasurementData["offsetFeed"] +
-                                                    " / " + self.dictMeasurementData["offsetDrill"]))
-        self.tableWidgetData.setItem(4, 1, QTableWidgetItem("Mitteilung\t: " + self.dictMeasurementData["remark"]))
-
-        self.tableWidgetData.setItem(0, 2, QTableWidgetItem("Durchmesser\t: "))
-        self.tableWidgetData.setItem(1, 2, QTableWidgetItem("Messhöhe\t: "))
-        self.tableWidgetData.setItem(2, 2, QTableWidgetItem("Messrichtung\t: "))
-        self.tableWidgetData.setItem(3, 2, QTableWidgetItem("Objektart\t: "))
-        self.tableWidgetData.setItem(4, 2, QTableWidgetItem("Standort\t: "))
-        self.tableWidgetData.setItem(5, 2, QTableWidgetItem("Name\t: "))
+        #self.canvasGraph.figure.subplots_adjust(left=mainWidth*slope+yIntercept)
+        self.canvasGraph.figure.subplots_adjust(left=leftMargin, bottom=bottomMargin)
+        self.canvasGraph.draw()
 
 
     def setUpUi(self):
@@ -156,13 +122,13 @@ class WidgetGraph(QWidget):
         self.verticalLayout_2 = QVBoxLayout()
         self.widgetTop = QWidget()
         self.widgetTop.setObjectName(u"widgetTop")
-        self.widgetTop.setMaximumSize(QSize(16777215, 160))
+        self.widgetTop.setMinimumSize(QSize(0, 0))
+        self.widgetTop.setMaximumSize(QSize(16777215, 999999))
         self.widgetTop.setStyleSheet(u"QListWidget{background:lightblue; spacing: 0;}")
         self.horizontalLayout = QHBoxLayout(self.widgetTop)
         self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
-
         self.horizontalSpacer0 = QSpacerItem(50, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout.addItem(self.horizontalSpacer0)
@@ -215,24 +181,28 @@ class WidgetGraph(QWidget):
 
         self.horizontalLayout.addWidget(self.widgetDataTop)
 
-        self.horizontalSpacer = QSpacerItem(200, 20, QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Minimum)
+        self.horizontalSpacer = QSpacerItem(0, 20, QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout.addItem(self.horizontalSpacer)
         self.widgetTop.setContentsMargins(0, 0, 0, 0)
 
         self.verticalLayout_2.addWidget(self.widgetTop)
 
-        self.canvasGraph = MplCanvas(self, width=6, height=4, dpi=100)
+        self.canvasGraph = MplCanvas(self, width=19, height=10, dpi=100)
         self.canvasGraph.axes.set_ylim(-5, 100)
         self.canvasGraph.axes.set_xlabel('Depth')
         self.canvasGraph.axes.set_ylabel('Data')
         # @todo remove later
-        self.measurementDrillDepth = 40.12
-        self.canvasGraph.axes.set_xlim(0, self.measurementDrillDepth)
+        self.measurementDrillDepth = float(self.dictMeasurementData["deviceLength"])
+        self.canvasGraph.axes.set_xlim(0, self.measurementDrillDepth+0.1)
         step = self.measurementDrillDepth / len(self.dataDrill)
         x = np.arange(0, self.measurementDrillDepth, step)
         self.canvasGraph.axes.plot(x, self.dataDrill, linewidth=0.7)
         self.canvasGraph.axes.plot(x, self.dataFeed, linewidth=0.7)
+        self.canvasGraph.figure.subplots_adjust(left=0.036, bottom=0.2490168523424322, right=0.98, top=0.98)
+        # left on start left=0.049 ; bottom=0.155 1277 1920
+        # Coordinates left : 1920/0.035 1277/0.049 265/0.28
+        # Coordinates bot : 1017/0.035 502/0.25
         self.canvasGraph.draw()
 
         if (self.mainWindow):
@@ -246,15 +216,25 @@ class WidgetGraph(QWidget):
 
             self.mainWindow.dictCanvasToRectList.update({self.canvasGraph: []})
 
-        self.widgetGraph = self.canvasGraph
+        self.widgetGraph = QWidget()
         self.widgetGraph.setObjectName(u"widgetGraph")
+
+        self.verticalLayout_3 = QVBoxLayout(self.widgetGraph)
+        self.verticalLayout_3.addWidget(self.canvasGraph)
+        self.verticalLayout_3.setSpacing(5)
+
+        self.widgetGraph.setLayout(self.verticalLayout_3)
+        #self.widgetGraph.setStyleSheet("border: 1px solid black;")
+
+        self.widgetGraph.setMinimumHeight(200)
 
         self.verticalLayout_2.addWidget(self.widgetGraph)
 
         self.widgetBottom = QWidget()
         self.widgetBottom.setObjectName(u"widgetBottom")
         self.widgetBottom.setContentsMargins(0, 0, 0, 0)
-        self.widgetBottom.setMaximumSize(QSize(16777215, 120))
+        self.widgetBottom.setMinimumSize(QSize(0, 0))
+        self.widgetBottom.setMaximumSize(QSize(16777215, 999999))
         self.horizontalLayout_2 = QHBoxLayout(self.widgetBottom)
         self.horizontalLayout_2.setSpacing(0)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
@@ -327,7 +307,91 @@ class WidgetGraph(QWidget):
         self.verticalLayout_2.addWidget(self.widgetMenu)
 
         self.setContentsMargins(0, 0, 0, 0)
+
+        sizePolicyMT = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        sizePolicyMT.setHorizontalStretch(0)
+        sizePolicyMT.setVerticalStretch(0)#self.heightWidgetTopPerc)
+        sizePolicyMT.setHeightForWidth(self.widgetTop.sizePolicy().hasHeightForWidth())
+        self.widgetTop.setSizePolicy(sizePolicyMT)
+
+        sizePolicyMG = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        sizePolicyMG.setHorizontalStretch(0)
+        sizePolicyMG.setVerticalStretch(0)#self.heightWidgetGraphPerc)
+        sizePolicyMG.setHeightForWidth(self.widgetTop.sizePolicy().hasHeightForWidth())
+        self.widgetTop.setSizePolicy(sizePolicyMG)
+
+        sizePolicyMB = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        sizePolicyMB.setHorizontalStretch(0)
+        sizePolicyMB.setVerticalStretch(0)#self.heightWidgetBottomPerc)
+        sizePolicyMB.setHeightForWidth(self.widgetBottom.sizePolicy().hasHeightForWidth())
+        self.widgetBottom.setSizePolicy(sizePolicyMB)
+
+        self.verticalLayout_2.setStretchFactor(self.widgetTop, self.heightWidgetTopPerc)
+        self.verticalLayout_2.setStretchFactor(self.widgetBottom, self.heightWidgetBottomPerc)
+        self.verticalLayout_2.setStretchFactor(self.widgetGraph, self.heightWidgetGraphPerc)
         self.setLayout(self.verticalLayout_2)
+
+
+    def getDataFromRGP(self, file):
+
+        charsRedFlags = ("{", "}", "wi", "\"dd\"", "pole", "\"set\"", "p2", "\"res\"", "ssd", "p1",
+                         "profile", "checksum", "wiPoleResult", "app", "assessment")
+        with open(file, 'r',errors="ignore") as f:
+            line = f.readline()
+            while line:
+                if (any (flag in line for flag in charsRedFlags)):
+                    line = f.readline()
+                    continue
+                if ("\"drill\"" in line):
+                    strList = line.split("[")[1].replace("]","").strip().split(",")[0:-1]
+                    self.dataDrill = [float(num) for num in strList]
+                    line = f.readline()
+                    continue
+                elif ("\"feed\"" in line):
+                    strList = line.split("[")[1].replace("]", "").strip().split(",")[0:-1]
+                    self.dataFeed = [float(num) for num in strList]
+                    line = f.readline()
+                    continue
+
+                self.listDataAll.append(line.replace("\"","").replace(",",""))
+                line = f.readline()
+
+        self.formatListToDict()
+
+
+    def formatListToDict(self):
+        self.dictMeasurementData = dict((x.strip(), y.strip())
+                                        for x, y in (element.split(":")
+                                                     for element in self.listDataAll))
+
+        self.name = self.dictMeasurementData["idNumber"] + self.dictMeasurementData["number"]
+
+
+    def setupTable(self):
+        self.tableWidgetData.setItem(0, 0, QTableWidgetItem("Messung Nr.\t: " + self.dictMeasurementData["number"]))
+        self.tableWidgetData.setItem(1, 0, QTableWidgetItem("ID-Nummer\t: " + self.dictMeasurementData["idNumber"]))
+        self.tableWidgetData.setItem(2, 0, QTableWidgetItem("Bohrtiefe\t: " + self.dictMeasurementData["depthMsmt"] + " cm"))
+        self.tableWidgetData.setItem(3, 0, QTableWidgetItem("Datum\t: " + self.dictMeasurementData["dateDay"] + "." +
+                                     self.dictMeasurementData["dateMonth"] + "." + self.dictMeasurementData["dateYear"]) )
+        self.tableWidgetData.setItem(4, 0,QTableWidgetItem("Uhrzeit\t: " + self.dictMeasurementData["timeHour"] + "." +
+                                     self.dictMeasurementData["timeMinute"] + "." + self.dictMeasurementData["timeSecond"]))
+        self.tableWidgetData.setItem(5, 0, QTableWidgetItem("Vorschub\t: " + self.dictMeasurementData["speedFeed"] +
+                                                            " cm/min"))
+
+        self.tableWidgetData.setItem(0, 1, QTableWidgetItem("Drehzahl\t: " + self.dictMeasurementData["speedDrill"] +
+                                                            " U/min"))
+        self.tableWidgetData.setItem(1, 1, QTableWidgetItem("Nadelstatus\t: ---"))
+        self.tableWidgetData.setItem(2, 1, QTableWidgetItem("Neigung\t: " + self.dictMeasurementData["tiltAngle"]))
+        self.tableWidgetData.setItem(3, 1, QTableWidgetItem("Offset\t: " + self.dictMeasurementData["offsetFeed"] +
+                                                    " / " + self.dictMeasurementData["offsetDrill"]))
+        self.tableWidgetData.setItem(4, 1, QTableWidgetItem("Mitteilung\t: " + self.dictMeasurementData["remark"]))
+
+        self.tableWidgetData.setItem(0, 2, QTableWidgetItem("Durchmesser\t: "))
+        self.tableWidgetData.setItem(1, 2, QTableWidgetItem("Messhöhe\t: "))
+        self.tableWidgetData.setItem(2, 2, QTableWidgetItem("Messrichtung\t: "))
+        self.tableWidgetData.setItem(3, 2, QTableWidgetItem("Objektart\t: "))
+        self.tableWidgetData.setItem(4, 2, QTableWidgetItem("Standort\t: "))
+        self.tableWidgetData.setItem(5, 2, QTableWidgetItem("Name\t: "))
 
 
     def addTableMarkerEntry(self, index, name, color, x, dx):
@@ -362,7 +426,6 @@ class WidgetGraph(QWidget):
             print("Not in dic")
 
 
-
     def toggleHideTop(self):
         rndmBool = (self.checkBoxHideTop.checkState() == Qt.Checked)
         self.widgetTop.hide() if rndmBool else self.widgetTop.show()
@@ -380,5 +443,16 @@ class WidgetGraph(QWidget):
         self.widgetBottom.show()
         self.widgetRight.show()
 
+
+    # had to make this function in order to resize the matplotlib because I guess it takes the axes values not the pixel
+    def reciprocal_func(self, x, side):
+        if side == "l":
+            a, b, c = 306479, 4138.91, -0.00757828
+        elif side == "b":
+            a, b, c = 355871, 2004.66, -0.10082
+        else:
+            return 0
+
+        return a / (b*x) + c
 
 # @todo put the create marker function in here for loading and saving reasons

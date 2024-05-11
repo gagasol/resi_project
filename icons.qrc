@@ -13,5 +13,8 @@
         <file>icons/brackets-square.svg</file>
         <file>icons/minus-square.svg</file>
         <file>icons/plus-square.svg</file>
+        <file>icons/text-indent.svg</file>
+        <file>icons/text-outdent.svg</file>
+        <file>icons/file-png.svg</file>
     </qresource>
 </RCC>
