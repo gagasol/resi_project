@@ -159,7 +159,7 @@ class WidgetGraph(QWidget):
         self.dictCanvasToRectList = {}
         self.markerList = []
 
-        self.vLineRect = Rectangle((-5, 0), 0.05, 120)
+        self.vLineRect = None
         self.flagVerticalLine = True
 
         self.focusedMarker = None
@@ -223,6 +223,8 @@ class WidgetGraph(QWidget):
             pyplot.style.use('ggplot')
             self.setUpUi()
             self.setupTable()
+
+            self.vLineRect = self.canvasGraph.axes.axvline(color='black', lw=0.8, linestyle='-')
 
 
     def resizeEvent(self, event):
@@ -334,6 +336,7 @@ class WidgetGraph(QWidget):
             self.canvasGraph.mpl_connect('figure_enter_event', self.onAxesEnter)
             #self.test_canvas.mpl_connect('axes_leave_event', self.onAxesLeave)
             self.canvasGraph.mpl_connect('figure_leave_event', self.onAxesLeave)
+            self.canvasGraph.mpl_connect('scroll_event', self.zoomOnMouseWheel)
             #self.canvasGraph.mpl_connect('resize_event', self.onResize)
 
             #self.dictCanvasToRectList.update({self.canvasGraph: []})
@@ -470,7 +473,9 @@ class WidgetGraph(QWidget):
         if (event.inaxes):
             # Draw vertical line
             if (self.flagVerticalLine):
-                self.vLineRect.set_x(event.xdata)
+                self.vLineRect.set_xdata(event.xdata)
+                self.vLineRect.set_visible(True)
+                event.canvas.draw()
 
             # If left mouse button is clicked
             if (event.button == MouseButton.LEFT):
@@ -498,6 +503,18 @@ class WidgetGraph(QWidget):
                     self.snapOn(event.canvas, self.focusedMarker)
                     self.lastXPos = event.xdata
 
+            if (event.button == 2):
+                ax = self.canvasGraph.axes
+                xMin, xMax = ax.get_xlim()
+                diff = xMax - xMin
+                delta = 1 / 20 * diff
+                if (event.xdata > self.lastXPos):
+                    ax.set_xlim(xMin + delta, xMax + delta)
+                else:
+                    ax.set_xlim(xMin - delta, xMax - delta)
+                self.canvasGraph.draw()
+
+            self.lastXPos = event.xdata
             # Redraw canvas after processing actions
             event.canvas.draw()
 
@@ -520,29 +537,33 @@ class WidgetGraph(QWidget):
                         return
 
         # logic for creating markers with addRectToCurrentCanv
-        if (not (self.flagMarkerFocus or self.flagMarkerLeftFocus or self.flagMarkerRightFocus)):
+            if (not (self.flagMarkerFocus or self.flagMarkerLeftFocus or self.flagMarkerRightFocus)):
 
-            if (self.clickCount == 0):
-                self.xPosMarkerStart = event.xdata
+                if (self.clickCount == 0):
+                    self.xPosMarkerStart = event.xdata
 
-            elif (self.clickCount == 1):
-                markerWindow = MarkerPresetWindow(self, {})
-                markerWindow.setAttribute(Qt.WA_DeleteOnClose)
-                markerWindow.show()
-                markerWindow.destroyed.emit()
+                elif (self.clickCount == 1):
+                    markerWindow = MarkerPresetWindow(self, {})
+                    markerWindow.setAttribute(Qt.WA_DeleteOnClose)
+                    markerWindow.show()
+                    markerWindow.destroyed.emit()
 
-                waitForMarkerInputLoop = QEventLoop()
-                markerWindow.closedByUser.connect(self.windowClosedByUser)
-                markerWindow.closedProgrammatically.connect(self.windowClosedProgrammatically)
-                markerWindow.destroyed.connect(waitForMarkerInputLoop.quit)
-                waitForMarkerInputLoop.exec()
+                    waitForMarkerInputLoop = QEventLoop()
+                    markerWindow.closedByUser.connect(self.windowClosedByUser)
+                    markerWindow.closedProgrammatically.connect(self.windowClosedProgrammatically)
+                    markerWindow.destroyed.connect(waitForMarkerInputLoop.quit)
+                    waitForMarkerInputLoop.exec()
 
-                if (not self.flagWindowClosedByUserSignal):
-                    self.addRectToCurrentCanv(event)
+                    if (not self.flagWindowClosedByUserSignal):
+                        self.addRectToCurrentCanv(event)
 
-                self.flagMouseClicked = False
+                    self.flagMouseClicked = False
 
-            self.clickCount = self.clickCount + 1 if (self.clickCount < 1) else 0
+                self.clickCount = self.clickCount + 1 if (self.clickCount < 1) else 0
+
+
+        if (event.button == MouseButton.RIGHT):
+            self.canvasGraph.axes.set_xlim(event.xdata)
 
     def onButtonReleased(self, event):
 
@@ -556,9 +577,28 @@ class WidgetGraph(QWidget):
         self.flagMarkerLeftFocus = False
         self.flagMarkerRightFocus = False
 
+    def zoomOnMouseWheel(self, event):
+
+        ax = self.canvasGraph.axes
+        xdata = event.xdata
+        ydata = event.ydata
+        baseScale = 2.
+
+        if event.button == 'down':
+            scaleFactor = 1 / baseScale
+        elif event.button == 'up':
+            scaleFactor = baseScale
+        else:
+            scaleFactor = 1
+
+        ax.set_xlim([xdata - (xdata - ax.get_xlim()[0]) / scaleFactor,
+                     xdata + (ax.get_xlim()[1] - xdata) / scaleFactor])
+
+        self.canvasGraph.draw()
+
     def onAxesEnter(self, event):
         self.vLineRect.set_visible(True)
-        event.canvas.axes.add_patch(self.vLineRect)
+        self.vLineRect.set_visible(True)
         event.canvas.draw()
 
     def onAxesLeave(self, event):
@@ -569,7 +609,7 @@ class WidgetGraph(QWidget):
                 or self.clickCount == 1):
             return
 
-        self.vLineRect.remove()
+        self.vLineRect.set_visible(False)
         event.canvas.draw()
         self.flagMarkerFocus = False
         self.flagMarkerLeftFocus = False
@@ -582,6 +622,7 @@ class WidgetGraph(QWidget):
     def windowClosedProgrammatically(self):
         self.flagWindowClosedByUserSignal = False
 
+    # region marker functionality
 
     # function to check if event coordinates are close to a Rectangle and/or close to either side of that Rectangle
     # if close to Rectangle and not close to either side make that rectangle movable
@@ -716,6 +757,7 @@ class WidgetGraph(QWidget):
 
         return True
 
+    # endregion
 
     def addTableMarkerEntry(self, index, name, color, x, dx):
         # @todo overload class to get a on_item_changed(self, item) signal and use it to change the markers
@@ -747,6 +789,14 @@ class WidgetGraph(QWidget):
 
         except KeyError:
             print("Not in dic")
+
+
+    def changeAxisLim(self, side, xLim=None, yLim=None):
+        x_Lim = xLim if xLim is not None else self.canvasGraph.axes.get_xlim()
+        y_Lim = xLim if yLim is not None else self.canvasGraph.axes.get_ylim()
+        self.canvasGraph.axes.set_xlim(x_Lim)
+        self.canvasGraph.axes.set_ylim(y_Lim)
+        self.canvasGraph.draw()
 
 
     def toggleHideTop(self):
