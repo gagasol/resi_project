@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QTableWidgetItem
 from PySide6.QtCore import QObject
+import json
 
 
 class DataModel:
@@ -8,6 +9,16 @@ class DataModel:
         self._dataDrill = None
         self._dataFeed = None
         self._deviceLength = None
+        self._customData = {
+            "diameter": "None",
+            "mHeight": "None",
+            "mDirection": "None",
+            "objecttype": "None",
+            "location": "None",
+            "name": "None"
+        }
+
+        self.markerStateList = []
 
         if ("rgp" in datasource.lower()):
             self._data = self._readDataFromRGP(datasource)
@@ -17,6 +28,9 @@ class DataModel:
 
             self._name = self._name[:-1]
             self._deviceLength = self._data["deviceLength"]
+        elif ("resi" in datasource.lower()):
+            self._readDataFromCustom(datasource)
+
         else:
             raise Exception("ERROR: extension '{0}' is not valid".format(datasource.split(".")[-1]))
 
@@ -69,11 +83,26 @@ class DataModel:
         return self._formatListToDict(tmpData)
 
 
+    def _readDataFromCustom(self, file):
+        with open(file, 'r') as f:
+            loadedState = json.load(f)
+
+        self._data = loadedState["data"]
+        self._name = self._data["selfName"]
+        self._deviceLength = self._data["deviceLength"]
+        self._dataDrill = self._data["dataDrill"]
+        self._dataFeed = self._data["dataFeed"]
+
+        for markerState in loadedState["marker"]:
+            self.markerStateList.append(markerState)
+
+
     def _formatListToDict(self, tmpData):
         dictData = dict((x.strip(), y.strip())
                         for x, y in (element.split(":")
                                      for element in tmpData))
 
+        dictData.update(self._customData)
         return dictData
 
 
@@ -100,12 +129,36 @@ class DataModel:
         collectedTableData.append(QTableWidgetItem(
             QObject.tr("Offset\t: ") + self._data["offsetFeed"] + " / " + self._data["offsetDrill"]))
         collectedTableData.append(QTableWidgetItem(QObject.tr("Mitteilung\t: ") + self._data["remark"]))
-        collectedTableData.append(QTableWidgetItem(QObject.tr("Durchmesser\t: ")))
-        collectedTableData.append(QTableWidgetItem(QObject.tr("Messhöhe\t: ")))
-        collectedTableData.append(QTableWidgetItem(QObject.tr("Messrichtung\t: ")))
-        collectedTableData.append(QTableWidgetItem(QObject.tr("Objektart\t: ")))
-        collectedTableData.append(QTableWidgetItem(QObject.tr("Standort\t: ")))
-        collectedTableData.append(QTableWidgetItem(QObject.tr("Name\t: ")))
+        collectedTableData.append(QTableWidgetItem(QObject.tr("Durchmesser\t: ") + self._data["diameter"]))
+        collectedTableData.append(QTableWidgetItem(QObject.tr("Messhöhe\t: ") + self._data["mHeight"]))
+        collectedTableData.append(QTableWidgetItem(QObject.tr("Messrichtung\t: ") + self._data["mDirection"]))
+        collectedTableData.append(QTableWidgetItem(QObject.tr("Objektart\t: ") + self._data["objecttype"]))
+        collectedTableData.append(QTableWidgetItem(QObject.tr("Standort\t: ") + self._data["location"]))
+        collectedTableData.append(QTableWidgetItem(QObject.tr("Name\t: ") + self._data["name"]))
 
         return collectedTableData
+
+
+    def getSaveState(self):
+        dataKeys = ["number", "idNumber", "depthMsmt", "date", "time", "speedFeed", "speedDrill", "tiltAngle",
+                    "offsetFeed", "offsetDrill", "remark"]
+        dataKeys.extend(list(self._customData.keys()))
+
+        keyValuePairs = {}
+        for key in dataKeys:
+            try:
+                print(key)
+                value = self._data[key]
+                keyValuePairs[key] = value
+            except KeyError:
+                print(f"Warning: Key '{key}' not found in self._data.")
+
+        graphDataKeyValues = {"selfName": self._name,
+                              "deviceLength": self._deviceLength,
+                              "dataDrill": self._dataDrill,
+                              "dataFeed": self._dataFeed}
+
+        keyValuePairs.update(graphDataKeyValues)
+        print(keyValuePairs)
+        return keyValuePairs
 

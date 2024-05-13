@@ -1,4 +1,5 @@
 # This Python file uses the following encoding: utf-8
+import json
 import sys
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, QWidget, QRadioButton, QCheckBox, QTableWidget, \
     QHeaderView, QAbstractScrollArea, QLabel, QTableWidgetItem
@@ -74,6 +75,15 @@ class CustomRectangle(matplotlib.patches.Rectangle):
         self._leftRect = custRect
     # endregion
 
+    def getSaveState(self):
+        state = {
+            'index': self.index,
+            'name': self.name,
+            'x': self.get_x(),
+            'width': self.get_width()
+        }
+        return state
+
     def move(self, dx, calledByScript=False):
         """
         moves a CustomRectangle by dx and corrects leftRect or rightRect if they're not None
@@ -147,6 +157,7 @@ class WidgetGraph(QWidget):
     def __init__(self, MainWindow=None, pathToFile=None, parent=None):
         super().__init__(parent)
 
+        # @todo add getter and setter for each of these variables
         # region settings variable
         self.heightWidgetTopPerc = 15
         self.heightWidgetGraphPerc = 75
@@ -156,7 +167,6 @@ class WidgetGraph(QWidget):
         # endregion
 
         # marker variables
-        self.dictCanvasToRectList = {}
         self.markerList = []
 
         self.vLineRect = None
@@ -219,10 +229,17 @@ class WidgetGraph(QWidget):
 
 # initialize Data and Ui
         if (self.mainWindow):
-            self.data = DataModel(pathToFile, self.mainWindow.listNameKeys)
+            if ("rgp" in pathToFile):
+                self.dataModel = DataModel(pathToFile, self.mainWindow.listNameKeys)
+            if ("resi" in pathToFile):
+                self.dataModel = DataModel(pathToFile, self.mainWindow.listNameKeys)
+
             pyplot.style.use('ggplot')
             self.setUpUi()
             self.setupTable()
+            if ("resi" in pathToFile):
+                for markerState in self.dataModel.markerStateList:
+                    self.addRectToCurrentCanv(None, markerState)
 
             self.vLineRect = self.canvasGraph.axes.axvline(color='black', lw=0.8, linestyle='-')
 
@@ -241,7 +258,7 @@ class WidgetGraph(QWidget):
 
     def setUpUi(self):
 
-        self._name, deviceLength, dataDrill, dataFeed = self.data.getGraphData()
+        self._name, deviceLength, dataDrill, dataFeed = self.dataModel.getGraphData()
 
         self.verticalLayout_2 = QVBoxLayout()
         self.widgetTop = QWidget()
@@ -459,7 +476,7 @@ class WidgetGraph(QWidget):
 
     def setupTable(self):
         i, j = 0, 0
-        for entry in self.data.getTablaTopData():
+        for entry in self.dataModel.getTablaTopData():
             self.tableWidgetData.setItem(i % 6, j // 6, entry)
             i, j = i + 1, j + 1
 
@@ -674,33 +691,44 @@ class WidgetGraph(QWidget):
 
 
     # @todo handle the marker setup in the widget graph because its the only place its used
-    def addRectToCurrentCanv(self, event):
-
-        width = event.xdata - self.xPosMarkerStart
-        anchorX = self.xPosMarkerStart if width > 0 else event.xdata
-        width = abs(width)
-        axisHeight = event.canvas.axes.get_ylim()[1]
+    def addRectToCurrentCanv(self, event=None, markerState=None):
+        axisHeight = self.canvasGraph.axes.get_ylim()[1]
         tmpListRect = self.markerList
 
+        if (markerState):
+            color = self.mainWindow.nameToColorDict[markerState["name"]]
+            tmpRect = CustomRectangle((markerState["x"], -axisHeight*0.8/100), markerState["width"],
+                                      - axisHeight * self.heightRectMarkPerc / 100, markerState["index"],
+                                      markerState["name"], self.canvasGraph)
+            tmpRect.set_color(color)
+            tmpListRect.append(tmpRect)
+            self.addTableMarkerEntry(len(tmpListRect) - 1, markerState["name"], color, round(markerState["x"], 2),
+                                     round(markerState["x"] + markerState["width"], 2))
 
+        else:
+            width = event.xdata - self.xPosMarkerStart
+            anchorX = self.xPosMarkerStart if width > 0 else event.xdata
+            width = abs(width)
 
-        tmpRect = CustomRectangle((anchorX, -axisHeight*0.8/100), width,
-                                  - axisHeight * self.heightRectMarkPerc / 100, len(tmpListRect),
-                                  self.markerName, event.canvas)
+            tmpRect = CustomRectangle((anchorX, -axisHeight*0.8/100), width,
+                                      axisHeight * self.heightRectMarkPerc / 100, len(tmpListRect),
+                                      self.markerName, event.canvas)
+            tmpRect.set_color(self.markerColor)
 
-        if (not self.adjustOverlay(event, tmpRect)):
-            return
+            if (not self.adjustOverlay(event, tmpRect)):
+                return
 
-        tmpRect.set_color(self.markerColor)
-        tmpListRect.append(tmpRect)
+            tmpListRect.append(tmpRect)
+            self.addTableMarkerEntry(len(tmpListRect) - 1, self.markerName, self.markerColor, round(anchorX, 2),
+                                     round(event.xdata, 2))
+
 
         # self.updateMarkerRectSave(event.canvas, tmpRect, argColorName=self.colorRect)
 
-        event.canvas.axes.add_patch(tmpRect)
-        event.canvas.draw()
+        self.canvasGraph.axes.add_patch(tmpRect)
+        self.canvasGraph.draw()
 
-        self.addTableMarkerEntry(len(tmpListRect) - 1, self.markerName, self.markerColor, round(anchorX, 2),
-                                 round(event.xdata, 2))
+
 
 
     # 90% of this function is actually redundant because CustomRectangles resizeLinks() can take of most of it
@@ -777,7 +805,7 @@ class WidgetGraph(QWidget):
 
     def updateTableMarkerEntry(self, index, name, x, dx):
         try:
-            color = self.mainWindow.dictMarker[name]
+            color = self.mainWindow.nameToColorDict[name]
             pixmap = QPixmap(30, 30)
             pixmap.fill(QColor(color))
             icon = QIcon(pixmap)
@@ -815,6 +843,20 @@ class WidgetGraph(QWidget):
         self.widgetTop.show()
         self.widgetBottom.show()
         self.widgetRight.show()
+
+
+    def getCurrentState(self):
+        state = {}
+        state.update({"data": self.dataModel.getSaveState()})
+        markerStateList = []
+        for marker in self.markerList:
+            markerStateList.append(marker.getSaveState())
+
+        state.update({"marker": markerStateList})
+        print("Aok")
+        with open('state.resi', 'w') as f:
+            json.dump(state, f)
+        return state
 
 
     # had to make this function in order to resize the matplotlib because I guess it takes the axes values not the pixel

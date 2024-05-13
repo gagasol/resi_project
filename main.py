@@ -72,68 +72,31 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # @vLineRect constant that marks the vertical position of the mouse cursor across the MplCanvas
         # @currentTargetRect variable that holds a rectangle if it has been clicked on
 
-        self.dictMarker = {}
+        self.nameToColorDict = {}
 
         # @todo delete later
-        self.dictMarker = {
+        self.nameToColorDict = {
             "Red": "#FF0000",
             "Blue": "#0000FF",
             "Yellow": "#FFFF00",
             "Black": "#000000",
             "White": "#FFFFFF",
-             "Aloof": "#7B68EE",
+            "Aloof": "#7B68EE",
             "Cherish": "#FFB6C1",
             "Divine": "#FFA07A",
             "Elapse": "#8B0000",
             "Green": "#00FF00",
-             "Coral": "#FF7F50",
+            "Coral": "#FF7F50",
             "Cyan": "#00FFFF",
             "Chocolate": "#D2691E",
             "Crimson": "#DC143C"
         }
 
-        self.vLineRect = Rectangle((-5, 0), 0.05, 120)
-        self.focusRect = None
 
-
-        # region global variables for settings
         self.listNameKeys = ["idNumber", "date"]
 
-        # endregion
-
-        # region data, counter, flags
-        # @xDataForMarker variable that holds the first clicked position to draw a marker from that to the second click
-        # @dict dictMarker dictionary containing a "String::Name: String::HexColor" pair to save all Marker
-        # @list listMarkerPreset list containing all named presets where <key>:"name" corresponds to the name
-        # @colorRect variable set by selectMarkerWindow that determines the color of a rectangle
-        # @nameRectMark variable set by selectMarkerWindow is the name of a marker rectangle
-        # @heightRectMarkPerc sets the height of the marker as percent of the y-axis
-        # @percMarkerFocusHeight sets the height of the focus for the marker as a percent of the y-axis
-
-        self.xDataForMarker = None
-        self.listMarkerPreset = []
-        self.colorRect = "#000000"
-        self.nameRectMark = ""
-        self.heightRectMarkPerc = 3
-        self.percMarkerFocusHeight = 30
-
-        self.dictCanvasToRectList = {}
         self.listGraphWidgets = []
-
-        # counter
-        # @variable clickCount counts to a max of 1, on 0 it sets the xDataForMarker var
-        # @variable test_x_start is set on mouse click to determine the width of the marker
-        self.clickCount = 0
-        self.test_x_start = 0
-
         # flags
-        self.flagRectFocus = False
-        self.flagRectLeftFocus = False
-        self.flagRectRightFocus = False
-        self.flagMouseClicked = False
-        self.flagVerticalLine = True
-        self.flagMarkerDragged = False
-        self.flagMarkerChanges = False
         self.flagWindowClosedByUserSignal = False
         # endregion
 
@@ -149,7 +112,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     #TDL!!!!
 
-        self.openButtonClicked(self.test_file_path)
+        #self.openButtonClicked(self.test_file_path)
 
 
     # functionality for QPushButtons
@@ -159,7 +122,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # @todo get rid of the fileName argument befeore release
     def openButtonClicked(self, fileName=None):
 
-        #fileName, _ = QFileDialog.getOpenFileName(None, "Select File", "", "*.rgp")
+        fileName, _ = QFileDialog.getOpenFileName(None, "Select File", "", "*.rgp;;*.resi")
         widget = WidgetGraph(self, fileName)
         print(fileName)
         self.listGraphWidgets.append(widget)
@@ -170,8 +133,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # functionality for the pushButtonSave QPushButton
     # @todo save stuff, duh
     def saveButtonClicked(self):
-        print(self.dictMarker)
-        print(self.listMarkerPreset)
+        for widget in self.listGraphWidgets:
+            widget.getCurrentState()
+
         print("saveButtonClicked")
 
     # functionality for the pushButtonTabView QPushButton
