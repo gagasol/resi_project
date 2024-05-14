@@ -58,6 +58,12 @@ class Ui_markerPresetWindow(object):
         self.comboBox = QComboBox(self.widget)
         self.comboBox.setObjectName(u"comboBox")
         self.comboBox.setMinimumSize(QSize(0, 0))
+        self.comboBox.setStyleSheet(u"QComboBox QAbstractItemView {\n"
+                       "  border: 1px solid grey;\n"
+                       "  background: white;\n"
+                       "  selection-background-color: blue;\n"
+                       "color: black;\n"
+                       "}")
 
         self.horizontalLayout.addWidget(self.comboBox)
 

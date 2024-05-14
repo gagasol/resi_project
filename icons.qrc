@@ -16,5 +16,6 @@
         <file>icons/text-indent.svg</file>
         <file>icons/text-outdent.svg</file>
         <file>icons/file-png.svg</file>
+        <file>icons/close.svg</file>
     </qresource>
 </RCC>

@@ -1,4 +1,5 @@
 # This Python file uses the following encoding: utf-8
+import json
 import sys
 
 from PySide6.QtCore import Qt, QEventLoop, QPoint, QRect, QSize, QSizeF, QMarginsF
@@ -16,6 +17,7 @@ from widgetGraph import WidgetGraph
 from ui_files.ui_mainwindow import Ui_MainWindow
 from markerpresetwindow import MarkerPresetWindow
 from editMarkerPreset import SelectMarkerWindow
+from pickMarkerWindow import PickMarker
 
 
 class CustomQMdiArea(QMdiArea):
@@ -72,7 +74,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # @vLineRect constant that marks the vertical position of the mouse cursor across the MplCanvas
         # @currentTargetRect variable that holds a rectangle if it has been clicked on
 
+        self.listGraphWidgets = []
         self.nameToColorDict = {}
+        self.listNameKeys = []
+        self.markerPrestDict = {}
 
         # @todo delete later
         self.nameToColorDict = {
@@ -95,7 +100,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.listNameKeys = ["idNumber", "date"]
 
-        self.listGraphWidgets = []
         # flags
         self.flagWindowClosedByUserSignal = False
         # endregion
@@ -123,18 +127,35 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def openButtonClicked(self, fileName=None):
 
         fileName, _ = QFileDialog.getOpenFileName(None, "Select File", "", "*.rgp;;*.resi")
-        widget = WidgetGraph(self, fileName)
-        print(fileName)
-        self.listGraphWidgets.append(widget)
-        self.ui.tabWidget.addTab(widget, widget._name)
+
+        if (".resi" in fileName):
+            with open(fileName, "r") as file:
+                loadedState = json.load(file)
+
+            for canvas in loadedState:
+                widget = WidgetGraph(self, "",  canvas)
+                self.listGraphWidgets.append(widget)
+                self.ui.tabWidget.addTab(widget, widget.name)
+        else:
+            widget = WidgetGraph(self, fileName)
+            print(fileName)
+            self.listGraphWidgets.append(widget)
+            self.ui.tabWidget.addTab(widget, widget.name)
 
         #self.ui.tabWidget.addTab(widget, widget.name)
 
     # functionality for the pushButtonSave QPushButton
     # @todo save stuff, duh
     def saveButtonClicked(self):
+        projectSave = []
         for widget in self.listGraphWidgets:
-            widget.getCurrentState()
+            titel = widget.name.replace(".", "")
+            projectSave.append(widget.getCurrentState())
+            with open(titel + ".resi", "w") as file:
+                json.dump(projectSave, file)
+
+        with open(".project", "w") as file:
+            json.dump(projectSave, file)
 
         print("saveButtonClicked")
 
@@ -231,25 +252,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.ui.pushButtonToggleOverlay.setIcon(icon_in)
             self.ui.pushButtonToggleOverlay.setIconSize(QSize(25, 25))
 
-    # event listener handling
 
+    def openPickMarker(self, defaultPreset=None):
+        defaultDict = self.markerPrestDict["default"] if defaultPreset is None else defaultPreset
+        pickMarkerWin = PickMarker(self, defaultDict)
 
-    def getMarkerNameAndColor(self):
-        self.markerWindow = markerpresetwindow.MarkerPresetWindow(self)
-        return self.nameRectMark, self.colorRect
-
-
-
-    # button functions
     # algorithms
 
 
-    def addMarkerToTable(self, currentCanvas):
-        ind = len(self.dictCanvasToRectList[currentCanvas])
-    def updateTableMarker(self, canvas, focusRect, index, name, x, dx):
-        pass
-
-# TDL functions I use for things
+    # TDL functions I use for things
 
 
 app = QtWidgets.QApplication(sys.argv)
@@ -257,3 +268,20 @@ app = QtWidgets.QApplication(sys.argv)
 window = MainWindow()
 window.show()
 app.exec()
+
+# todo Linux zeigt keiine Schrift außer im Hover -> setColorText black
+# todo name von preset statt Pick Marker
+# todo save each file on its own
+# todo keep marking after one click
+# todo toggle marking active on key input
+# todo change pick system to a List of labels in the current default preset
+# todo mouse panning remove y axis
+# todo table data change row with tab not column
+# todo set certain ifnormation as constant in table data
+# todo icons add a down arrow for overriding the options
+# todo on right click set delta for marker
+# todo marker window activate cancel
+# todo show marking area while marking
+# todo give option to show markers behind graph
+# todo adjust snapOn to snap on sooner (or later, or not at all)
+# todo add project option

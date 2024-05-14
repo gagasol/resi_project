@@ -2,7 +2,7 @@
 import json
 import sys
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, QWidget, QRadioButton, QCheckBox, QTableWidget, \
-    QHeaderView, QAbstractScrollArea, QLabel, QTableWidgetItem
+    QHeaderView, QAbstractScrollArea, QLabel, QTableWidgetItem, QDialog
 from PySide6 import QtWidgets
 
 import numpy as np
@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (QApplication, QHBoxLayout, QListView, QListWidget
                                QVBoxLayout, QWidget)
 
 from dataModel import DataModel
-from markerpresetwindow import MarkerPresetWindow
+from pickMarkerWindow import PickMarker
 
 
 class MplCanvas(FigureCanvasQTAgg):
@@ -40,38 +40,42 @@ class MplCanvas(FigureCanvasQTAgg):
 class CustomRectangle(matplotlib.patches.Rectangle):
     # @todo add a saveDelete that accounts for the deleted element by adjusting the index and sets the new links
     # @todo while moving checkc if left or right marker gets to zero, if so stop
-    def __init__(self, xy, width, height, index, name, canvas):
+    def __init__(self, xy, width, height, index, name, color, canvas):
         super().__init__(xy, width, height)
         self.index = index
         self.name = name
         self.canvas = canvas
+        self.color = color
 
         self.lastXPos = xy[0]
 
         self._rightRect = None
         self._leftRect = None
 
+        self.set_color(color)
+
     # region getter and setter
+    def get_x1(self):
+        return self.get_x() + self.get_width()
+
     def getRightRect(self):
         return self._rightRect
 
     def setRightRect(self, custRect):
-        self._rightRect = custRect
-        if (type(custRect) != CustomRectangle):
-            pass#raise Exception("rightRect must be of type CustomRectangle")
-        if (self._rightRect):
-            pass#raise Exception("rightRect already set")
+        if (type(custRect) == None):
+            self._rightRect = None
+        if (self._rightRect != None):
+            raise Exception("rightRect already set")
         self._rightRect = custRect
 
     def getLeftRect(self):
         return self._leftRect
 
     def setLeftRect(self, custRect):
-        self._leftRect = custRect
-        if (type(custRect) != CustomRectangle):
-            pass#raise Exception("leftRect must be of type CustomRectangle")
-        if (self._leftRect):
-            pass#raise Exception("leftRect already set")
+        if (type(custRect) == None):
+            self._leftRect = None
+        if (self._leftRect != None):
+            raise Exception("leftRect already set")
         self._leftRect = custRect
     # endregion
 
@@ -79,6 +83,7 @@ class CustomRectangle(matplotlib.patches.Rectangle):
         state = {
             'index': self.index,
             'name': self.name,
+            'color': self.color,
             'x': self.get_x(),
             'width': self.get_width()
         }
@@ -137,7 +142,7 @@ class CustomRectangle(matplotlib.patches.Rectangle):
 
     def updateTableMarker(self):
         self.canvas.parent().parent().updateTableMarkerEntry(self.index, self.name, self.get_x(),
-                                                    self.get_width() + self.get_x())
+                                                    self.get_x1())
 
 
 class AutoSizedTable(QTableWidget):
@@ -154,7 +159,7 @@ class AutoSizedTable(QTableWidget):
 
 
 class WidgetGraph(QWidget):
-    def __init__(self, MainWindow=None, pathToFile=None, parent=None):
+    def __init__(self, MainWindow=None, pathToFile=None, loadedState=None, settingsSet=None, parent=None):
         super().__init__(parent)
 
         # @todo add getter and setter for each of these variables
@@ -168,6 +173,14 @@ class WidgetGraph(QWidget):
 
         # marker variables
         self.markerList = []
+        self.defaultMarkerDict = {
+            "_NameForPreset": "Preset_1",
+            "Red": "#FF0000",
+            "Green": "#008000",
+            "Blue": "#0000FF",
+            "Yellow": "#FFFF00",
+            "Black": "#000000",
+            "White": "#FFFFFF"}
 
         self.vLineRect = None
         self.flagVerticalLine = True
@@ -179,13 +192,15 @@ class WidgetGraph(QWidget):
         self.markerName = None
         self.markerColor = None
 
-
         self.flagMarkerFocus = False
         self.flagMarkerRightFocus = False
         self.flagMarkerLeftFocus = False
 
         self.flagMarkerDragged = False
         self.flagMouseClicked = False
+
+        self.flagPanZoom = False
+        self.flagMarking = False
 
         self.flagWindowClosedByUserSignal = False
         # region tons of variables for the QTWidget
@@ -213,7 +228,7 @@ class WidgetGraph(QWidget):
         self.horizontalSpacer0 = None
         # endregion
 # data variables setup
-        self._name = None
+        self.name = None
 
         self.dataDrill = []
         self.dataFeed = []
@@ -231,18 +246,18 @@ class WidgetGraph(QWidget):
         if (self.mainWindow):
             if ("rgp" in pathToFile):
                 self.dataModel = DataModel(pathToFile, self.mainWindow.listNameKeys)
-            if ("resi" in pathToFile):
-                self.dataModel = DataModel(pathToFile, self.mainWindow.listNameKeys)
+            if (pathToFile == ""):
+                self.dataModel = DataModel(pathToFile, self.mainWindow.listNameKeys, loadedState)
 
             pyplot.style.use('ggplot')
             self.setUpUi()
             self.setupTable()
-            if ("resi" in pathToFile):
+            self.toolbar = NavigationToolbar(self.canvasGraph, None)
+            if (pathToFile==""):
                 for markerState in self.dataModel.markerStateList:
                     self.addRectToCurrentCanv(None, markerState)
 
             self.vLineRect = self.canvasGraph.axes.axvline(color='black', lw=0.8, linestyle='-')
-
 
     def resizeEvent(self, event):
         # this is neccecary because matplotlib doesn't resize linear or whatever, need to look into that and find
@@ -255,10 +270,19 @@ class WidgetGraph(QWidget):
         self.canvasGraph.figure.subplots_adjust(left=leftMargin, bottom=bottomMargin)
         self.canvasGraph.draw()
 
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Alt and event.modifiers() == Qt.AltModifier:
+            self.flagMarking = not self.flagMarking
+            self.clickCount = 0
+            print(self.flagMarking)
+        super().keyPressEvent(event)
+
 
     def setUpUi(self):
 
-        self._name, deviceLength, dataDrill, dataFeed = self.dataModel.getGraphData()
+        self.name, deviceLength, dataDrill, dataFeed = self.dataModel.getGraphData()
+
+        self.setFocusPolicy(Qt.ClickFocus)
 
         self.verticalLayout_2 = QVBoxLayout()
         self.widgetTop = QWidget()
@@ -354,6 +378,7 @@ class WidgetGraph(QWidget):
             #self.test_canvas.mpl_connect('axes_leave_event', self.onAxesLeave)
             self.canvasGraph.mpl_connect('figure_leave_event', self.onAxesLeave)
             self.canvasGraph.mpl_connect('scroll_event', self.zoomOnMouseWheel)
+            #self.canvasGraph.mpl_connect('key_press_event', self.onKeyPress)
             #self.canvasGraph.mpl_connect('resize_event', self.onResize)
 
             #self.dictCanvasToRectList.update({self.canvasGraph: []})
@@ -499,39 +524,33 @@ class WidgetGraph(QWidget):
                 # If flag for rectangle being focused is set, move the rectangle
                 if (self.flagMarkerFocus):
                     self.flagMarkerDragged = True
-                    self.clickCount = 0
                     self.focusedMarker.move(event.xdata - self.lastXPos)
                     self.snapOn(event.canvas, self.focusedMarker)
                     self.updateTableMarkerEntry(self.focusedMarker.index, self.focusedMarker.name, self.focusedMarker.get_x(),
                                                 self.focusedMarker.get_width() + self.focusedMarker.get_x())
                     self.lastXPos = event.xdata
 
+                    if (self.flagMarking):
+                        self.xPosMarkerStart = event.xdata
+
                 # If flag for rectangle being focused on right side is set, resize rectangle from right
                 elif (self.flagMarkerRightFocus):
-                    self.clickCount = 0
                     self.focusedMarker.resizeWidth(event.xdata - self.lastXPos, "r")
                     self.snapOn(event.canvas, self.focusedMarker)
                     self.lastXPos = event.xdata
 
+                    if (self.flagMarking):
+                        self.xPosMarkerStart = event.xdata
+
                 # If flag for rectangle being focused on left side is set, resize rectangle from left
                 elif (self.flagMarkerLeftFocus):
-                    self.clickCount = 0
                     self.focusedMarker.resizeWidth(event.xdata - self.lastXPos, "l")
                     self.snapOn(event.canvas, self.focusedMarker)
                     self.lastXPos = event.xdata
 
-            if (event.button == 2):
-                ax = self.canvasGraph.axes
-                xMin, xMax = ax.get_xlim()
-                diff = xMax - xMin
-                delta = 1 / 20 * diff
-                if (event.xdata > self.lastXPos):
-                    ax.set_xlim(xMin + delta, xMax + delta)
-                else:
-                    ax.set_xlim(xMin - delta, xMax - delta)
-                self.canvasGraph.draw()
+                    if (self.flagMarking):
+                        self.xPosMarkerStart = event.xdata
 
-            self.lastXPos = event.xdata
             # Redraw canvas after processing actions
             event.canvas.draw()
 
@@ -539,6 +558,8 @@ class WidgetGraph(QWidget):
 
         if (event.inaxes is None):
             return
+
+        self.lastXPos = event.xdata
 
         if (event.button == MouseButton.LEFT):
             self.flagMouseClicked = True
@@ -552,22 +573,26 @@ class WidgetGraph(QWidget):
                     if self.checkIfClickByRect(event, marker):
                         self.focusedMarker = marker
                         return
+                    else:
+                        self.focusedMarker = None
 
         # logic for creating markers with addRectToCurrentCanv
-            if (not (self.flagMarkerFocus or self.flagMarkerLeftFocus or self.flagMarkerRightFocus)):
+            if (not (self.flagMarkerFocus or self.flagMarkerLeftFocus or self.flagMarkerRightFocus)
+                    and self.flagMarking):
 
                 if (self.clickCount == 0):
                     self.xPosMarkerStart = event.xdata
 
-                elif (self.clickCount == 1):
-                    markerWindow = MarkerPresetWindow(self, {})
+                elif (self.clickCount > 0):
+                    markerWindow = PickMarker(self, self.defaultMarkerDict)
+                    markerWindow.setWindowModality(Qt.ApplicationModal)
                     markerWindow.setAttribute(Qt.WA_DeleteOnClose)
                     markerWindow.show()
                     markerWindow.destroyed.emit()
 
                     waitForMarkerInputLoop = QEventLoop()
-                    markerWindow.closedByUser.connect(self.windowClosedByUser)
-                    markerWindow.closedProgrammatically.connect(self.windowClosedProgrammatically)
+                    markerWindow.signalCanceled.connect(self.windowClosedByUser)
+                    markerWindow.signalAccepted.connect(self.windowClosedProgrammatically)
                     markerWindow.destroyed.connect(waitForMarkerInputLoop.quit)
                     waitForMarkerInputLoop.exec()
 
@@ -575,12 +600,14 @@ class WidgetGraph(QWidget):
                         self.addRectToCurrentCanv(event)
 
                     self.flagMouseClicked = False
+                    self.xPosMarkerStart = event.xdata
 
-                self.clickCount = self.clickCount + 1 if (self.clickCount < 1) else 0
+                # self.clickCount = self.clickCount + 1 if (self.clickCount < 1) else 0
+                self.clickCount += 1
 
 
-        if (event.button == MouseButton.RIGHT):
-            self.canvasGraph.axes.set_xlim(event.xdata)
+        if (event.button == MouseButton.MIDDLE):
+            self.toolbar.pan()
 
     def onButtonReleased(self, event):
 
@@ -589,10 +616,6 @@ class WidgetGraph(QWidget):
             event.canvas.draw()
 
         self.flagMouseClicked = False
-        self.flagMarkerFocus = False
-        self.focusedMarker = None
-        self.flagMarkerLeftFocus = False
-        self.flagMarkerRightFocus = False
 
     def zoomOnMouseWheel(self, event):
 
@@ -623,7 +646,7 @@ class WidgetGraph(QWidget):
         if (event is None
                 or event.canvas is None
                 or self.flagMouseClicked
-                or self.clickCount == 1):
+                or self.clickCount > 0):
             return
 
         self.vLineRect.set_visible(False)
@@ -674,23 +697,34 @@ class WidgetGraph(QWidget):
         if (focusRect.getLeftRect() and focusRect.getRightRect()):
             return
 
+        snapDelta = self.canvasGraph.axes.get_xlim()[1] * 4 / 150
         for marker in self.markerList:
-            if (marker == focusRect.getRightRect() or marker == focusRect.getLeftRect()):
-                return
+            if (marker == focusRect.getRightRect()
+                    or marker == focusRect.getLeftRect() or marker == focusRect):
+                continue
             fixedRectXStart = marker.get_x()
-            fixedRectRectXEnd = marker.get_x() + marker.get_width()
+            fixedRectXEnd = marker.get_x() + marker.get_width()
             focusRectXStart = focusRect.get_x()
             focusRectXEnd = focusRectXStart + focusRect.get_width()
+            print(focusRect.getLeftRect(), focusRect.getRightRect())
+            print(marker.getLeftRect(), marker.getRightRect())
 
-            if (focusRect.getRightRect() is None and focusRectXEnd >= fixedRectXStart > focusRectXStart):
+            if (focusRect.getRightRect() is None
+                    and focusRectXEnd >= fixedRectXStart-snapDelta > focusRectXStart):
+                focusRect.set_width(fixedRectXEnd - focusRectXStart)
                 focusRect.setRightRect(marker)
                 marker.setLeftRect(focusRect)
-            elif (focusRect.getLeftRect() is None and focusRect.get_x() <= fixedRectRectXEnd < focusRectXEnd):
+            elif (focusRect.getLeftRect() is None
+                  and focusRectXStart <= fixedRectXEnd+snapDelta < focusRectXEnd):
+                focusRect.set_x(fixedRectXEnd)
                 focusRect.setLeftRect(marker)
                 marker.setRightRect(focusRect)
 
+        for marker in self.markerList:
+            marker.updateTableMarker()
+        self.canvasGraph.draw()
 
-    # @todo handle the marker setup in the widget graph because its the only place its used
+    # @todo fix a bug where it doesnt reset the partner markers if a marker is added inbetween 2
     def addRectToCurrentCanv(self, event=None, markerState=None):
         axisHeight = self.canvasGraph.axes.get_ylim()[1]
         tmpListRect = self.markerList
@@ -699,8 +733,7 @@ class WidgetGraph(QWidget):
             color = self.mainWindow.nameToColorDict[markerState["name"]]
             tmpRect = CustomRectangle((markerState["x"], -axisHeight*0.8/100), markerState["width"],
                                       - axisHeight * self.heightRectMarkPerc / 100, markerState["index"],
-                                      markerState["name"], self.canvasGraph)
-            tmpRect.set_color(color)
+                                      markerState["name"], markerState["color"], self.canvasGraph)
             tmpListRect.append(tmpRect)
             self.addTableMarkerEntry(len(tmpListRect) - 1, markerState["name"], color, round(markerState["x"], 2),
                                      round(markerState["x"] + markerState["width"], 2))
@@ -712,8 +745,7 @@ class WidgetGraph(QWidget):
 
             tmpRect = CustomRectangle((anchorX, -axisHeight*0.8/100), width,
                                       axisHeight * self.heightRectMarkPerc / 100, len(tmpListRect),
-                                      self.markerName, event.canvas)
-            tmpRect.set_color(self.markerColor)
+                                      self.markerName, self.markerColor, event.canvas)
 
             if (not self.adjustOverlay(event, tmpRect)):
                 return
@@ -721,6 +753,8 @@ class WidgetGraph(QWidget):
             tmpListRect.append(tmpRect)
             self.addTableMarkerEntry(len(tmpListRect) - 1, self.markerName, self.markerColor, round(anchorX, 2),
                                      round(event.xdata, 2))
+            self.snapOn(event.canvas, tmpRect)
+
 
 
         # self.updateMarkerRectSave(event.canvas, tmpRect, argColorName=self.colorRect)
@@ -733,7 +767,7 @@ class WidgetGraph(QWidget):
 
     # 90% of this function is actually redundant because CustomRectangles resizeLinks() can take of most of it
     # not gonna change that though.
-    # also @todo add this to widgetGraph as well
+    # also @todo fix a bug when adding
     def adjustOverlay(self, event, tmpRect):
         try:
             newRectXStart = tmpRect.get_x()
@@ -748,8 +782,8 @@ class WidgetGraph(QWidget):
                 oldRectXStart = marker.get_x()
                 oldRectXEnd = marker.get_x()+marker.get_width()
 
-                startInOld = oldRectXStart < newRectXStart <= oldRectXEnd
-                endInOld = oldRectXStart < newRectXEnd <= oldRectXEnd
+                startInOld = oldRectXStart < newRectXStart < oldRectXEnd
+                endInOld = oldRectXStart < newRectXEnd < oldRectXEnd
                 if (startInOld ^ endInOld):
 
                     if (startInOld):
@@ -758,6 +792,7 @@ class WidgetGraph(QWidget):
                         marker.setRightRect(tmpRect)
                         tmpRect._leftRect = None
                         tmpRect.setLeftRect(marker)
+                        return True
                     if (endInOld):
                         # marker.set_width(marker.get_width() - newRectXEnd - marker.get_x())
                         marker.set_width(oldRectXEnd - newRectXEnd)
@@ -766,6 +801,7 @@ class WidgetGraph(QWidget):
                         marker.setLeftRect(tmpRect)
                         tmpRect._rightRect = None
                         tmpRect.setRightRect(marker)
+                        return True
 
                 elif (startInOld and endInOld):
                     return False
@@ -852,10 +888,7 @@ class WidgetGraph(QWidget):
         for marker in self.markerList:
             markerStateList.append(marker.getSaveState())
 
-        state.update({"marker": markerStateList})
-        print("Aok")
-        with open('state.resi', 'w') as f:
-            json.dump(state, f)
+        state.update({"markerState": markerStateList})
         return state
 
 

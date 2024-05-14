@@ -159,6 +159,7 @@ class SelectMarkerWindow(QWidget):
             self.setCursor(QCursor(Qt.ArrowCursor))
 
     def acceptButtonClicked(self):
+        self.markerPresetWindow.setWindowModality(Qt.ApplicationModal)
         if (self.presetInd is not None):
             self.markerPresetWindow.listPresets[self.presetInd] = dict(self.dictMarkerList)
         else:

@@ -35,6 +35,7 @@ class Ui_SelectMarkerWindow(object):
 "  border: 1px solid grey;\n"
 "  background: white;\n"
 "  selection-background-color: blue;\n"
+"color: black;\n"
 "}")
         self.verticalLayout_2 = QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")

@@ -4,7 +4,7 @@ import json
 
 
 class DataModel:
-    def __init__(self, datasource, listNameKeys):
+    def __init__(self, datasource, listNameKeys, jsonData=None):
         self._name = ""
         self._dataDrill = None
         self._dataFeed = None
@@ -17,7 +17,7 @@ class DataModel:
             "location": "None",
             "name": "None"
         }
-
+        self.jsonData = jsonData
         self.markerStateList = []
 
         if ("rgp" in datasource.lower()):
@@ -28,7 +28,7 @@ class DataModel:
 
             self._name = self._name[:-1]
             self._deviceLength = self._data["deviceLength"]
-        elif ("resi" in datasource.lower()):
+        elif (datasource == ""):
             self._readDataFromCustom(datasource)
 
         else:
@@ -83,17 +83,18 @@ class DataModel:
         return self._formatListToDict(tmpData)
 
 
+    # @todo check if the name/color pairs of each marker fits the name/color pair of the nameToColorDict
+    # if it doesnt dont change the color but create a seperate dict with that
     def _readDataFromCustom(self, file):
-        with open(file, 'r') as f:
-            loadedState = json.load(f)
+        loadedState = self.jsonData
 
         self._data = loadedState["data"]
         self._name = self._data["selfName"]
         self._deviceLength = self._data["deviceLength"]
         self._dataDrill = self._data["dataDrill"]
         self._dataFeed = self._data["dataFeed"]
-
-        for markerState in loadedState["marker"]:
+        print(loadedState["markerState"])
+        for markerState in loadedState["markerState"]:
             self.markerStateList.append(markerState)
 
 
@@ -147,7 +148,6 @@ class DataModel:
         keyValuePairs = {}
         for key in dataKeys:
             try:
-                print(key)
                 value = self._data[key]
                 keyValuePairs[key] = value
             except KeyError:
@@ -159,6 +159,5 @@ class DataModel:
                               "dataFeed": self._dataFeed}
 
         keyValuePairs.update(graphDataKeyValues)
-        print(keyValuePairs)
         return keyValuePairs
 

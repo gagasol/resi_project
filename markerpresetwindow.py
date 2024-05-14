@@ -34,6 +34,7 @@ class MarkerPresetWindow(QWidget):
         self.listPresets = markerPresets
 
         self.flagDelete = False
+        self.flagCanceled = False
 
         self.comboBoxCount = 0
         self.comboBoxInd = 0
@@ -78,13 +79,21 @@ class MarkerPresetWindow(QWidget):
 
         self.loadPresets()
         self.ui.pushButtonAddPreset.clicked.connect(self.addPreset)
+        self.ui.pushButtonCancel.clicked.connect(self.cancelMarker)
 
     def closeEvent(self, event):
-        if self.sender() is None:
+        if self.flagCanceled or self.sender() is None:
+            print("NONE  BRO")
             self.closedByUser.emit()
         else:
+            print("YOU DID IT BRO")
             self.closedProgrammatically.emit()
-            return
+
+
+    def cancelMarker(self):
+        self.flagCanceled = True
+        self.close()
+
 
     def onComboBoxItemChanged(self, index):
 
@@ -94,6 +103,8 @@ class MarkerPresetWindow(QWidget):
         if (textCurrentItem == "Add Marker"):
             selectMarkerWindow = SelectMarkerWindow(self, self.listPresets[self.sender().id_number],
                                                     self.sender().id_number)
+            self.setWindowModality(Qt.NonModal)
+            selectMarkerWindow.setWindowModality(Qt.ApplicationModal)
             selectMarkerWindow.setAttribute(Qt.WA_DeleteOnClose)
             selectMarkerWindow.show()
 
@@ -105,6 +116,7 @@ class MarkerPresetWindow(QWidget):
             if (textCurrentItem in preset):
                 self.mainWindow.markerColor = preset[textCurrentItem]
                 self.mainWindow.markerName = textCurrentItem
+                self.flagCanceled = False
                 self.close()
 
     def onComboBoxActivated(self, index):
@@ -112,6 +124,8 @@ class MarkerPresetWindow(QWidget):
 
     def addPreset(self):
         selectMarkerWindow = SelectMarkerWindow(self)
+        self.setWindowModality(Qt.NonModal)
+        selectMarkerWindow.setWindowModality(Qt.ApplicationModal)
         selectMarkerWindow.setAttribute(Qt.WA_DeleteOnClose)
         selectMarkerWindow.show()
 
@@ -132,7 +146,7 @@ class MarkerPresetWindow(QWidget):
             tmpComboBox = QComboBox(self)
             tmpComboBox.id_number = self.comboBoxCount
             self.comboBoxCount += 1
-            tmpComboBox.addItem("Pick a Marker")
+            tmpComboBox.addItem(preset["_NameForPreset"])
             i = 1
             for marker in preset:
                 if (marker == "_NameForPreset"):
