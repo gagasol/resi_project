@@ -241,7 +241,7 @@ class WidgetGraph(QWidget):
         self.heightWidgetGraphPerc = 75
         self.heightWidgetBottomPerc = 10
         self.heightRectMarkPerc = 3
-        self.percMarkerFocusHeight = 20
+        self.percMarkerFocusHeight = 5
         # endregion
 
         # marker variables
@@ -270,7 +270,8 @@ class WidgetGraph(QWidget):
         self.flagMarkerDragged = False
         self.flagMouseClicked = False
 
-        self.flagPanZoom = False
+        self.flagPanZoomScript = False
+        self.flagVerticalZoom = False
         self.flagMarking = False
 
         self.flagWindowClosedByUserSignal = False
@@ -352,7 +353,6 @@ class WidgetGraph(QWidget):
             self.flagMarking = not self.flagMarking
             self.clickCount = 0
             if (self.flagMarking):
-                print("==")
                 self.canvasGraph.setCursor(QCursor(Qt.CrossCursor))
                 self.currentCursor = QCursor(Qt.CrossCursor)
             else:
@@ -366,12 +366,22 @@ class WidgetGraph(QWidget):
             print("R")
         if event.text().lower() == "a":
             self.flagSetDxForMarker = True
+        if event.key() == Qt.Key_Shift:
+            self.flagVerticalZoom = True
+            if (not 'pan/zoom' in self.toolbar.mode):
+                self.flagPanZoomScript = True
+                self.toolbar.pan()
         super().keyPressEvent(event)
 
 
     def keyReleaseEvent(self, event):
         if event.text().lower() == "a":
             self.flagSetDxForMarker = False
+        if event.key() == Qt.Key_Shift:
+            self.flagVerticalZoom = False
+            if (self.flagPanZoomScript):
+                self.toolbar.pan()
+                self.flagPanZoomScript = False
         super().keyPressEvent(event)
 
     def setUpUi(self):
@@ -707,8 +717,8 @@ class WidgetGraph(QWidget):
                     if (not (name or col)):
                         return
 
-                    if("Rinde" in name):
-                        self.dxMarkerForTable = event.xdata
+                    if("Borke" in name):
+                        self.setDxForMarker(event.xdata)
 
                     self.markerName = name
                     self.markerColor = col
@@ -723,6 +733,7 @@ class WidgetGraph(QWidget):
 
                 self.clickCount += 1
 
+
         if (self.flagSetDxForMarker):
             print("Adjusted x value: " + str(event.xdata))
             self.setDxForMarker(event.xdata)
@@ -734,6 +745,11 @@ class WidgetGraph(QWidget):
 
 
         if (event.button == MouseButton.RIGHT):
+            mode = self.toolbar.mode
+            if ("pan/zoom" in mode):
+                self.toolbar.pan()
+                return
+
             if(not self.flagMarking):
                 if (self.markerList is not []):
                     for marker in self.markerList:
@@ -775,8 +791,12 @@ class WidgetGraph(QWidget):
         else:
             scaleFactor = 1
 
-        ax.set_xlim([xdata - (xdata - ax.get_xlim()[0]) / scaleFactor,
-                     xdata + (ax.get_xlim()[1] - xdata) / scaleFactor])
+        if (self.flagVerticalZoom):
+            ax.set_ylim([ydata - (ydata - ax.get_ylim()[0]) / scaleFactor,
+                         ydata + (ax.get_ylim()[1] - ydata) / scaleFactor])
+        else:
+            ax.set_xlim([xdata - (xdata - ax.get_xlim()[0]) / scaleFactor,
+                         xdata + (ax.get_xlim()[1] - xdata) / scaleFactor])
 
         self.canvasGraph.draw()
 
@@ -819,10 +839,12 @@ class WidgetGraph(QWidget):
 
     # region marker functionality
     def addRectToCurrentCanv(self, event=None, markerState=None, noOverlayCheck=False):
-        axisHeight = self.canvasGraph.axes.get_ylim()[1]
+        print("~~~~~~~~~~addRectToCurrentCanv~~~~~~~~~~")
+        axisHeight = 100
         tmpListRect = self.markerList
 
         if (markerState):
+            print("Loading marker {0} ..".format(markerState["name"]))
             color = self.mainWindow.nameToColorDict[markerState["name"]]
             tmpRect = CustomRectangle((markerState["x"], -axisHeight*0.4/100), markerState["width"],
                                       - axisHeight * self.heightRectMarkPerc / 100, markerState["index"],
@@ -846,7 +868,7 @@ class WidgetGraph(QWidget):
             tmpRect.set_linewidth(0.5)
             if (not noOverlayCheck and not self.adjustOverlay(event, tmpRect)):
                 return
-
+            print("Marker {0} created".format(tmpRect.name))
             tmpListRect.append(tmpRect)
             self.addTableMarkerEntry(len(tmpListRect) - 1, self.markerName, self.markerColor, round(anchorX, 2),
                                      round(event.xdata, 2))
@@ -893,10 +915,11 @@ class WidgetGraph(QWidget):
     def snapOn(self, canvas, focusRect):
         print("~~~~~~~~~snapOn~~~~~~~~~~")
         # @todo on snapon creates temporae gap between linked markers (adjust width of linked marker)
-        if (focusRect.getLeftRect() and focusRect.getRightRect()):
+        if ((focusRect.getLeftRect() or focusRect.getNextRectInList() == None)
+                and (focusRect.getRightRect() or focusRect.getLastRectInList() == None)):
             return
 
-        snapDelta = self.canvasGraph.axes.get_xlim()[1] * 1 / 150
+        snapDelta = self.canvasGraph.axes.get_xlim()[1] * 1 / 200
         nextAndLastRect = [focusRect.getLastRectInList(), focusRect.getNextRectInList()]
 
         for marker in nextAndLastRect:
@@ -910,12 +933,14 @@ class WidgetGraph(QWidget):
             if (focusRect.getRightRect() is None
                     and focusRectXEnd >= fixedRectXStart-snapDelta > focusRectXStart):
                 focusRect.set_width(fixedRectXEnd - focusRectXStart)
+                print(" selfIndex: {0} rightMarker: {1}".format(focusRect.index, marker.index))
                 focusRect.setRightRect(marker)
                 marker.setLeftRect(focusRect)
                 if (focusRect.getLeftRect()):
                     focusRect.getLeftRect().set_width(focusRect.getLeftRect().get_width() + snapDelta)
             elif (focusRect.getLeftRect() is None
                   and focusRectXStart <= fixedRectXEnd+snapDelta < focusRectXEnd):
+                print(" selfIndex: {0} leftMarker: {1}".format(focusRect.index, marker.index))
                 focusRect.set_x(fixedRectXEnd)
                 focusRect.setLeftRect(marker)
                 marker.setRightRect(focusRect)
