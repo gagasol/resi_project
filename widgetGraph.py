@@ -720,7 +720,7 @@ class WidgetGraph(QWidget):
 
         if (self.flagSetDxForMarker):
             print("Adjusted x value: " + str(event.xdata))
-            self.dxMarkerForTable = event.xdata
+            self.setDxForMarker(event.xdata)
             for marker in self.markerList:
                 self.updateTableMarkerEntry(marker.index,
                                             marker.name,
@@ -740,7 +740,7 @@ class WidgetGraph(QWidget):
 
 
 
-        if (event.button == MouseButton.MIDDLE):
+        if (event.button == MouseButton.MIDDLE and not self.flagMarking):
             self.toolbar.pan()
 
     def onButtonReleased(self, event):
@@ -791,14 +791,6 @@ class WidgetGraph(QWidget):
         self.focusedMarker = None
 
 
-    def setDxForMarker1(self, dx):
-        print("~~~~~~~~~~setDxForMarker~~~~~~~~~~")
-        self.dxMarkerForTable = dx
-        #labels = self.canvasGraph.axes.get_xticklabels()
-        self.canvasGraph.axes.set_xticklabels(np.arange(0,21,1))
-        self.canvasGraph.draw()
-        print(self.canvasGraph.axes.get_xticklabels())
-
     def setDxForMarker(self, dx):
         self.dxMarkerForTable = dx
         def customFormat(x, pos):
@@ -807,6 +799,7 @@ class WidgetGraph(QWidget):
         self.canvasGraph.axes.xaxis.set_major_formatter(matplotlib.pyplot.FuncFormatter(customFormat))
         self.canvasGraph.axes.set_xticks(np.arange(0+dx, 42, 2))
         self.canvasGraph.axes.set_xlim(0, self.deviceLength+0.1)
+        self.canvasGraph.draw()
 
 
     def windowClosedByUser(self):
