@@ -68,6 +68,7 @@ class MarkerPresetWindow(QDialog):
 
 
     def okButtonClicked(self):
+
         self.accept()
 
     def cancelMarker(self):

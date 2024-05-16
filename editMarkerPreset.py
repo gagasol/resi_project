@@ -166,6 +166,8 @@ class EditMarkerPresetWindow(QWidget):
         else:
             self.markerPresetWindow.listPresets.append(dict(self.dictMarkerList))
         self.markerPresetWindow.loadPresets()
+        self.dictMarkerList.remove(self.dictMarkerList[0])
+        self.markerPresetWindow.dictAllMarkers.update(dict(self.dictMarkerList))
         self.close()
 
 
@@ -217,6 +219,7 @@ class EditMarkerPresetWindow(QWidget):
                         del self.listLabel[i-1]
                         widget.hide()
                         widget.setParent(None)
+                        widget.deleteLater()
                         self.delButtonClicked()
                         return
                     else:

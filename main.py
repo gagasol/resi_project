@@ -76,7 +76,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.pickMarkerWin = None
         self.markerPresetWin = None
-
+        # @todo IMPORTANT make the nameToColorDict into a real thing!
         self.listGraphWidgets = []
         self.nameToColorDict = {}
         self.listNameKeys = []
@@ -257,7 +257,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.ui.pushButtonToggleOverlay.setIconSize(QSize(25, 25))
 
 
-    def openPickMarker(self, defaultPresetName, clickGlobalPos):
+    def openPickMarker(self, defaultPresetName):
         defaultDict = None
         for presetDict in self.markerPresetList:
             if (defaultPresetName in presetDict.values()):
@@ -267,7 +267,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             raise Exception("No preset named '" + defaultPresetName + "'")
 
         self.pickMarkerWin = PickMarker(self, defaultDict)
-        if (self.pickMarkerWin.exec_()):
+        if (self.pickMarkerWin.exec()):
             return self.pickMarkerWin.markerName, self.pickMarkerWin.markerColor
         else:
             return None, None
@@ -284,12 +284,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
     def loadPreset(self):
-        with open("markerPresets.json", "r") as file:
-            self.markerPresetList = json.load(file)
+        try:
+            with open("markerSave.json", "r") as file:
+                loadedFile = json.load(file)
+                self.nameToColorDict = loadedFile[0]
+                self.markerPresetList = loadedFile[1]
+        except FileNotFoundError:
+            print("First startup detected")
 
     def closeEvent(self, event):
-        with open("markerPresets.json", "w") as f:
-            json.dump(self.markerPresetList, f)
+        saveData = [self.nameToColorDict, self.markerPresetList]
+        with open("markerSave.json", "w") as f:
+            json.dump(saveData, f)
 
     # algorithms
 
