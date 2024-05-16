@@ -640,6 +640,7 @@ class WidgetGraph(QWidget):
 
                 # If flag for rectangle being focused on right side is set, resize rectangle from right
                 elif (self.flagMarkerRightFocus):
+                    self.flagMarkerDragged = True
                     self.focusedMarker.resizeWidth(event.xdata - self.lastXPos, "r")
                     self.snapOn(event.canvas, self.focusedMarker)
                     self.lastXPos = event.xdata
@@ -649,6 +650,7 @@ class WidgetGraph(QWidget):
 
                 # If flag for rectangle being focused on left side is set, resize rectangle from left
                 elif (self.flagMarkerLeftFocus):
+                    self.flagMarkerDragged = True
                     self.focusedMarker.resizeWidth(event.xdata - self.lastXPos, "l")
                     self.snapOn(event.canvas, self.focusedMarker)
                     self.lastXPos = event.xdata
@@ -687,14 +689,14 @@ class WidgetGraph(QWidget):
                     and self.flagMarking):
 
                 if (self.clickCount == 0):
-                    print("############@Marking_start############")
+                    print("############@Marking_start in onButtonPress############")
                     self.focusedMarker = None
                     self.flagMarkerFocus = False
                     self.xPosMarkerStart = event.xdata
                     print("xPosMarkerStart: {0} at clickCount: {1}".format(self.xPosMarkerStart, self.clickCount))
                     if (self.markerList == []):
                         self.dxMarkerForTable = event.xdata
-                        self.setDxForMarker(event.xdata)
+                        #self.setDxForMarker(event.xdata)
 
                 elif (self.clickCount > 0):
                     if(self.xPosMarkerStart > event.xdata):
@@ -704,6 +706,9 @@ class WidgetGraph(QWidget):
 
                     if (not (name or col)):
                         return
+
+                    if("Rinde" in name):
+                        self.dxMarkerForTable = event.xdata
 
                     self.markerName = name
                     self.markerColor = col
@@ -746,10 +751,15 @@ class WidgetGraph(QWidget):
     def onButtonReleased(self, event):
 
         if (self.flagMarkerDragged):
+            if ("Rinde" in self.focusedMarker.name):
+                self.setDxForMarker(self.focusedMarker.get_x1())
+                for marker in self.markerList:
+                    marker.updateTableMarker()
             self.flagMarkerDragged = False
             event.canvas.draw()
 
-        self.flagMouseClicked = False
+        self.flagMouseClicked = False#
+        self.focusedMarker = None
 
     def zoomOnMouseWheel(self, event):
 
