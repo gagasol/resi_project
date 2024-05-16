@@ -19,6 +19,8 @@ from PySide6.QtWidgets import (QApplication, QHBoxLayout, QPushButton, QScrollAr
     QSizePolicy, QSpacerItem, QVBoxLayout, QWidget)
 import rc_icons
 
+
+
 class Ui_PickMarker(object):
     def setupUi(self, PickMarker):
         if not PickMarker.objectName():
@@ -26,7 +28,11 @@ class Ui_PickMarker(object):
         PickMarker.resize(100, 100)
         PickMarker.setMinimumSize(QSize(100, 0))
         PickMarker.setMaximumSize(QSize(100, 300))
-        PickMarker.setWindowOpacity(0.9)
+        PickMarker.setWindowOpacity(0.8)
+        PickMarker.setStyleSheet(""" 
+            QLabel{margin:2px; 
+            border-radius: 2px;}
+            """)
         self.verticalLayout = QVBoxLayout(PickMarker)
         self.verticalLayout.setSpacing(0)
         self.verticalLayout.setObjectName(u"verticalLayout")
@@ -37,6 +43,7 @@ class Ui_PickMarker(object):
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.scrollArea.sizePolicy().hasHeightForWidth())
+        self.scrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scrollArea.setSizePolicy(sizePolicy)
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
@@ -60,9 +67,6 @@ class Ui_PickMarker(object):
         self.horizontalLayout.setSpacing(4)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
-        self.horizontalSpacer = QSpacerItem(104, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-
-        self.horizontalLayout.addItem(self.horizontalSpacer)
 
         self.pushButtonOpenPresets = QPushButton(self.widget)
         self.pushButtonOpenPresets.setObjectName(u"pushButtonOpenPresets")

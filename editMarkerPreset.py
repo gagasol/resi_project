@@ -47,6 +47,7 @@ class TextEntryDialog(QDialog):
 
         self.label = QLabel(self)
         self.label.setText("Name :")
+        self.layout.addWidget(self.label)
         self.text_entry = QLineEdit(self)
         self.layout.addWidget(self.text_entry)
 
@@ -55,7 +56,7 @@ class TextEntryDialog(QDialog):
         self.layout.addWidget(self.ok_button)
 
 
-class SelectMarkerWindow(QWidget):
+class EditMarkerPresetWindow(QWidget):
     def __init__(self, MarkerPresetWindow, argDictMarker=None, presetInd=None, parent=None):
         super().__init__(parent)
         self.ui = Ui_markerPresetWindow()

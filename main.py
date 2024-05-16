@@ -16,7 +16,7 @@ import markerpresetwindow
 from widgetGraph import WidgetGraph
 from ui_files.ui_mainwindow import Ui_MainWindow
 from markerpresetwindow import MarkerPresetWindow
-from editMarkerPreset import SelectMarkerWindow
+from editMarkerPreset import EditMarkerPresetWindow
 from pickMarkerWindow import PickMarker
 
 
@@ -74,10 +74,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # @vLineRect constant that marks the vertical position of the mouse cursor across the MplCanvas
         # @currentTargetRect variable that holds a rectangle if it has been clicked on
 
+        self.pickMarkerWin = None
+        self.markerPresetWin = None
+
         self.listGraphWidgets = []
         self.nameToColorDict = {}
         self.listNameKeys = []
-        self.markerPrestDict = {}
+        self.markerPresetList = []
 
         # @todo delete later
         self.nameToColorDict = {
@@ -96,6 +99,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             "Chocolate": "#D2691E",
             "Crimson": "#DC143C"
         }
+        self.loadPreset()
 
 
         self.listNameKeys = ["idNumber", "date"]
@@ -127,7 +131,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def openButtonClicked(self, fileName=None):
 
         fileName, _ = QFileDialog.getOpenFileName(None, "Select File", "", "*.rgp;;*.resi")
-
+        self.nameOfFile = fileName.split(".")[0]
         if (".resi" in fileName):
             with open(fileName, "r") as file:
                 loadedState = json.load(file)
@@ -151,7 +155,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         for widget in self.listGraphWidgets:
             titel = widget.name.replace(".", "")
             projectSave.append(widget.getCurrentState())
-            with open(titel + ".resi", "w") as file:
+            with open(self.nameOfFile + ".resi", "w") as file:
                 json.dump(projectSave, file)
 
         with open(".project", "w") as file:
@@ -253,9 +257,39 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.ui.pushButtonToggleOverlay.setIconSize(QSize(25, 25))
 
 
-    def openPickMarker(self, defaultPreset=None):
-        defaultDict = self.markerPrestDict["default"] if defaultPreset is None else defaultPreset
-        pickMarkerWin = PickMarker(self, defaultDict)
+    def openPickMarker(self, defaultPresetName, clickGlobalPos):
+        defaultDict = None
+        for presetDict in self.markerPresetList:
+            if (defaultPresetName in presetDict.values()):
+                defaultDict = presetDict
+                break
+        if (defaultDict is None):
+            raise Exception("No preset named '" + defaultPresetName + "'")
+
+        self.pickMarkerWin = PickMarker(self, defaultDict)
+        if (self.pickMarkerWin.exec_()):
+            return self.pickMarkerWin.markerName, self.pickMarkerWin.markerColor
+        else:
+            return None, None
+
+
+    def openChangeMarkerPreset(self, defaultPresetName=None):
+        markerPresetWin = MarkerPresetWindow(self, self.nameToColorDict, self.markerPresetList)
+        if (markerPresetWin.exec()):
+            for markerDict in self.markerPresetList:
+                if (defaultPresetName in markerDict.values()):
+                    return markerDict
+        else:
+            return None
+
+
+    def loadPreset(self):
+        with open("markerPresets.json", "r") as file:
+            self.markerPresetList = json.load(file)
+
+    def closeEvent(self, event):
+        with open("markerPresets.json", "w") as f:
+            json.dump(self.markerPresetList, f)
 
     # algorithms
 

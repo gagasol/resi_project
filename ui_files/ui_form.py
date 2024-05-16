@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (QApplication, QHBoxLayout, QPushButton, QScrollAr
 class Ui_SelectMarkerWindow(object):
     def setupUi(self, SelectMarkerWindow):
         if not SelectMarkerWindow.objectName():
-            SelectMarkerWindow.setObjectName(u"SelectMarkerWindow")
+            SelectMarkerWindow.setObjectName(u"EditMarkerPresetWindow")
         SelectMarkerWindow.resize(400, 600)
         self.verticalLayout = QVBoxLayout(SelectMarkerWindow)
         self.verticalLayout.setObjectName(u"verticalLayout")
@@ -81,9 +81,9 @@ class Ui_SelectMarkerWindow(object):
     # setupUi
 
     def retranslateUi(self, SelectMarkerWindow):
-        SelectMarkerWindow.setWindowTitle(QCoreApplication.translate("SelectMarkerWindow", u"SelectMarkerWindow", None))
-        self.pushButtonAddPreset.setText(QCoreApplication.translate("SelectMarkerWindow", u"Add Preset", None))
-        self.pushButtonChangePreset.setText(QCoreApplication.translate("SelectMarkerWindow", u"Change Preset", None))
-        self.pushButtonCancel.setText(QCoreApplication.translate("SelectMarkerWindow", u"Cancel", None))
+        SelectMarkerWindow.setWindowTitle(QCoreApplication.translate("EditMarkerPresetWindow", u"EditMarkerPresetWindow", None))
+        self.pushButtonAddPreset.setText(QCoreApplication.translate("EditMarkerPresetWindow", u"Add Preset", None))
+        self.pushButtonChangePreset.setText(QCoreApplication.translate("EditMarkerPresetWindow", u"Change Preset", None))
+        self.pushButtonCancel.setText(QCoreApplication.translate("EditMarkerPresetWindow", u"Cancel", None))
     # retranslateUi
 

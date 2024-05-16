@@ -6,32 +6,32 @@ import string
 
 from PySide6.QtCore import QEventLoop, Qt, Signal, QObject
 from PySide6.QtGui import QPixmap, QColor, QIcon
-from PySide6.QtWidgets import QApplication, QWidget, QComboBox, QVBoxLayout, QSpacerItem, QSizePolicy, QLabel
+from PySide6.QtWidgets import QApplication, QWidget, QComboBox, QVBoxLayout, QSpacerItem, QSizePolicy, QLabel, QDialog
 
 # Important:
 # You need to run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py, or
 #     pyside2-uic form.ui -o ui_form.py
 from ui_files.ui_form import Ui_SelectMarkerWindow
-from editMarkerPreset import SelectMarkerWindow
+from editMarkerPreset import EditMarkerPresetWindow
 
 
-class MarkerPresetWindow(QWidget):
+class MarkerPresetWindow(QDialog):
     closedByUser = Signal()
     closedProgrammatically = Signal()
 
-    def __init__(self, MainWindow, markerDict=None, markerPresets=None, parent=None):
+    def __init__(self, MainWindow, nameToColorDict=None, markerPresetList=None, parent=None):
         super().__init__(parent)
-        if markerPresets is None:
+        if markerPresetList is None:
             markerPresets = []
-        if markerDict is None:
+        if nameToColorDict is None:
             markerDict = {}
         self.ui = Ui_SelectMarkerWindow()
         self.ui.setupUi(self)
 
         self.mainWindow = MainWindow
-        self.dictAllMarkers = markerDict
-        self.listPresets = markerPresets
+        self.dictAllMarkers = nameToColorDict
+        self.listPresets = markerPresetList
 
         self.flagDelete = False
         self.flagCanceled = False
@@ -43,34 +43,10 @@ class MarkerPresetWindow(QWidget):
         self.markerName = None
 
         # bunch of stuff for trying stuff out
-        self.listPreset = [
-            {
-                "_NameForPreset": "Preset_1",
-                "Red": "#FF0000",
-                "Green": "#008000",
-                "Blue": "#0000FF",
-                "Yellow": "#FFFF00",
-                "Black": "#000000",
-                "White": "#FFFFFF"
-            },
-            {
-                "_NameForPreset": "Preset_2",
-                "Aloof": "#7B68EE",
-                "Cherish": "#FFB6C1",
-                "Divine": "#FFA07A",
-                "Elapse": "#8B0000",
-                "Green": "#00FF00"
-            },
-            {
-                "_NameForPreset": "Preset_3",
-                "Coral": "#FF7F50",
-                "Cyan": "#00FFFF",
-                "Chocolate": "#D2691E",
-                "Crimson": "#DC143C"}
-        ]
+
 
         if not self.listPresets:
-            for dic in self.listPreset:
+            for dic in self.listPresets:
                 self.listPresets.append(dic)
         if not self.dictAllMarkers:
             self.listPresetToFlatList()
@@ -79,6 +55,7 @@ class MarkerPresetWindow(QWidget):
 
         self.loadPresets()
         self.ui.pushButtonAddPreset.clicked.connect(self.addPreset)
+        self.ui.pushButtonChangePreset.clicked.connect(self.okButtonClicked)
         self.ui.pushButtonCancel.clicked.connect(self.cancelMarker)
 
     def closeEvent(self, event):
@@ -90,9 +67,12 @@ class MarkerPresetWindow(QWidget):
             self.closedProgrammatically.emit()
 
 
+    def okButtonClicked(self):
+        self.accept()
+
     def cancelMarker(self):
         self.flagCanceled = True
-        self.close()
+        self.reject()
 
 
     def onComboBoxItemChanged(self, index):
@@ -101,8 +81,8 @@ class MarkerPresetWindow(QWidget):
         if (index == 0 or textCurrentItem == "_NameForPreset"):
             return
         if (textCurrentItem == "Add Marker"):
-            selectMarkerWindow = SelectMarkerWindow(self, self.listPresets[self.sender().id_number],
-                                                    self.sender().id_number)
+            selectMarkerWindow = EditMarkerPresetWindow(self, self.listPresets[self.sender().id_number],
+                                                        self.sender().id_number)
             self.setWindowModality(Qt.NonModal)
             selectMarkerWindow.setWindowModality(Qt.ApplicationModal)
             selectMarkerWindow.setAttribute(Qt.WA_DeleteOnClose)
@@ -123,7 +103,7 @@ class MarkerPresetWindow(QWidget):
         print(self.sender().id_number)
 
     def addPreset(self):
-        selectMarkerWindow = SelectMarkerWindow(self)
+        selectMarkerWindow = EditMarkerPresetWindow(self)
         self.setWindowModality(Qt.NonModal)
         selectMarkerWindow.setWindowModality(Qt.ApplicationModal)
         selectMarkerWindow.setAttribute(Qt.WA_DeleteOnClose)
@@ -185,7 +165,7 @@ class MarkerPresetWindow(QWidget):
 '''
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    widget = SelectMarkerWindow()
+    widget = EditMarkerPresetWindow()
     widget.show()
     sys.exit(app.exec())
 '''
