@@ -11,12 +11,12 @@ class DataModel:
         self._dataFeed = None
         self._deviceLength = None
         self._customData = {
-            "diameter": "None",
-            "mHeight": "None",
-            "mDirection": "None",
-            "objecttype": "None",
-            "location": "None",
-            "name": "None"
+            "diameter": "---",
+            "mHeight": "---",
+            "mDirection": "---",
+            "objecttype": "---",
+            "location": "---",
+            "name": "---"
         }
         self.jsonData = jsonData
         self.markerStateList = []
