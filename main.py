@@ -131,7 +131,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def openButtonClicked(self, fileName=None):
 
         fileName, _ = QFileDialog.getOpenFileName(None, "Select File", "", "*.rgp;;*.resi")
-        self.nameOfFile = fileName.split(".")[0]
+        self.nameOfFile = fileName.split(".")[0].split("/")[-1]
         if (".resi" in fileName):
             with open(fileName, "r") as file:
                 loadedState = json.load(file)
@@ -139,12 +139,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             for canvas in loadedState:
                 widget = WidgetGraph(self, "",  canvas)
                 self.listGraphWidgets.append(widget)
-                self.ui.tabWidget.addTab(widget, widget.name)
+                self.ui.tabWidget.addTab(widget, self.nameOfFile)
         else:
             widget = WidgetGraph(self, fileName)
             print(fileName)
             self.listGraphWidgets.append(widget)
-            self.ui.tabWidget.addTab(widget, self.nameOfFile.split("/")[-1])
+            self.ui.tabWidget.addTab(widget, self.nameOfFile)
 
         #self.ui.tabWidget.addTab(widget, widget.name)
 
@@ -153,7 +153,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def saveButtonClicked(self):
         projectSave = []
         for widget in self.listGraphWidgets:
-            titel = widget.name.replace(".", "")
             projectSave.append(widget.getCurrentState())
             with open(self.nameOfFile + ".resi", "w") as file:
                 json.dump(projectSave, file)
@@ -202,8 +201,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
         # @todo add globally
         filename = self.nameOfFile + "." + suffix
-        printWidth = 1906
-        printHeight = 1000
+        printWidth = 1920
+        printHeight = 1080
         scaledPixmap = QPixmap(QSize(printWidth, printHeight))
         print(scaledPixmap.size())
 
@@ -215,12 +214,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         printWidget = graphWidget
 
         printWidget.resize(printWidth, printHeight)
+
+        printWidget.changeWidgetsRelSpace(25, 60, 15)
+
         printWidget.render(scaledPixmap)
 
         if (suffix == "png"):
             print("printing to png")
             filename = filename
             scaledPixmap.save(filename)
+            graphWidget.resetWidgetsRelSpace()
             return
 
         elif (suffix == "pdf"):
@@ -235,6 +238,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             pdfPainter = QPainter(pdfWriter)
             pdfPainter.drawPixmap(0, 0, scaledPixmap)
             pdfPainter.end()
+            graphWidget.resetWidgetsRelSpace()
+
 
 
     def toggleOverlayButtonClicked(self):
