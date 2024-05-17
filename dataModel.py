@@ -43,8 +43,10 @@ class DataModel:
                          "profile", "checksum", "wiPoleResult", "app", "assessment")
         time = ""
         date = ""
+        offset = ""
+        avg = ""
         # @todo find out why the character at the end of the drill line can't be decoded to UTF-8 in Linux
-        with open(file, 'r', errors="ignore") as f:
+        with (open(file, 'r', errors="ignore") as f):
             line = f.readline()
             while line:
                 if (any(flag in line for flag in charsRedFlags)):
@@ -59,27 +61,50 @@ class DataModel:
                     strList = line.split("[")[1].replace("]", "").strip().split(",")[0:-1]
                     self._dataFeed = [float(num) for num in strList]
                     line = f.readline()
-                    break
+                    continue
                 elif (any(s in line for s in ["dateYear", "dateMonth", "dateDay"])):
                     datePart = line.split(":")[1].strip()[:-1]
                     date = datePart + "." + date
                     if ("dateDay" in line):
-                        tmpData.append("date: " + date[:-1])
-                        print(tmpData[-1])
+                        tmpData.append("date; " + date[:-1])
 
                     line = f.readline()
                     continue
                 elif (any(s in line for s in ["timeHour", "timeMinute", "timeSecond"])):
                     timePart = line.split(":")[1].strip()[:-1]
-                    time = time + ";" + timePart
+                    time = time + ":" + timePart
                     if ("timeSecond" in line):
-                        tmpData.append("time: " + time[1:])
-                        print(tmpData[-1])
+                        tmpData.append("time; " + time[1:])
 
                     line = f.readline()
                     continue
+                elif (any(s in line for s in ["offsetFeed", "offsetDrill"])):
+                    offsetPart = line.split(":")[1].strip()[:-1]
+                    if ("Drill" in line):
+                        offset = offset + offsetPart
+                        tmpData.append("offset; " + offset)
+                        line = f.readline()
+                        continue
+                    offset = offsetPart + " / "
+                    line = f.readline()
+                    continue
+                elif (any(s in line for s in ["graphDrillAvgShow", "graphFeedAvgShow"])):
+                    avgPart = line.split(":")[1].strip()[:-1]
+                    if ("0" in avgPart):
+                        avgPart = "aus"
+                    else:
+                        avgPart = "an"
 
-                tmpData.append(line.replace("\"", "").replace(",", ""))
+                    if ("Feed" in line):
+                        avg = avg + avgPart
+                        tmpData.append("graphAvgShow; " + avg)
+                        line = f.readline()
+                        continue
+                    avg = avgPart + " / "
+                    line = f.readline()
+                    continue
+
+                tmpData.append(line.replace("\"", "").replace(",", "").replace(":",";"))
                 line = f.readline()
 
         return self._formatListToDict(tmpData)
@@ -102,8 +127,13 @@ class DataModel:
 
 
     def _formatListToDict(self, tmpData):
+        print(tmpData)
+        for element in tmpData:
+            if (len(element.split(";"))!= 2):
+                print(element)
+
         dictData = dict((x.strip(), y.strip())
-                        for x, y in (element.split(":")
+                        for x, y in (element.split(";")
                                      for element in tmpData))
 
         dictData.update(self._customData)
@@ -124,9 +154,9 @@ class DataModel:
             "speedFeed": 'Vorschub',
             "speedDrill": 'Drehzahl',
             "tiltAngle": 'Neigung',
-            "offsetFeed": 'Offset',
-            "offsetDrill": 'Offset',
-            "remark": 'Mitteilung',
+            "result": 'Nadelstatus',
+            "offset": 'Offset',
+            "graphAvgShow": 'Mittelung',
             "diameter": 'Durchmesser',
             "mHeight": 'Messhöhe',
             "mDirection": 'Messrichtung',
@@ -143,9 +173,9 @@ class DataModel:
             "speedFeed": QObject.tr('Vorschub'),
             "speedDrill": QObject.tr('Drehzahl'),
             "tiltAngle": QObject.tr('Neigung'),
-            "offsetFeed": QObject.tr('Offset'),
-            "offsetDrill": QObject.tr('Offset'),
-            "remark": QObject.tr('Mitteilung'),
+            "result": QObject.tr('Nadelstatus'),
+            "offset": QObject.tr('Offset'),
+            "graphAvgShow": QObject.tr('Mittelung'),
             "empty": "",
             "diameter": QObject.tr('Durchmesser'),
             "mHeight": QObject.tr('Messhöhe'),
