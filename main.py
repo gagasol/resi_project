@@ -131,7 +131,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def openButtonClicked(self, fileName=None):
 
         fileName, _ = QFileDialog.getOpenFileName(None, "Select File", "", "*.rgp;;*.resi")
-        self.nameOfFile = fileName.split(".")[0]
+        self.nameOfFile = fileName.split(".")[0].split("/")[-1]
         if (".resi" in fileName):
             with open(fileName, "r") as file:
                 loadedState = json.load(file)
@@ -139,12 +139,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             for canvas in loadedState:
                 widget = WidgetGraph(self, "",  canvas)
                 self.listGraphWidgets.append(widget)
-                self.ui.tabWidget.addTab(widget, widget.name)
+                self.ui.tabWidget.addTab(widget, self.nameOfFile)
         else:
             widget = WidgetGraph(self, fileName)
             print(fileName)
             self.listGraphWidgets.append(widget)
-            self.ui.tabWidget.addTab(widget, widget.name)
+            self.ui.tabWidget.addTab(widget, self.nameOfFile)
 
         #self.ui.tabWidget.addTab(widget, widget.name)
 
@@ -153,7 +153,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def saveButtonClicked(self):
         projectSave = []
         for widget in self.listGraphWidgets:
-            titel = widget.name.replace(".", "")
             projectSave.append(widget.getCurrentState())
             with open(self.nameOfFile + ".resi", "w") as file:
                 json.dump(projectSave, file)
@@ -199,43 +198,48 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
     def saveGraphWidgetAs(self, suffix):
-        for graphWidget in self.listGraphWidgets:
-            # @todo add globally
-            filename = "test_output"
-            printWidth = 1906
-            printHeight = 1000
-            scaledPixmap = QPixmap(QSize(printWidth, printHeight))
-            print(scaledPixmap.size())
+        graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
+        # @todo add globally
+        filename = self.nameOfFile + "." + suffix
+        printWidth = 1920
+        printHeight = 1080
+        scaledPixmap = QPixmap(QSize(printWidth, printHeight))
+        print(scaledPixmap.size())
 
-            printWidget = WidgetGraph()
-            # @todo as soon as I have a load function in widgetGraph I can change the way I take an image
-            # instead of printWidget = graphWidget I copy the state not the instance (maybe add load state? overkill..)
-            # printWidget.setAttribute(Qt.WA_DontShowOnScreen, True)
-            # printWidget.setAttribute(Qt.WA_Mapped, True)
-            printWidget = graphWidget
+        printWidget = WidgetGraph()
+        # @todo as soon as I have a load function in widgetGraph I can change the way I take an image
+        # instead of printWidget = graphWidget I copy the state not the instance (maybe add load state? overkill..)
+        # printWidget.setAttribute(Qt.WA_DontShowOnScreen, True)
+        # printWidget.setAttribute(Qt.WA_Mapped, True)
+        printWidget = graphWidget
 
-            printWidget.resize(printWidth, printHeight)
-            printWidget.render(scaledPixmap)
+        printWidget.resize(printWidth, printHeight)
 
-            if (suffix == "png"):
-                print("printing to png")
-                filename = filename + ".png"
-                scaledPixmap.save(filename)
-                return
+        printWidget.changeWidgetsRelSpace(25, 60, 15)
 
-            elif (suffix == "pdf"):
-                print("printing to pdf")
-                filename = filename.strip() + ".pdf"
-                pdfWriter = QPdfWriter(filename)
-                pageSize = QPageSize(QSizeF(210, 297), QPageSize.Millimeter)
-                pdfWriter.setPageSize(pageSize)
-                pdfWriter.setResolution(230)
-                pdfWriter.setPageMargins(QMarginsF(0, 0, 0, 0))
+        printWidget.render(scaledPixmap)
 
-                pdfPainter = QPainter(pdfWriter)
-                pdfPainter.drawPixmap(0, 0, scaledPixmap)
-                pdfPainter.drawPixmap(0, 960, scaledPixmap)
-                pdfPainter.end()
+        if (suffix == "png"):
+            print("printing to png")
+            filename = filename
+            scaledPixmap.save(filename)
+            graphWidget.resetWidgetsRelSpace()
+            return
+
+        elif (suffix == "pdf"):
+            print("printing to pdf")
+            filename = filename.strip()
+            pdfWriter = QPdfWriter(filename)
+            pageSize = QPageSize(QSizeF(210, 297), QPageSize.Millimeter)
+            pdfWriter.setPageSize(pageSize)
+            pdfWriter.setResolution(230)
+            pdfWriter.setPageMargins(QMarginsF(0, 0, 0, 0))
+
+            pdfPainter = QPainter(pdfWriter)
+            pdfPainter.drawPixmap(0, 0, scaledPixmap)
+            pdfPainter.end()
+            graphWidget.resetWidgetsRelSpace()
+
 
 
     def toggleOverlayButtonClicked(self):
