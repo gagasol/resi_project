@@ -11,12 +11,12 @@ class DataModel:
         self._dataFeed = None
         self._deviceLength = None
         self._customData = {
-            "diameter": "None",
-            "mHeight": "None",
-            "mDirection": "None",
-            "objecttype": "None",
-            "location": "None",
-            "name": "None"
+            "diameter": "---",
+            "mHeight": "---",
+            "mDirection": "---",
+            "objecttype": "---",
+            "location": "---",
+            "name": "---"
         }
         self.jsonData = jsonData
         self.markerStateList = []
@@ -234,7 +234,7 @@ class DataModel:
 
     def getSaveState(self):
         dataKeys = ["number", "idNumber", "depthMsmt", "date", "time", "speedFeed", "speedDrill", "tiltAngle",
-                    "offsetFeed", "offsetDrill", "remark"]
+                    "result", "offset", "remark", "graphAvgShow"]
         dataKeys.extend(list(self._customData.keys()))
 
         keyValuePairs = {}
