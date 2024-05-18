@@ -234,7 +234,7 @@ class DataModel:
 
     def getSaveState(self):
         dataKeys = ["number", "idNumber", "depthMsmt", "date", "time", "speedFeed", "speedDrill", "tiltAngle",
-                    "result", "offset", "remark"]
+                    "result", "offset", "remark", "graphAvgShow"]
         dataKeys.extend(list(self._customData.keys()))
 
         keyValuePairs = {}
