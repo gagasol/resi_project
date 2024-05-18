@@ -326,7 +326,7 @@ class WidgetGraph(QWidget):
                 self.dataModel = DataModel(pathToFile, self.mainWindow.listNameKeys, loadedState)
 
 
-            self.defaultMarkerDictName = "Preset_1"
+            self.defaultMarkerDictName = self.mainWindow.defaultPresetName
             pyplot.style.use('ggplot')
             self.setUpUi()
             self.setupTable()

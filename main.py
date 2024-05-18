@@ -82,6 +82,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.listNameKeys = []
         self.markerPresetList = []
 
+        self.defaultPresetName = ""
+
         # @todo delete later
         self.nameToColorDict = {
             "Red": "#FF0000",
@@ -277,6 +279,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             return None, None
 
 
+    def overridePickMarkerDict(self, markerDict):
+        self.pickMarkerWin.loadMarkerDict(markerDict)
+
+
     def openChangeMarkerPreset(self, defaultPresetName=None):
         markerPresetWin = MarkerPresetWindow(self, self.nameToColorDict, self.markerPresetList)
         if (markerPresetWin.exec()):
@@ -293,11 +299,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 loadedFile = json.load(file)
                 self.nameToColorDict = loadedFile[0]
                 self.markerPresetList = loadedFile[1]
+                self.defaultPresetName = loadedFile[2]
         except FileNotFoundError:
             print("First startup detected")
 
     def closeEvent(self, event):
-        saveData = [self.nameToColorDict, self.markerPresetList]
+        if (self.defaultPresetName is not None):
+            saveData = [self.nameToColorDict, self.markerPresetList, self.defaultPresetName]
+        else:
+            saveData = [self.nameToColorDict, self.markerPresetList]
         with open("markerSave.json", "w") as f:
             json.dump(saveData, f)
 

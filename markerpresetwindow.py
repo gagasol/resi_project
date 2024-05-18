@@ -6,14 +6,15 @@ import string
 
 from PySide6.QtCore import QEventLoop, Qt, Signal, QObject
 from PySide6.QtGui import QPixmap, QColor, QIcon
-from PySide6.QtWidgets import QApplication, QWidget, QComboBox, QVBoxLayout, QSpacerItem, QSizePolicy, QLabel, QDialog
+from PySide6.QtWidgets import QApplication, QWidget, QComboBox, QVBoxLayout, QSpacerItem, QSizePolicy, QLabel, QDialog, \
+    QCheckBox, QHBoxLayout, QRadioButton, QButtonGroup
 
 # Important:
 # You need to run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py, or
 #     pyside2-uic form.ui -o ui_form.py
 from ui_files.ui_form import Ui_SelectMarkerWindow
-from editMarkerPreset import EditMarkerPresetWindow
+from editMarkerPreset import EditMarkerPresetWindow, TextEntryDialog
 
 
 class MarkerPresetWindow(QDialog):
@@ -42,6 +43,8 @@ class MarkerPresetWindow(QDialog):
         self.markerColor = None
         self.markerName = None
 
+        self.buttonGroup = QButtonGroup()
+
         # bunch of stuff for trying stuff out
 
 
@@ -60,20 +63,25 @@ class MarkerPresetWindow(QDialog):
 
     def closeEvent(self, event):
         if self.flagCanceled or self.sender() is None:
-            print("NONE  BRO")
             self.closedByUser.emit()
         else:
-            print("YOU DID IT BRO")
             self.closedProgrammatically.emit()
 
 
     def okButtonClicked(self):
-
+        self.checkSelection()
+        print("[Debug Info] New defaultPresetName: " + self.mainWindow.defaultPresetName)
         self.accept()
 
     def cancelMarker(self):
         self.flagCanceled = True
         self.reject()
+
+
+    def checkSelection(self):
+        checkedButton = self.buttonGroup.checkedButton()
+        if checkedButton is not None:
+            self.mainWindow.defaultPresetName = checkedButton.objectName()
 
 
     def onComboBoxItemChanged(self, index):
@@ -93,26 +101,32 @@ class MarkerPresetWindow(QDialog):
             selectMarkerWindow.destroyed.connect(waitForMarkerInputLoop.quit)
             waitForMarkerInputLoop.exec()
 
-        for preset in self.listPresets:
-            if (textCurrentItem in preset):
-                self.mainWindow.markerColor = preset[textCurrentItem]
-                self.mainWindow.markerName = textCurrentItem
-                self.flagCanceled = False
-                self.close()
+
+        #print(self.listPresets[self.sender().id_number])
+        self.mainWindow.overridePickMarkerDict(self.listPresets[self.sender().id_number])
+        self.close()
+        #return self.listPresets[self.sender().id_number]
+
 
     def onComboBoxActivated(self, index):
         print(self.sender().id_number)
 
     def addPreset(self):
-        selectMarkerWindow = EditMarkerPresetWindow(self)
-        self.setWindowModality(Qt.NonModal)
-        selectMarkerWindow.setWindowModality(Qt.ApplicationModal)
-        selectMarkerWindow.setAttribute(Qt.WA_DeleteOnClose)
-        selectMarkerWindow.show()
+        dialog = TextEntryDialog(self)
 
-        waitForMarkerInputLoop = QEventLoop()
-        selectMarkerWindow.destroyed.connect(waitForMarkerInputLoop.quit)
-        waitForMarkerInputLoop.exec()
+        if dialog.exec():
+            text = dialog.text_entry.text()
+            dictMarker = {"_NameForPreset", text}
+
+            selectMarkerWindow = EditMarkerPresetWindow(self, argDictMarker=dictMarker)
+            self.setWindowModality(Qt.NonModal)
+            selectMarkerWindow.setWindowModality(Qt.ApplicationModal)
+            selectMarkerWindow.setAttribute(Qt.WA_DeleteOnClose)
+            selectMarkerWindow.show()
+
+            waitForMarkerInputLoop = QEventLoop()
+            selectMarkerWindow.destroyed.connect(waitForMarkerInputLoop.quit)
+            waitForMarkerInputLoop.exec()
 
     def loadPresets(self):
 
@@ -122,8 +136,15 @@ class MarkerPresetWindow(QDialog):
                 self.ui.scrollAreaWidgetContents.layout().removeWidget(comboBox)
 
         tmpComboBoxMarker = []
+        tmpComboBoxes = []
 
         for preset in self.listPresets:
+            widget = QWidget()
+            verticalLayout = QHBoxLayout()
+            checkBox = QRadioButton('Default')
+            checkBox.setObjectName(preset["_NameForPreset"])
+            if (preset["_NameForPreset"] == self.mainWindow.defaultPresetName):
+                checkBox.setChecked(True)
             tmpComboBox = QComboBox(self)
             tmpComboBox.id_number = self.comboBoxCount
             self.comboBoxCount += 1
@@ -139,13 +160,18 @@ class MarkerPresetWindow(QDialog):
                 tmpComboBox.setItemIcon(i, icon)
                 i += 1
 
-            self.ui.scrollAreaWidgetContents.layout().insertWidget(len(tmpComboBoxMarker), tmpComboBox)
+            self.buttonGroup.addButton(checkBox)
+            verticalLayout.addWidget(tmpComboBox)
+            verticalLayout.addWidget(checkBox)
+            widget.setLayout(verticalLayout)
+            self.ui.scrollAreaWidgetContents.layout().insertWidget(len(tmpComboBoxMarker), widget)
             tmpComboBox.addItem("Add Marker")
             tmpComboBox.currentIndexChanged.connect(self.onComboBoxItemChanged)
             tmpComboBox.activated.connect(self.onComboBoxActivated)
             tmpComboBoxMarker.append(tmpComboBox)
+            tmpComboBoxes.append(tmpComboBox)
 
-        self.listComboBoxPresets = tmpComboBoxMarker
+        self.listComboBoxPresets = [tmpComboBoxMarker, tmpComboBoxes]
 
     def listPresetToFlatList(self):
         for preset in self.listPresets:
