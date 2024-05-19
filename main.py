@@ -1,5 +1,6 @@
 # This Python file uses the following encoding: utf-8
 import json
+import logging
 import sys
 
 from PySide6.QtCore import Qt, QEventLoop, QPoint, QRect, QSize, QSizeF, QMarginsF
@@ -62,6 +63,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.markerWindow = None
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        logging.basicConfig(level=logging.DEBUG)
+
+        matplotlib_logger = logging.getLogger('matplotlib')
+        matplotlib_logger.setLevel(logging.WARNING)
 
         # testing area @todo TBD!!!
 
@@ -133,6 +138,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def openButtonClicked(self, fileName=None):
 
         fileName, _ = QFileDialog.getOpenFileName(None, "Select File", "", "*.rgp;;*.resi")
+        if (fileName == ""):
+            return
         self.nameOfFile = fileName.split(".")[0].split("/")[-1]
         if (".resi" in fileName):
             with open(fileName, "r") as file:
@@ -201,6 +208,39 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def saveGraphWidgetAs(self, suffix):
         graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
+        graphWidget.horizontalSpacer0.changeSize(10, 20)
+        graphWidget.horizontalLayout.invalidate()
+        graphWidget.widgetMenu.hide()
+        graphWidget.widgetBottom.hide()
+        graphWidget.labelData.hide()
+        graphWidget.changeWidgetsRelSpace(15, 85, 0)
+
+        originalFontDataUneven = graphWidget.tableWidgetData.item(0, 0).font()
+        originalFontDataEven = graphWidget.tableWidgetData.item(0, 1).font()
+        try:
+            originalFontMarker = graphWidget.tableWidgetMarker.item(0, 0).font()
+        except AttributeError:
+            logging.info("No Markers set so far")
+
+        for i in range(graphWidget.tableWidgetData.rowCount()):
+            for j in range(graphWidget.tableWidgetData.columnCount()):
+                item = graphWidget.tableWidgetData.item(i, j)
+                if (item):
+                    font = item.font()
+                    font.setPointSize(15)
+                    item.setFont(font)
+
+        for i in range(graphWidget.tableWidgetMarker.rowCount()):
+            for j in range(graphWidget.tableWidgetMarker.columnCount()):
+                item = graphWidget.tableWidgetMarker.item(i, j)
+                if  (item):
+                    font = item.font()
+                    font.setPointSize(15)
+                    item.setFont(font)
+
+        graphWidget.tableWidgetMarker.setParent(None)
+        graphWidget.horizontalLayout.insertWidget(2, graphWidget.tableWidgetMarker)
+        graphWidget.tableWidgetMarker.show()
         # @todo add globally
         filename = self.nameOfFile + "." + suffix
         printWidth = 1920
@@ -208,25 +248,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         scaledPixmap = QPixmap(QSize(printWidth, printHeight))
         print(scaledPixmap.size())
 
-        printWidget = WidgetGraph()
         # @todo as soon as I have a load function in widgetGraph I can change the way I take an image
         # instead of printWidget = graphWidget I copy the state not the instance (maybe add load state? overkill..)
         # printWidget.setAttribute(Qt.WA_DontShowOnScreen, True)
         # printWidget.setAttribute(Qt.WA_Mapped, True)
-        printWidget = graphWidget
 
-        printWidget.resize(printWidth, printHeight)
+        graphWidget.resize(printWidth, printHeight)
 
-        printWidget.changeWidgetsRelSpace(25, 60, 15)
 
-        printWidget.render(scaledPixmap)
+        graphWidget.render(scaledPixmap)
 
         if (suffix == "png"):
             print("printing to png")
             filename = filename
             scaledPixmap.save(filename)
             graphWidget.resetWidgetsRelSpace()
-            return
 
         elif (suffix == "pdf"):
             print("printing to pdf")
@@ -241,6 +277,29 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             pdfPainter.drawPixmap(0, 0, scaledPixmap)
             pdfPainter.end()
             graphWidget.resetWidgetsRelSpace()
+
+        for i in range(graphWidget.tableWidgetData.rowCount()):
+            for j in range(graphWidget.tableWidgetData.columnCount()):
+                item = graphWidget.tableWidgetData.item(i, j)
+                if  (item):
+                    if(j%2 == 0):
+                        item.setFont(originalFontDataUneven)
+                    else:
+                        item.setFont(originalFontDataEven)
+
+        for i in range(graphWidget.tableWidgetMarker.rowCount()):
+            for j in range(graphWidget.tableWidgetMarker.columnCount()):
+                item = graphWidget.tableWidgetMarker.item(i, j)
+                if  (item):
+                    item.setFont(originalFontMarker)
+
+        graphWidget.horizontalSpacer0.changeSize(70, 20)
+        graphWidget.widgetMenu.show()
+        graphWidget.widgetBottom.show()
+        graphWidget.labelData.show()
+        graphWidget.tableWidgetMarker.setParent(None)
+        graphWidget.horizontalLayout_2.insertWidget(0, graphWidget.tableWidgetMarker)
+        graphWidget.tableWidgetMarker.show()
 
 
 
@@ -279,8 +338,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             return None, None
 
 
-    def overridePickMarkerDict(self, markerDict):
-        self.pickMarkerWin.loadMarkerDict(markerDict)
+    def overridePickMarkerDict(self, markerDict, name="", col=""):
+        if (name != ""):
+            self.pickMarkerWin.loadMarkerDict(markerDict)
+            self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex()).defaultMarkerDictName = markerDict["_NameForPreset"]
+            self.pickMarkerWin.markerName = name
+            self.pickMarkerWin.markerColor = col
+            self.pickMarkerWin.accept()
+            self.pickMarkerWin.close()
+        else:
+            self.pickMarkerWin.loadMarkerDict(markerDict)
 
 
     def openChangeMarkerPreset(self, defaultPresetName=None):
@@ -329,13 +396,11 @@ app.exec()
 # todo keep marking after one click
 # todo toggle marking active on key input
 # todo change pick system to a List of labels in the current default preset
-# todo mouse panning remove y axis
 # todo table data change row with tab not column
 # todo set certain ifnormation as constant in table data
 # todo icons add a down arrow for overriding the options
-# todo on right click set delta for marker
-# todo marker window activate cancel
 # todo show marking area while marking
 # todo give option to show markers behind graph
-# todo adjust snapOn to snap on sooner (or later, or not at all)
 # todo add project option
+
+# @IMPORTANT TODO fix markerPreset

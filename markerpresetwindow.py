@@ -101,9 +101,14 @@ class MarkerPresetWindow(QDialog):
             selectMarkerWindow.destroyed.connect(waitForMarkerInputLoop.quit)
             waitForMarkerInputLoop.exec()
 
-
-        #print(self.listPresets[self.sender().id_number])
-        self.mainWindow.overridePickMarkerDict(self.listPresets[self.sender().id_number])
+        preset = self.listPresets[self.sender().id_number]
+        if (textCurrentItem in preset):
+            col = preset[textCurrentItem]
+            name = textCurrentItem
+        else:
+            col = ""
+            name = ""
+        self.mainWindow.overridePickMarkerDict(self.listPresets[self.sender().id_number], name, col)
         self.close()
         #return self.listPresets[self.sender().id_number]
 
