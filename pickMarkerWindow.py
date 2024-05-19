@@ -1,4 +1,5 @@
 # This Python file uses the following encoding: utf-8
+import logging
 import sys
 
 from PySide6 import QtCore
@@ -65,6 +66,7 @@ class PickMarker(QDialog):
     def pushButtonOpenPresetsClicked(self):
         markers = self.mainWindow.openChangeMarkerPreset(self.markerDict["_NameForPreset"])
         if (markers):
+            logging.debug(markers)
             self.markerDict = markers
             self.loadMarkerDict(self.markerDict)
 

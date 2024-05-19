@@ -2,6 +2,7 @@ from PySide6.QtGui import QBrush, QColor, Qt, QFont
 from PySide6.QtWidgets import QTableWidgetItem, QTextEdit, QLabel
 from PySide6.QtCore import QObject
 import json
+import logging
 
 
 class DataModel:
@@ -120,18 +121,12 @@ class DataModel:
         self._deviceLength = self._data["deviceLength"]
         self._dataDrill = self._data["dataDrill"]
         self._dataFeed = self._data["dataFeed"]
-        print(loadedState["markerState"])
         for markerState in loadedState["markerState"]:
             self.markerStateList.append(markerState)
         self.dx_xlim = loadedState["dx_xlim"]
 
 
     def _formatListToDict(self, tmpData):
-        print(tmpData)
-        for element in tmpData:
-            if (len(element.split(";"))!= 2):
-                print(element)
-
         dictData = dict((x.strip(), y.strip())
                         for x, y in (element.split(";")
                                      for element in tmpData))
@@ -145,25 +140,6 @@ class DataModel:
 
 
     def getTablaTopData(self):#c44a04
-        result_dict = {
-            #"number": 'Messung Nr.',
-            "idNumber": 'ID-Nummer',
-            "depthMsmt": 'Bohrtiefe',
-            "date": 'Datum',
-            "time": 'Uhrzeit',
-            "speedFeed": 'Vorschub',
-            "speedDrill": 'Drehzahl',
-            "tiltAngle": 'Neigung',
-            "result": 'Nadelstatus',
-            "offset": 'Offset',
-            "graphAvgShow": 'Mittelung',
-            "diameter": 'Durchmesser',
-            "mHeight": 'Messhöhe',
-            "mDirection": 'Messrichtung',
-            "objecttype": 'Objektart',
-            "location": 'Standort',
-            "name": 'Name'
-        }
         result_dict = {
             "number": QObject.tr('Messung Nr.'),
             "idNumber": QObject.tr('ID-Nummer'),
@@ -186,9 +162,24 @@ class DataModel:
         }
         collectedTableNames = []
         collectedTableData = []
+        totalCharactersPerRow = []
+        maxLen = 0
+        for i, (key, value) in enumerate(result_dict.items()):
+            print(i)
+            if (i % 6 == 0 and i > 0):
+                totalCharactersPerRow.append(maxLen+2)
+                print(maxLen)
+                maxLen = 0
 
-        for key, value in result_dict.items():
-            tableTextEditEntry = QTableWidgetItem('{0}\t:'.format(value))
+            maxLen = max(len(value), maxLen)
+
+        print(totalCharactersPerRow)
+        totalCharactersPerRow.append(maxLen + 2)
+
+        for i, (key, value) in enumerate(result_dict.items()):
+            print(i)
+            textString = value.ljust(totalCharactersPerRow[i // 6]-len(value))
+            tableTextEditEntry = QTableWidgetItem(textString)
             font = QFont()
             font.setWeight(QFont.Bold)
             brush = QBrush(QColor("#c44a04"))
@@ -196,39 +187,15 @@ class DataModel:
             tableTextEditEntry.setForeground(brush)
             tableTextEditEntry.setFlags(tableTextEditEntry.flags() & ~Qt.ItemIsEditable)
             collectedTableNames.append(tableTextEditEntry)
-            print("[Debug Info] " + key)
             if(value == ""):
-                print("A")
                 tableItemDataEntry = QTableWidgetItem("")
             else:
                 tableItemDataEntry = QTableWidgetItem(self._data[key] + "  ")
+            if (1 < i < 12):
+                tableItemDataEntry.setFlags(tableItemDataEntry.flags() & ~Qt.ItemIsEditable)
 
             collectedTableData.append(tableItemDataEntry)
 
-        """
-        collectedTableData.append(QLabel(QObject.tr("ID-Nummer\t: ") + self._data["idNumber"]))
-        collectedTableData.append(
-            QLabel(QObject.tr("Bohrtiefe\t: ") + self._data["depthMsmt"] + " cm"))
-        collectedTableData.append(QLabel(
-            QObject.tr("Datum\t: ") + self._data["date"]))
-        collectedTableData.append(QLabel(
-            QObject.tr("Uhrzeit\t: ") + self._data["time"].replace(";",":")))
-        collectedTableData.append(
-            QLabel(QObject.tr("Vorschub\t: ") + self._data["speedFeed"] + " cm/min"))
-        collectedTableData.append(
-            QLabel(QObject.tr("Drehzahl\t: ") + self._data["speedDrill"] + QObject.tr(" U/min")))
-        collectedTableData.append(QLabel(QObject.tr("Nadelstatus\t: ---")))
-        collectedTableData.append(QLabel(QObject.tr("Neigung\t: ") + self._data["tiltAngle"]))
-        collectedTableData.append(QLabel(
-            QObject.tr("Offset\t: ") + self._data["offsetFeed"] + " / " + self._data["offsetDrill"]))
-        collectedTableData.append(QLabel(QObject.tr("Mitteilung\t: ") + self._data["remark"]))
-        collectedTableData.append(QLabel(QObject.tr("Durchmesser\t: ") + self._data["diameter"]))
-        collectedTableData.append(QLabel(QObject.tr("Messhöhe\t: ") + self._data["mHeight"]))
-        collectedTableData.append(QLabel(QObject.tr("Messrichtung\t: ") + self._data["mDirection"]))
-        collectedTableData.append(QLabel(QObject.tr("Objektart\t: ") + self._data["objecttype"]))
-        collectedTableData.append(QLabel(QObject.tr("Standort\t: ") + self._data["location"]))
-        collectedTableData.append(QLabel(QObject.tr("Name\t: ") + self._data["name"]))
-        """
         return [collectedTableNames, collectedTableData]
 
 
@@ -242,8 +209,8 @@ class DataModel:
             try:
                 value = self._data[key]
                 keyValuePairs[key] = value
-            except KeyError:
-                print(f"Warning: Key '{key}' not found in self._data.")
+            except KeyError as kE:
+                logging.exception(f"Warning: Key '{kE.args[0]}' not found in self._data.")
 
         graphDataKeyValues = {"selfName": self._name,
                               "deviceLength": self._deviceLength,

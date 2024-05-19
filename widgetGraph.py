@@ -1,5 +1,6 @@
 # This Python file uses the following encoding: utf-8
 import json
+import logging
 import sys
 
 from PySide6.QtTest import QTest
@@ -237,6 +238,8 @@ class WidgetGraph(QWidget):
 
         # @todo add getter and setter for each of these variables
         # region settings variable
+        self.verticalLayout_3 = None
+        self.tableWidgetMarker = None
         self.heightWidgetTopPerc = 15
         self.heightWidgetGraphPerc = 75
         self.heightWidgetBottomPerc = 10
@@ -400,7 +403,7 @@ class WidgetGraph(QWidget):
         self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
-        self.horizontalSpacer0 = QSpacerItem(50, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        self.horizontalSpacer0 = QSpacerItem(70, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout.addItem(self.horizontalSpacer0)
 
@@ -420,7 +423,7 @@ class WidgetGraph(QWidget):
         self.tableWidgetData = AutoSizedTable(self.widgetDataTop)
         self.tableWidgetData.setObjectName(u"tableWidgetData")
         self.tableWidgetData.setMinimumSize(QSize(0, 0))
-        self.tableWidgetData.setMaximumSize(QSize(1000, 150))
+        self.tableWidgetData.setMaximumSize(QSize(1000, 500))
         self.tableWidgetData.setAutoScroll(False)
         self.tableWidgetData.setProperty("isWrapping", True)
         self.tableWidgetData.setColumnCount(6)
@@ -525,7 +528,7 @@ class WidgetGraph(QWidget):
         self.tableWidgetMarker = AutoSizedTable(self.widgetBottom)
         self.tableWidgetMarker.setObjectName(u"tableWidgetMarker")
         self.tableWidgetMarker.setMinimumSize(QSize(0, 0))
-        self.tableWidgetMarker.setMaximumSize(QSize(1000, 150))
+        self.tableWidgetMarker.setMaximumSize(QSize(1000, 500))
         self.tableWidgetMarker.setAutoScroll(False)
         self.tableWidgetMarker.setProperty("isWrapping", True)
         self.tableWidgetMarker.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
@@ -545,13 +548,12 @@ class WidgetGraph(QWidget):
         self.tableWidgetMarker.setStyleSheet("""QTableView::item:selected {background: none;}""")
         self.tableWidgetMarker.setSizePolicy(sizePolicy2)
 
-        self.tableWidgetMarker.setStyleSheet("QTableView::item{font: 12pt \"Bahnschrift\" Condensed;}"
+        self.tableWidgetMarker.setStyleSheet("QTableView::item{font: 12pt;}"
                                              "QTableWidget::item { margin: 10px; }")
 
         self.horizontalLayout_2.addWidget(self.tableWidgetMarker)
 
         self.horizontalSpacer_2 = QSpacerItem(369, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-
         self.horizontalLayout_2.addItem(self.horizontalSpacer_2)
 
         self.textEditComment = QTextEdit(self.widgetBottom)
@@ -728,7 +730,7 @@ class WidgetGraph(QWidget):
                         return
 
                     if (self.markerList == []):
-                        if("Borke" in name):
+                        if("Borke/Rinde" in name):
                             self.setDxForMarker(event.xdata)
 
                     self.markerName = name
@@ -924,7 +926,7 @@ class WidgetGraph(QWidget):
         return self.flagMarkerLeftFocus or self.flagMarkerRightFocus or self.flagMarkerFocus
 
     def snapOn(self, canvas, focusRect):
-        print("~~~~~~~~~~~~ snapOn ~~~~~~~~~~~~")
+        logging.debug("~~~~~~~~~~~~ snapOn ~~~~~~~~~~~~")
         # @todo on snapon creates temporae gap between linked markers (adjust width of linked marker)
         if ((focusRect.getLeftRect() or focusRect.getNextRectInList() == None)
                 and (focusRect.getRightRect() or focusRect.getLastRectInList() == None)):
@@ -966,7 +968,7 @@ class WidgetGraph(QWidget):
 
     # 90% of this function is actually redundant because CustomRectangles resizeLinks() can take of most of it
     # not gonna change that though.
-    # also @todo fix a bug when adding
+    # also @todo combine markers if leftMarker or richtMarker have the same name/color
     def adjustOverlay(self, event, tmpRect):
         print("~~~~~~~~~~~~ adjustOverlay ~~~~~~~~~~~~")
         try:
