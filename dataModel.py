@@ -165,10 +165,8 @@ class DataModel:
         totalCharactersPerRow = []
         maxLen = 0
         for i, (key, value) in enumerate(result_dict.items()):
-            print(i)
             if (i % 6 == 0 and i > 0):
                 totalCharactersPerRow.append(maxLen+2)
-                print(maxLen)
                 maxLen = 0
 
             maxLen = max(len(value), maxLen)
@@ -177,7 +175,6 @@ class DataModel:
         totalCharactersPerRow.append(maxLen + 2)
 
         for i, (key, value) in enumerate(result_dict.items()):
-            print(i)
             textString = value.ljust(totalCharactersPerRow[i // 6]-len(value))
             tableTextEditEntry = QTableWidgetItem(textString)
             font = QFont()

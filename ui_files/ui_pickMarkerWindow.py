@@ -28,7 +28,7 @@ class Ui_PickMarker(object):
         PickMarker.resize(100, 100)
         PickMarker.setMinimumSize(QSize(100, 0))
         PickMarker.setMaximumSize(QSize(100, 300))
-        PickMarker.setWindowOpacity(0.8)
+        PickMarker.setWindowOpacity(0.85)
         PickMarker.setStyleSheet(""" 
             QLabel{margin:2px; 
             border-radius: 2px;}

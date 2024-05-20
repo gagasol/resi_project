@@ -89,7 +89,6 @@ class PickMarker(QDialog):
 
 
     def loadMarkerDict(self, markerDict):
-        print("ok")
         layoutScrollArea = self.ui.scrollAreaWidgetContents.layout()
         for i in reversed(range(layoutScrollArea.count())):
             widget = layoutScrollArea.itemAt(i).widget()
