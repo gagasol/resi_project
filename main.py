@@ -63,7 +63,17 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.markerWindow = None
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        logging.basicConfig(level=logging.DEBUG)
+
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+
+        file_handler = logging.FileHandler('logfile.log')
+        formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
+
+        file_handler.setFormatter(formatter)
+
+        # add file handler to logger
+        self.logger.addHandler(file_handler)
 
         matplotlib_logger = logging.getLogger('matplotlib')
         matplotlib_logger.setLevel(logging.WARNING)
@@ -136,16 +146,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # @todo add multiple file input
     # @todo get rid of the fileName argument befeore release
     def openButtonClicked(self, fileName=None):
-
+        self.logger.info("~~~~~~~~~~~~ openButtonClicked ~~~~~~~~~~~~")
         fileName, _ = QFileDialog.getOpenFileName(None, "Select File", "", "*.rgp;;*.resi")
+        self.logger.info("filename :{0}".format(fileName))
         if (fileName == ""):
             return
         self.nameOfFile = fileName.split(".")[0].split("/")[-1]
         if (".resi" in fileName):
             with open(fileName, "r") as file:
                 loadedState = json.load(file)
-
+                self.logger.info("loaded state : {0}".format(loadedState))
             for canvas in loadedState:
+                logging.info(" canvas :{0}".format(canvas))
                 widget = WidgetGraph(self, "",  canvas)
                 self.listGraphWidgets.append(widget)
                 self.ui.tabWidget.addTab(widget, self.nameOfFile)
@@ -155,6 +167,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.listGraphWidgets.append(widget)
             self.ui.tabWidget.addTab(widget, self.nameOfFile)
 
+            self.ui.tabWidget.setCurrentIndex(len(self.listGraphWidgets) - 1)
+
         #self.ui.tabWidget.addTab(widget, widget.name)
 
     # functionality for the pushButtonSave QPushButton
@@ -163,6 +177,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         projectSave = []
         for widget in self.listGraphWidgets:
             projectSave.append(widget.getCurrentState())
+            self.logger.info("\nproject saved : \n\n{0}".format(projectSave))
             with open(self.nameOfFile + ".resi", "w") as file:
                 json.dump(projectSave, file)
 
@@ -207,45 +222,30 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
     def saveGraphWidgetAs(self, suffix):
+        """
+        Save the current graph widget as a file with the specified suffix.
+
+        :param suffix: The suffix of the file to be saved (e.g. "png", "pdf").
+        :return: None
+        """
         graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
-        graphWidget.horizontalSpacer0.changeSize(10, 20)
-        graphWidget.horizontalLayout.invalidate()
-        graphWidget.widgetMenu.hide()
-        graphWidget.widgetBottom.hide()
-        graphWidget.labelData.hide()
-        graphWidget.changeWidgetsRelSpace(15, 85, 0)
 
         originalFontDataUneven = graphWidget.tableWidgetData.item(0, 0).font()
         originalFontDataEven = graphWidget.tableWidgetData.item(0, 1).font()
         try:
             originalFontMarker = graphWidget.tableWidgetMarker.item(0, 0).font()
         except AttributeError:
+            originalFontMarker = None
             logging.info("No Markers set so far")
 
-        for i in range(graphWidget.tableWidgetData.rowCount()):
-            for j in range(graphWidget.tableWidgetData.columnCount()):
-                item = graphWidget.tableWidgetData.item(i, j)
-                if (item):
-                    font = item.font()
-                    font.setPointSize(15)
-                    item.setFont(font)
+        self.printSetupStart(graphWidget)
 
-        for i in range(graphWidget.tableWidgetMarker.rowCount()):
-            for j in range(graphWidget.tableWidgetMarker.columnCount()):
-                item = graphWidget.tableWidgetMarker.item(i, j)
-                if  (item):
-                    font = item.font()
-                    font.setPointSize(15)
-                    item.setFont(font)
-
-        graphWidget.tableWidgetMarker.setParent(None)
-        graphWidget.horizontalLayout.insertWidget(2, graphWidget.tableWidgetMarker)
-        graphWidget.tableWidgetMarker.show()
         # @todo add globally
         filename = self.nameOfFile + "." + suffix
         printWidth = 1920
         printHeight = 1080
         scaledPixmap = QPixmap(QSize(printWidth, printHeight))
+        scaledPixmap.fill(Qt.transparent)
         print(scaledPixmap.size())
 
         # @todo as soon as I have a load function in widgetGraph I can change the way I take an image
@@ -268,7 +268,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             print("printing to pdf")
             filename = filename.strip()
             pdfWriter = QPdfWriter(filename)
-            pageSize = QPageSize(QSizeF(210, 297), QPageSize.Millimeter)
+            pageSize = QPageSize(QSizeF(210, 115), QPageSize.Millimeter)
             pdfWriter.setPageSize(pageSize)
             pdfWriter.setResolution(230)
             pdfWriter.setPageMargins(QMarginsF(0, 0, 0, 0))
@@ -278,6 +278,67 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             pdfPainter.end()
             graphWidget.resetWidgetsRelSpace()
 
+        self.printSetupEnd(graphWidget, originalFontDataUneven, originalFontDataEven, originalFontMarker)
+
+
+
+
+    def printSetupStart(self, graphWidget):
+        """
+        :param graphWidget: The graph widget on which the setup changes will be applied.
+        :return: None
+
+        This method is used to make initial setup changes to the given graph widget before printing. It changes the size
+        of the horizontal spacer, invalidates the horizontal layout, hides the widget menu, hides the widget bottom,
+        hides the label data, and changes the relative space of the widgets.
+
+        It also adjusts the font size of the items in the table widget data and table widget marker to 15 point size.
+
+        Finally, it sets the parent of the tablewidgetmarker to None, inserts it into the horizontal layout at index 2,
+        and shows the table widget marker.
+        """
+        graphWidget.horizontalSpacer0.changeSize(10, 20)
+        graphWidget.horizontalLayout.invalidate()
+        graphWidget.widgetMenu.hide()
+        graphWidget.widgetBottom.hide()
+        graphWidget.labelData.hide()
+        graphWidget.changeWidgetsRelSpace(15, 85, 0)
+        graphWidget.setAttribute(Qt.WA_NoSystemBackground, True)
+        graphWidget.setAttribute(Qt.WA_TranslucentBackground, True)
+        for i in range(graphWidget.tableWidgetData.rowCount()):
+            for j in range(graphWidget.tableWidgetData.columnCount()):
+                item = graphWidget.tableWidgetData.item(i, j)
+                if (item):
+                    font = item.font()
+                    font.setPointSize(15)
+                    item.setFont(font)
+
+        for i in range(graphWidget.tableWidgetMarker.rowCount()):
+            for j in range(graphWidget.tableWidgetMarker.columnCount()):
+                item = graphWidget.tableWidgetMarker.item(i, j)
+                if (item):
+                    font = item.font()
+                    font.setPointSize(15)
+                    item.setFont(font)
+
+        graphWidget.tableWidgetMarker.setParent(None)
+        graphWidget.horizontalLayout.insertWidget(2, graphWidget.tableWidgetMarker)
+        graphWidget.tableWidgetMarker.show()
+
+    def printSetupEnd(self, graphWidget, originalFontDataUneven, originalFontDataEven, originalFontMarker):
+        """
+        :param graphWidget: The graph widget containing the table widgets.
+        :param originalFontDataUneven: The original font to be set for the table data items on odd columns.
+        :param originalFontDataEven: The original font to be set for the table data items on even columns.
+        :param originalFontMarker: The original font to be set for the table marker items.
+        :return: None
+
+        This method sets the original fonts for the table data items and table marker items in the given graph widget.
+        It also adjusts the size of the horizontal spacer and shows the necessary components in the graph widget.
+
+        """
+        graphWidget.setAttribute(Qt.WA_NoSystemBackground, False)
+        graphWidget.setAttribute(Qt.WA_TranslucentBackground, False)
         for i in range(graphWidget.tableWidgetData.rowCount()):
             for j in range(graphWidget.tableWidgetData.columnCount()):
                 item = graphWidget.tableWidgetData.item(i, j)
@@ -300,7 +361,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         graphWidget.tableWidgetMarker.setParent(None)
         graphWidget.horizontalLayout_2.insertWidget(0, graphWidget.tableWidgetMarker)
         graphWidget.tableWidgetMarker.show()
-
 
 
     def toggleOverlayButtonClicked(self):
@@ -373,8 +433,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def closeEvent(self, event):
         if (self.defaultPresetName is not None):
             saveData = [self.nameToColorDict, self.markerPresetList, self.defaultPresetName]
+            self.logger.info("~~~~~~ saveData defaultPresetName is not None ~~~~~~ \n {0}".format(saveData))
         else:
             saveData = [self.nameToColorDict, self.markerPresetList]
+            self.logger.info("~~~~~~ saveData defaultPresetName is None ~~~~~~\n {0}".format(saveData))
         with open("markerSave.json", "w") as f:
             json.dump(saveData, f)
 
