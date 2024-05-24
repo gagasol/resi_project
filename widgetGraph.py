@@ -5,7 +5,7 @@ import sys
 
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, QWidget, QRadioButton, QCheckBox, QTableWidget, \
-    QHeaderView, QAbstractScrollArea, QLabel, QTableWidgetItem, QDialog
+    QHeaderView, QAbstractScrollArea, QLabel, QTableWidgetItem, QDialog, QStyledItemDelegate, QLineEdit
 from PySide6 import QtWidgets
 
 import numpy as np
@@ -23,7 +23,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
                            QFont, QFontDatabase, QGradient, QIcon,
                            QImage, QKeySequence, QLinearGradient, QPainter,
                            QPalette, QPixmap, QRadialGradient, QTransform,
-                           QPdfWriter, QPainter, QPageSize)
+                           QPdfWriter, QPainter, QPageSize, QKeyEvent)
 from PySide6.QtWidgets import (QApplication, QHBoxLayout, QListView, QListWidget,
                                QListWidgetItem, QSizePolicy, QSpacerItem, QTextEdit,
                                QVBoxLayout, QWidget)
@@ -224,7 +224,66 @@ class AutoSizedTable(QTableWidget):
         super().__init__(*args)
         vh = self.verticalHeader()
         vh.setSectionResizeMode(QHeaderView.Stretch)
+        self.setItemDelegate(MyDelegate(self))
 
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        # Disable moving down on Enter
+        if event.key() in {Qt.Key_Return, Qt.Key_Enter}:
+            event.ignore()
+        else:
+            super().keyPressEvent(event)
+
+    def focusNextPrevChild(self, next):
+        if (next):
+            if (self.currentRow() + 1 < self.rowCount()):
+                self.setCurrentCell(self.currentRow() + 1, self.currentColumn())
+            else:
+                if (self.currentColumn() + 1 < self.columnCount()):
+                    self.setCurrentCell(0, self.currentColumn() + 1)
+        else:
+            if (self.currentRow() - 1 >= 0):
+                self.setCurrentCell(self.currentRow() - 1, self.currentColumn())
+            else:
+                if (self.currentColumn() - 1 >= 0):
+                    self.setCurrentCell(self.rowCount() - 1, self.currentColumn() - 1)
+
+        return True
+
+
+class MyDelegate(QStyledItemDelegate):
+    def createEditor(self, parent, option, index):
+        editor = super().createEditor(parent, option, index)
+
+        if isinstance(editor, QLineEdit):
+            # Get notified when editing is finished
+            editor.editingFinished.connect(self._handleEditingFinished)
+
+        return editor
+
+    def _handleEditingFinished(self):
+        editor = self.sender()
+
+        if not editor:
+            return
+
+        editor.editingFinished.disconnect(self._handleEditingFinished)
+
+        # After editing, move the focus to the next cell
+        tableWidget = editor.parent().parent()
+        current = tableWidget.currentItem()
+        row = current.row()
+        column = current.column()
+        print("A")
+        if row < tableWidget.rowCount() - 1:
+            nextItem = tableWidget.item(row, column)
+            if nextItem:
+                tableWidget.setCurrentItem(nextItem)
+        elif column < tableWidget.columnCount() - 1:
+            nextItem = tableWidget.item(0, column)
+            if nextItem:
+                tableWidget.setCurrentItem(nextItem)
+
+        editor.editingFinished.connect(self._handleEditingFinished)
 
     def resizeEvent(self, event):
         ratio = self.height() / self.rowCount() if self.rowCount() else 0
@@ -472,7 +531,8 @@ class WidgetGraph(QWidget):
 
 
         self.tableWidgetData.setStyleSheet("QTableView::item:selected {background: none;}"
-                                           "QTableWidget::item { margin: 0px; }")
+                                           "QTableWidget::item { margin: 0px;"
+                                           "background-color: transparent; }")
 
         for i in range(6):
             self.tableWidgetData.setRowHeight(i, 50)
@@ -574,7 +634,8 @@ class WidgetGraph(QWidget):
         self.tableWidgetMarker.setSizePolicy(sizePolicy2)
 
         self.tableWidgetMarker.setStyleSheet("QTableView::item{font: 12pt;}"
-                                             "QTableWidget::item { margin: 10px; }")
+                                             "QTableWidget::item { margin: 0px; "
+                                             "background-color: transparent; }")
 
         self.horizontalLayout_2.addWidget(self.tableWidgetMarker)
 
@@ -737,7 +798,7 @@ class WidgetGraph(QWidget):
                     and self.flagMarking and not self.flagShiftHeld):
 
                 if (self.clickCount == 0):
-                    self.logger.info("************ Marking_start ************")
+                    self.logger.info("*************** Marking_start ***************")
                     self.focusedMarker = None
                     self.flagMarkerFocus = False
                     self.xPosMarkerStart = event.xdata
@@ -979,11 +1040,12 @@ class WidgetGraph(QWidget):
         return self.flagMarkerLeftFocus or self.flagMarkerRightFocus or self.flagMarkerFocus
 
     def snapOn(self, canvas, focusRect):
-        self.logger.info("~~~~~~~~~~~~ snapOn ~~~~~~~~~~~~")
         # @todo on snapon creates temporae gap between linked markers (adjust width of linked marker)
         if ((focusRect.getLeftRect() or focusRect.getNextRectInList() == None)
                 and (focusRect.getRightRect() or focusRect.getLastRectInList() == None)):
             return
+
+        self.logger.info("~~~~~~~~~~~~ snapOn ~~~~~~~~~~~~")
 
         snapDelta = self.canvasGraph.axes.get_xlim()[1] * 1 / 200
         nextAndLastRect = [focusRect.getLastRectInList(), focusRect.getNextRectInList()]
@@ -998,15 +1060,15 @@ class WidgetGraph(QWidget):
 
             if (focusRect.getRightRect() is None
                     and focusRectXEnd >= fixedRectXStart-snapDelta > focusRectXStart):
-                focusRect.set_width(fixedRectXEnd - focusRectXStart)
-                self.logger.info(" selfIndex: {0} rightMarker: {1}".format(focusRect.index, marker.index))
+                focusRect.set_width(fixedRectXStart - focusRectXStart)
+                self.logger.info(" rightRectTrue selfIndex: {0} rightMarker: {1}".format(focusRect.index, marker.index))
                 focusRect.setRightRect(marker)
                 marker.setLeftRect(focusRect)
                 if (focusRect.getLeftRect()):
                     focusRect.getLeftRect().set_width(focusRect.getLeftRect().get_width() + snapDelta)
             elif (focusRect.getLeftRect() is None
                   and focusRectXStart <= fixedRectXEnd+snapDelta < focusRectXEnd):
-                self.logger.info(" selfIndex: {0} leftMarker: {1}".format(focusRect.index, marker.index))
+                self.logger.info(" leftRectTrue selfIndex: {0} leftMarker: {1}".format(focusRect.index, marker.index))
                 focusRect.set_x(fixedRectXEnd)
                 focusRect.setLeftRect(marker)
                 marker.setRightRect(focusRect)
