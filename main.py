@@ -305,6 +305,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         graphWidget.changeWidgetsRelSpace(15, 85, 0)
         graphWidget.setAttribute(Qt.WA_NoSystemBackground, True)
         graphWidget.setAttribute(Qt.WA_TranslucentBackground, True)
+        graphWidget.vLineRect.set_visible(True)
         for i in range(graphWidget.tableWidgetData.rowCount()):
             for j in range(graphWidget.tableWidgetData.columnCount()):
                 item = graphWidget.tableWidgetData.item(i, j)
@@ -361,6 +362,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         graphWidget.tableWidgetMarker.setParent(None)
         graphWidget.horizontalLayout_2.insertWidget(0, graphWidget.tableWidgetMarker)
         graphWidget.tableWidgetMarker.show()
+        graphWidget.vLineRect.set_visible(True)
 
 
     def toggleOverlayButtonClicked(self):
