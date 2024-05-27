@@ -234,7 +234,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.ui.tabWidget.removeTab(index)
 
 
-
     # functionality for the pushButtonWindowView QPushButton
     def windowButtonClicked(self):
         if (self.ui.stackedWidgetWorkArea.currentIndex() != 1):

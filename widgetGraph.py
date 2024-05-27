@@ -240,6 +240,8 @@ class AutoSizedTable(QTableWidget):
             else:
                 if (self.currentColumn() + 1 < self.columnCount()):
                     self.setCurrentCell(0, self.currentColumn() + 1)
+                else:
+                    self.setCurrentCell(0, 0)
         else:
             if (self.currentRow() - 1 >= 0):
                 self.setCurrentCell(self.currentRow() - 1, self.currentColumn())

@@ -92,6 +92,9 @@ class MarkerPresetWindow(QDialog):
         if (textCurrentItem == "Add Marker"):
             selectMarkerWindow = EditMarkerPresetWindow(self, self.listPresets[self.sender().id_number],
                                                         self.sender().id_number)
+            selectMarkerWindow.exec()
+            return
+            """
             self.setWindowModality(Qt.NonModal)
             selectMarkerWindow.setWindowModality(Qt.ApplicationModal)
             selectMarkerWindow.setAttribute(Qt.WA_DeleteOnClose)
@@ -100,6 +103,11 @@ class MarkerPresetWindow(QDialog):
             waitForMarkerInputLoop = QEventLoop()
             selectMarkerWindow.destroyed.connect(waitForMarkerInputLoop.quit)
             waitForMarkerInputLoop.exec()
+            """
+
+        print(self.sender().id_number, self.comboBoxCount)
+        if ( self.sender().id_number == self.comboBoxCount ):
+            pass
 
         preset = self.listPresets[self.sender().id_number]
         if (textCurrentItem in preset):
@@ -124,6 +132,8 @@ class MarkerPresetWindow(QDialog):
             dictMarker = {"_NameForPreset", text}
 
             selectMarkerWindow = EditMarkerPresetWindow(self, argDictMarker=dictMarker)
+            selectMarkerWindow.exec()
+            """
             self.setWindowModality(Qt.NonModal)
             selectMarkerWindow.setWindowModality(Qt.ApplicationModal)
             selectMarkerWindow.setAttribute(Qt.WA_DeleteOnClose)
@@ -132,13 +142,19 @@ class MarkerPresetWindow(QDialog):
             waitForMarkerInputLoop = QEventLoop()
             selectMarkerWindow.destroyed.connect(waitForMarkerInputLoop.quit)
             waitForMarkerInputLoop.exec()
-
+            """
     def loadPresets(self):
 
         if (self.listComboBoxPresets):
             self.comboBoxCount = 0
-            for comboBox in self.listComboBoxPresets:
-                self.ui.scrollAreaWidgetContents.layout().removeWidget(comboBox)
+            for i in range(len(self.listComboBoxPresets[1])):
+                if (i == len(self.listComboBoxPresets[1]) - 1):
+                    self.ui.scrollAreaWidgetContents.layout().removeWidget(self.listComboBoxPresets[1][i])
+                    break
+
+                self.ui.scrollAreaWidgetContents.layout().removeWidget(self.listComboBoxPresets[1][i].parent())
+
+            self.listComboBoxPresets = []
 
         tmpComboBoxMarker = []
         tmpComboBoxes = []
@@ -175,6 +191,19 @@ class MarkerPresetWindow(QDialog):
             tmpComboBox.activated.connect(self.onComboBoxActivated)
             tmpComboBoxMarker.append(tmpComboBox)
             tmpComboBoxes.append(tmpComboBox)
+
+        tmpComboBox = QComboBox()
+        tmpComboBox.addItem(QObject.tr("All markers"))
+        for index, (key, value) in enumerate(self.dictAllMarkers.items()):
+            pixmap = QPixmap(30, 30)
+            pixmap.fill(QColor(value))
+            icon = QIcon(pixmap)
+            tmpComboBox.addItem(key)
+            tmpComboBox.setItemIcon(index+1, icon)
+
+        tmpComboBoxes.append(tmpComboBox)
+
+        self.ui.scrollAreaWidgetContents.layout().insertWidget(self.comboBoxCount, tmpComboBox)
 
         self.listComboBoxPresets = [tmpComboBoxMarker, tmpComboBoxes]
 
