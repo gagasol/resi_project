@@ -12,12 +12,12 @@ class DataModel:
         self._dataFeed = None
         self._deviceLength = None
         self._customData = {
-            "diameter": "---",
-            "mHeight": "---",
-            "mDirection": "---",
-            "objecttype": "---",
-            "location": "---",
-            "name": "---"
+            "0_diameter": "---",
+            "1_mHeight": "---",
+            "2_mDirection": "---",
+            "3_objecttype": "---",
+            "4_location": "---",
+            "5_name": "---"
         }
         self.jsonData = jsonData
         self.markerStateList = []
@@ -150,12 +150,12 @@ class DataModel:
             "offset": QObject.tr('Offset'),
             "graphAvgShow": QObject.tr('Mittelung'),
             "empty": "",
-            "diameter": QObject.tr('Durchmesser'),
-            "mHeight": QObject.tr('Messhöhe'),
-            "mDirection": QObject.tr('Messrichtung'),
-            "objecttype": QObject.tr('Objektart'),
-            "location": QObject.tr('Standort'),
-            "name": QObject.tr('Name')
+            "0_diameter": QObject.tr('Durchmesser'),
+            "1_mHeight": QObject.tr('Messhöhe'),
+            "2_mDirection": QObject.tr('Messrichtung'),
+            "3_objecttype": QObject.tr('Objektart'),
+            "4_location": QObject.tr('Standort'),
+            "5_name": QObject.tr('Name')
         }
         collectedTableNames = []
         collectedTableData = []
@@ -168,7 +168,6 @@ class DataModel:
 
             maxLen = max(len(value), maxLen)
 
-        print(totalCharactersPerRow)
         totalCharactersPerRow.append(maxLen + 2)
 
         for i, (key, value) in enumerate(result_dict.items()):
@@ -191,6 +190,21 @@ class DataModel:
             collectedTableData.append(tableItemDataEntry)
 
         return [collectedTableNames, collectedTableData]
+
+
+    def changeCustomDataEntry(self, row, column, entry):
+        if (column == 1):
+            if (row == 0):
+                self._data["number"] = entry
+            else:
+                self._data["idNumber"] = entry
+        else:
+            index = row + column - 5
+            for key, value in self._data.items():
+                if (str(index)+"_" in key):
+                    self._data[key] = entry
+                    break
+
 
 
     def getSaveState(self):
