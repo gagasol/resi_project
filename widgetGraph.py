@@ -240,6 +240,8 @@ class AutoSizedTable(QTableWidget):
             else:
                 if (self.currentColumn() + 1 < self.columnCount()):
                     self.setCurrentCell(0, self.currentColumn() + 1)
+                else:
+                    self.setCurrentCell(0, 0)
         else:
             if (self.currentRow() - 1 >= 0):
                 self.setCurrentCell(self.currentRow() - 1, self.currentColumn())
@@ -972,6 +974,8 @@ class WidgetGraph(QWidget):
             tmpListRect.append(tmpRect)
             self.addTableMarkerEntry(len(tmpListRect) - 1, markerState["name"], color, round(markerState["x"], 2),
                                      round(markerState["x"] + markerState["width"], 2))
+            self.updateMarkerIndices()
+            self.snapOn(self.canvasGraph, tmpRect)
 
         else:
             width = event.xdata - self.xPosMarkerStart
@@ -1041,8 +1045,8 @@ class WidgetGraph(QWidget):
 
     def snapOn(self, canvas, focusRect):
         # @todo on snapon creates temporae gap between linked markers (adjust width of linked marker)
-        if ((focusRect.getLeftRect() or focusRect.getNextRectInList() == None)
-                and (focusRect.getRightRect() or focusRect.getLastRectInList() == None)):
+        if ((focusRect.getLeftRect() or focusRect.getNextRectInList() is None)
+                and (focusRect.getRightRect() or focusRect.getLastRectInList() is None)):
             return
 
         self.logger.info("~~~~~~~~~~~~ snapOn ~~~~~~~~~~~~")
@@ -1051,7 +1055,7 @@ class WidgetGraph(QWidget):
         nextAndLastRect = [focusRect.getLastRectInList(), focusRect.getNextRectInList()]
 
         for marker in nextAndLastRect:
-            if (marker == None):
+            if (marker is None):
                 continue
             fixedRectXStart = marker.get_x()
             fixedRectXEnd = marker.get_x() + marker.get_width()

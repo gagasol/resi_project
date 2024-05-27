@@ -3,9 +3,10 @@ import json
 import logging
 import sys
 
-from PySide6.QtCore import Qt, QEventLoop, QPoint, QRect, QSize, QSizeF, QMarginsF
+from PySide6.QtCore import Qt, QEventLoop, QPoint, QRect, QSize, QSizeF, QMarginsF, QObject
 from PySide6.QtGui import QIcon, QPdfWriter, QPageSize, QPainter, QPixmap
-from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, QWidget, QFileDialog, QMdiArea, QMdiSubWindow
+from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, QWidget, QFileDialog, QMdiArea, QMdiSubWindow, \
+    QMessageBox
 from PySide6 import QtWidgets
 
 import numpy as np
@@ -66,6 +67,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
+
+        self.ui.tabWidget.tabCloseRequested.connect(self.closeTab)
 
         file_handler = logging.FileHandler('logfile.log')
         formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
@@ -156,11 +159,26 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             with open(fileName, "r") as file:
                 loadedState = json.load(file)
                 self.logger.info("loaded state : {0}".format(loadedState))
+
+            print("loadedState len = 1")
+            logging.info(" canvas :{0}".format(loadedState))
+            widget = WidgetGraph(self, "", loadedState)
+            self.listGraphWidgets.append(widget)
+            self.ui.tabWidget.addTab(widget, self.nameOfFile)
+            self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() - 1)
+
+        elif(".project" in fileName):
+            with open(fileName, "r") as file:
+                loadedState = json.load(file)
+                self.logger.info("loaded state : {0}".format(loadedState))
+
             for canvas in loadedState:
+                print("loadedState len > 1")
                 logging.info(" canvas :{0}".format(canvas))
                 widget = WidgetGraph(self, "",  canvas)
                 self.listGraphWidgets.append(widget)
                 self.ui.tabWidget.addTab(widget, self.nameOfFile)
+
         else:
             widget = WidgetGraph(self, fileName)
             print(fileName)
@@ -168,6 +186,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.ui.tabWidget.addTab(widget, self.nameOfFile)
 
             self.ui.tabWidget.setCurrentIndex(len(self.listGraphWidgets) - 1)
+            self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() - 1)
 
         #self.ui.tabWidget.addTab(widget, widget.name)
 
@@ -178,8 +197,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         for widget in self.listGraphWidgets:
             projectSave.append(widget.getCurrentState())
             self.logger.info("\nproject saved : \n\n{0}".format(projectSave))
-            with open(self.nameOfFile + ".resi", "w") as file:
-                json.dump(projectSave, file)
+            with open(widget.name + ".resi", "w") as file:
+                json.dump(widget.getCurrentState(), file)
 
         with open(".project", "w") as file:
             json.dump(projectSave, file)
@@ -196,6 +215,25 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.ui.stackedWidgetWorkArea.setCurrentIndex(0)
 
+
+    def closeTab(self, index):
+        tabWidget = self.ui.tabWidget.widget(index)
+        reply = QMessageBox.question(self, QObject.tr("Confirm close"), QObject.tr("Save before you close?"),
+                                     QMessageBox.Save | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
+        if (reply == QMessageBox.Save):
+            if tabWidget is not None:
+                with open(tabWidget.name + ".resi", "w") as file:
+                    json.dump(tabWidget.getCurrentState(), file)
+                tabWidget.deleteLater()
+
+            self.ui.tabWidget.removeTab(index)
+
+        elif (reply == QMessageBox.No):
+            if tabWidget is not None:
+                tabWidget.deleteLater()
+            self.ui.tabWidget.removeTab(index)
+
+
     # functionality for the pushButtonWindowView QPushButton
     def windowButtonClicked(self):
         if (self.ui.stackedWidgetWorkArea.currentIndex() != 1):
@@ -210,7 +248,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.ui.mdiArea.addSubWindow(widget)
 
         self.ui.stackedWidgetWorkArea.setCurrentIndex(1)
-        self.ui.mdiArea.tileSubWindowsV()
+        self.ui.mdiArea.tileSubWindows()
 
 
     def pdfButtonClicked(self):
@@ -279,8 +317,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             graphWidget.resetWidgetsRelSpace()
 
         self.printSetupEnd(graphWidget, originalFontDataUneven, originalFontDataEven, originalFontMarker)
-
-
 
 
     def printSetupStart(self, graphWidget):

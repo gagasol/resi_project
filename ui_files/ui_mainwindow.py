@@ -224,6 +224,7 @@ class Ui_MainWindow(object):
         self.tabWidget.setObjectName(u"tabWidget")
         self.tabWidget.setEnabled(True)
         self.tabWidget.setMovable(True)
+        self.tabWidget.setTabsClosable(True)
 
         self.horizontalLayout_2.addWidget(self.tabWidget)
 

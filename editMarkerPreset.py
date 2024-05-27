@@ -56,7 +56,7 @@ class TextEntryDialog(QDialog):
         self.layout.addWidget(self.ok_button)
 
 
-class EditMarkerPresetWindow(QWidget):
+class EditMarkerPresetWindow(QDialog):
     def __init__(self, MarkerPresetWindow, argDictMarker=None, presetInd=None, parent=None):
         super().__init__(parent)
         self.ui = Ui_markerPresetWindow()
@@ -205,13 +205,13 @@ class EditMarkerPresetWindow(QWidget):
         if (widget != None):
             if(not self.flagDelete):
                 dialog = QInputDialog()
-                dialog.exec()
+                if (dialog.exec()):
 
-                text = dialog.textValue()
-                color = QtWidgets.QColorDialog.getColor().name()
+                    text = dialog.textValue()
+                    color = QtWidgets.QColorDialog.getColor().name()
 
-                color = argColor if color == "#ffffff" or color == "#000000" else color
-                text = argText if text == "" else text
+                    color = argColor if color == "#ffffff" or color == "#000000" else color
+                    text = argText if text == "" else text
             for i in range(len(self.dictMarkerList)):
                 if (argText == self.dictMarkerList[i][0]):
                     if (self.flagDelete):
