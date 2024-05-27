@@ -25,11 +25,8 @@ class DataModel:
 
         if ("rgp" in datasource.lower()):
             self._data = self._readDataFromRGP(datasource)
-            print(self._data)
-            for nameKey in listNameKeys:
-                self._name = self._name + str(self._data[nameKey]) + "_"
 
-            self._name = self._name[:-1]
+            self._name = datasource.split(".")[0].split("/")[-1]
             self._deviceLength = self._data["deviceLength"]
         elif (datasource == ""):
             self._readDataFromCustom(datasource)
