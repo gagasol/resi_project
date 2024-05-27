@@ -275,7 +275,6 @@ class MyDelegate(QStyledItemDelegate):
         current = tableWidget.currentItem()
         row = current.row()
         column = current.column()
-        print("A")
         if row < tableWidget.rowCount() - 1:
             nextItem = tableWidget.item(row, column)
             if nextItem:
@@ -715,8 +714,13 @@ class WidgetGraph(QWidget):
             self.tableWidgetData.setItem(m, n, dataSet[0][i])
             self.tableWidgetData.setItem(m, l, dataSet[1][i])
 
+        self.tableWidgetData.cellChanged.connect(self.onCellChangeTableTop)
 
-        #self.tableWidgetData.setItem(0, 0, QTableWidgetItem("This shows in the first row/column"))
+
+    def onCellChangeTableTop(self, row, column):
+        print(row, column)
+        entry = self.tableWidgetData.item(row, column).text()
+        self.dataModel.changeCustomDataEntry(row, column, entry)
 
 
 
