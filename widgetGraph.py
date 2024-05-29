@@ -224,24 +224,37 @@ class AutoSizedTable(QTableWidget):
         super().__init__(*args)
         vh = self.verticalHeader()
         vh.setSectionResizeMode(QHeaderView.Stretch)
-        self.setItemDelegate(MyDelegate(self))
+        #self.setItemDelegate(MyDelegate(self))
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         # Disable moving down on Enter
         if event.key() in {Qt.Key_Return, Qt.Key_Enter}:
-            event.ignore()
+            self.focusNextPrevChild(True)
         else:
             super().keyPressEvent(event)
 
     def focusNextPrevChild(self, next):
         if (next):
+            currentRow = self.currentRow()
+            currentColumn = self.currentColumn()
+            while True:
+                currentColumn = (currentColumn + (currentRow + 1) // 6) % self.columnCount()
+                currentRow = (currentRow + 1) % self.rowCount()
+
+                nextItem = self.item(currentRow, currentColumn)
+
+                if (nextItem and nextItem.flags() & Qt.ItemIsEditable):
+                    self.setCurrentCell(nextItem.row(), nextItem.column())
+                    break
+
+            """        
             if (self.currentRow() + 1 < self.rowCount()):
                 self.setCurrentCell(self.currentRow() + 1, self.currentColumn())
             else:
                 if (self.currentColumn() + 1 < self.columnCount()):
                     self.setCurrentCell(0, self.currentColumn() + 1)
                 else:
-                    self.setCurrentCell(0, 0)
+                    self.setCurrentCell(0, 0)"""
         else:
             if (self.currentRow() - 1 >= 0):
                 self.setCurrentCell(self.currentRow() - 1, self.currentColumn())
@@ -322,7 +335,8 @@ class WidgetGraph(QWidget):
         self.markerList = []
         self.defaultMarkerDictName = ""
 
-        self.deviceLength = None
+        self.depthMsmt = None
+        self.deviceLength = 40
 
         self.dxMarkerForTable = 0
         self.flagSetDxForMarker = False
@@ -474,7 +488,7 @@ class WidgetGraph(QWidget):
 
     def setUpUi(self):
 
-        self.name, deviceLength, dataDrill, dataFeed = self.dataModel.getGraphData()
+        self.name, depthMsmt, dataDrill, dataFeed = self.dataModel.getGraphData()
 
         self.setFocusPolicy(Qt.ClickFocus)
 
@@ -557,10 +571,12 @@ class WidgetGraph(QWidget):
         self.canvasGraph.axes.set_xlabel('Depth')
         self.canvasGraph.axes.set_ylabel('Data')
         # @todo remove later
-        self.deviceLength = float(deviceLength)
-        self.canvasGraph.axes.set_xlim(0, self.deviceLength+0.1)
-        step = self.deviceLength / len(dataDrill)
-        x = np.arange(0, self.deviceLength, step)
+        self.depthMsmt = float(depthMsmt)
+        self.canvasGraph.axes.set_xlim(0, self.deviceLength + 0.1)
+        step = self.depthMsmt / len(dataDrill)
+        #stepFeed = self.deviceLength / len(dataFeed)
+        x = np.arange(0, self.depthMsmt, step)[:len(dataDrill)]
+        #xFeed = np.arange(0, self.deviceLength, stepFeed)[:len(dataFeed)]
         self.canvasGraph.axes.plot(x, dataDrill, linewidth=0.7)
         self.canvasGraph.axes.plot(x, dataFeed, linewidth=0.7)
         self.canvasGraph.figure.subplots_adjust(left=0.036, bottom=0.2490168523424322, right=0.98, top=0.98)

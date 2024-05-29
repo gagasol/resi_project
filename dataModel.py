@@ -10,7 +10,7 @@ class DataModel:
         self._name = ""
         self._dataDrill = None
         self._dataFeed = None
-        self._deviceLength = None
+        self._depthMsmt = None
         self._customData = {
             "0_diameter": "---",
             "1_mHeight": "---",
@@ -27,7 +27,7 @@ class DataModel:
             self._data = self._readDataFromRGP(datasource)
 
             self._name = datasource.split(".")[0].split("/")[-1]
-            self._deviceLength = self._data["deviceLength"]
+            self._depthMsmt = self._data["depthMsmt"]
         elif (datasource == ""):
             self._readDataFromCustom(datasource)
 
@@ -115,7 +115,7 @@ class DataModel:
 
         self._data = loadedState["data"]
         self._name = self._data["selfName"]
-        self._deviceLength = self._data["deviceLength"]
+        self._depthMsmt = self._data["depthMsmt"]
         self._dataDrill = self._data["dataDrill"]
         self._dataFeed = self._data["dataFeed"]
         for markerState in loadedState["markerState"]:
@@ -133,7 +133,7 @@ class DataModel:
 
 
     def getGraphData(self):
-        return [self._name, self._deviceLength, self._dataDrill, self._dataFeed]
+        return [self._name, self._depthMsmt, self._dataDrill, self._dataFeed]
 
 
     def getTablaTopData(self):#c44a04
@@ -180,6 +180,7 @@ class DataModel:
             tableTextEditEntry.setFont(font)
             tableTextEditEntry.setForeground(brush)
             tableTextEditEntry.setFlags(tableTextEditEntry.flags() & ~Qt.ItemIsEditable)
+            tableTextEditEntry.setFlags(tableTextEditEntry.flags() & ~Qt.ItemIsSelectable)
             collectedTableNames.append(tableTextEditEntry)
             if(value == ""):
                 tableItemDataEntry = QTableWidgetItem("")
@@ -188,13 +189,14 @@ class DataModel:
                 font.setFamily("Tahoma")
                 brush = QBrush(QColor("#1f1bf7"))
                 if (key == "depthMsmt"):
-                    tableItemDataEntry = QTableWidgetItem(str(int(float(self._data[key]))) + "  ")
+                    tableItemDataEntry = QTableWidgetItem(self._data[key] + "  ")
                 else:
                     tableItemDataEntry = QTableWidgetItem(self._data[key] + "  ")
                 tableItemDataEntry.setFont(fontDataEntry)
                 tableItemDataEntry.setForeground(brush)
             if (1 < i < 12):
                 tableItemDataEntry.setFlags(tableItemDataEntry.flags() & ~Qt.ItemIsEditable)
+                tableItemDataEntry.setFlags(tableItemDataEntry.flags() & ~Qt.ItemIsSelectable)
 
             collectedTableData.append(tableItemDataEntry)
 
@@ -230,7 +232,7 @@ class DataModel:
                 logging.exception(f"Warning: Key '{kE.args[0]}' not found in self._data.")
 
         graphDataKeyValues = {"selfName": self._name,
-                              "deviceLength": self._deviceLength,
+                              "deviceLength": self._depthMsmt,
                               "dataDrill": self._dataDrill,
                               "dataFeed": self._dataFeed}
 

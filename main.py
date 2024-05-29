@@ -181,7 +181,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             widget = WidgetGraph(self, fileName)
             print(fileName)
             self.listGraphWidgets.append(widget)
-            self.ui.tabWidget.addTab(widget, self.nameOfFile)
+            self.ui.tabWidget.addTab(widget, self.nameOfFile+".rpg")
 
             self.ui.tabWidget.setCurrentIndex(len(self.listGraphWidgets) - 1)
             self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() - 1)
@@ -195,10 +195,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         for widget in self.listGraphWidgets:
             projectSave.append(widget.getCurrentState())
             self.logger.info("\nproject saved : \n\n{0}".format(projectSave))
-            with open(widget.name + ".resi", "w") as file:
+            with open("./data/" + widget.name + ".resi", "w") as file:
                 json.dump(widget.getCurrentState(), file)
 
-        with open(".project", "w") as file:
+        with open("./data/a.project", "w") as file:
             json.dump(projectSave, file)
 
         print("saveButtonClicked")
@@ -277,7 +277,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.printSetupStart(graphWidget)
 
         # @todo add globally
-        filename = self.nameOfFile + "." + suffix
+        filename = self.ui.tabWidget.tabText(self.ui.tabWidget.currentIndex())
+        if (".rpg" in filename):
+            filename = filename.replace(".rpg", "." + suffix)
+        else:
+            filename = filename + "." + suffix
         printWidth = 1920
         printHeight = 1080
         scaledPixmap = QPixmap(QSize(printWidth, printHeight))
@@ -296,13 +300,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         if (suffix == "png"):
             print("printing to png")
-            filename = filename
+            filename = "./data/" + filename
             scaledPixmap.save(filename)
             graphWidget.resetWidgetsRelSpace()
 
         elif (suffix == "pdf"):
             print("printing to pdf")
-            filename = filename.strip()
+            filename = "./data/" + filename.strip()
             pdfWriter = QPdfWriter(filename)
             pageSize = QPageSize(QSizeF(210, 115), QPageSize.Millimeter)
             pdfWriter.setPageSize(pageSize)
@@ -458,7 +462,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def loadPreset(self):
         try:
-            with open("markerSave.json", "r") as file:
+            with open("./settings/markerSave.json", "r") as file:
                 loadedFile = json.load(file)
                 self.nameToColorDict = loadedFile[0]
                 self.markerPresetList = loadedFile[1]
@@ -471,7 +475,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             saveData = [self.nameToColorDict, self.markerPresetList, self.defaultPresetName]
         else:
             saveData = [self.nameToColorDict, self.markerPresetList]
-        with open("markerSave.json", "w") as f:
+        with open("./settings/markerSave.json", "w") as f:
             json.dump(saveData, f)
 
     # algorithms
