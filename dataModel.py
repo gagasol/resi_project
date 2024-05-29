@@ -103,7 +103,10 @@ class DataModel:
                     continue
 
                 elif ("diameter" in line):
-                    self._customData["0_diameter"] = float(line.split(":")[1].strip()[:-1])
+                    if ("0.0" in line):
+                        self._customData["0_diameter"] = ""
+                    else:
+                        self._customData["0_diameter"] = float(line.split(":")[1].strip()[:-1])
 
                 elif ("object\":" in line):
                     try:
@@ -202,8 +205,8 @@ class DataModel:
                 fontDataEntry = QFont()
                 font.setFamily("Tahoma")
                 brush = QBrush(QColor("#1f1bf7"))
-                if (key == "depthMsmt"):
-                    tableItemDataEntry = QTableWidgetItem(str(self._data[key]) + "  ")
+                if (key == "tiltAngle"):
+                    tableItemDataEntry = QTableWidgetItem(str(int(round(float(self._data[key]) + 0.001, 0) - 90)) + "  ")
                 else:
                     tableItemDataEntry = QTableWidgetItem(str(self._data[key]) + "  ")
                 tableItemDataEntry.setFont(fontDataEntry)
