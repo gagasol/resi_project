@@ -340,16 +340,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         graphWidget.widgetMenu.hide()
         graphWidget.widgetBottom.hide()
         graphWidget.labelData.hide()
-        graphWidget.changeWidgetsRelSpace(15, 85, 0)
+        graphWidget.changeWidgetsRelSpace(18, 82, 0)
         graphWidget.setAttribute(Qt.WA_NoSystemBackground, True)
         graphWidget.setAttribute(Qt.WA_TranslucentBackground, True)
         graphWidget.vLineRect.set_visible(False)
+        graphWidget.canvasGraph.axes.set_xlabel('Tiefe (cm)', fontsize=18)
+        graphWidget.canvasGraph.axes.set_ylabel('Wiederstand (%)', fontsize=18)
+        graphWidget.canvasGraph.axes.xaxis.label.set_position((0.98, 1))
+        graphWidget.canvasGraph.axes.yaxis.label.set_position((1, 0.86))
         for i in range(graphWidget.tableWidgetData.rowCount()):
             for j in range(graphWidget.tableWidgetData.columnCount()):
                 item = graphWidget.tableWidgetData.item(i, j)
                 if (item):
                     font = item.font()
-                    font.setPointSize(15)
+                    font.setPointSize(18)
                     item.setFont(font)
 
         for i in range(graphWidget.tableWidgetMarker.rowCount()):
@@ -357,7 +361,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 item = graphWidget.tableWidgetMarker.item(i, j)
                 if (item):
                     font = item.font()
-                    font.setPointSize(15)
+                    font.setPointSize(18)
                     item.setFont(font)
 
         graphWidget.tableWidgetMarker.setParent(None)
@@ -401,6 +405,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         graphWidget.horizontalLayout_2.insertWidget(0, graphWidget.tableWidgetMarker)
         graphWidget.tableWidgetMarker.show()
         graphWidget.vLineRect.set_visible(True)
+        graphWidget.canvasGraph.axes.set_xlabel('Tiefe (cm)', fontsize=10)
+        graphWidget.canvasGraph.axes.set_ylabel('Wiederstand (%)', fontsize=10)
+        graphWidget.canvasGraph.axes.xaxis.label.set_position((0.98, 1))
+        graphWidget.canvasGraph.axes.yaxis.label.set_position((1, 0.9))
 
 
     def toggleOverlayButtonClicked(self):
