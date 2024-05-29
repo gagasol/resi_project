@@ -174,8 +174,9 @@ class DataModel:
             textString = value.ljust(totalCharactersPerRow[i // 6]-len(value))
             tableTextEditEntry = QTableWidgetItem(textString)
             font = QFont()
+            font.setFamily("Tahoma")
             font.setWeight(QFont.Bold)
-            brush = QBrush(QColor("#c44a04"))
+            brush = QBrush(QColor("#000000"))
             tableTextEditEntry.setFont(font)
             tableTextEditEntry.setForeground(brush)
             tableTextEditEntry.setFlags(tableTextEditEntry.flags() & ~Qt.ItemIsEditable)
@@ -183,7 +184,15 @@ class DataModel:
             if(value == ""):
                 tableItemDataEntry = QTableWidgetItem("")
             else:
-                tableItemDataEntry = QTableWidgetItem(self._data[key] + "  ")
+                fontDataEntry = QFont()
+                font.setFamily("Tahoma")
+                brush = QBrush(QColor("#1f1bf7"))
+                if (key == "depthMsmt"):
+                    tableItemDataEntry = QTableWidgetItem(str(int(float(self._data[key]))) + "  ")
+                else:
+                    tableItemDataEntry = QTableWidgetItem(self._data[key] + "  ")
+                tableItemDataEntry.setFont(fontDataEntry)
+                tableItemDataEntry.setForeground(brush)
             if (1 < i < 12):
                 tableItemDataEntry.setFlags(tableItemDataEntry.flags() & ~Qt.ItemIsEditable)
 
