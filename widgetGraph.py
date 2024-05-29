@@ -1245,6 +1245,8 @@ class WidgetGraph(QWidget):
             itemName = QTableWidgetItem(name)
             itemName.setIcon(icon)
             itemNumbers = QTableWidgetItem(": {0} cm bis {1} cm".format(x, dx))
+            itemName.setForeground(QColor("#000000"))
+            itemNumbers.setForeground(QColor("#000000"))
         else:
             itemName = QTableWidgetItem("")
             itemNumbers = QTableWidgetItem("")
@@ -1261,6 +1263,7 @@ class WidgetGraph(QWidget):
             dx = dx - self.dxMarkerForTable
 
             item = QTableWidgetItem(": {0} cm bis {1} cm".format(round(x, 2), round(dx, 2)))
+            item.setForeground(QColor("#000000"))
             self.tableWidgetMarker.setItem(row, column + 1, item)
 
 
