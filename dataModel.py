@@ -103,7 +103,7 @@ class DataModel:
                     continue
 
                 elif ("diameter" in line):
-                    if ("0.0" in line):
+                    if (float(line.split(":")[1].strip()[:-1]) == 0):
                         self._customData["0_diameter"] = ""
                     else:
                         self._customData["0_diameter"] = float(line.split(":")[1].strip()[:-1])
