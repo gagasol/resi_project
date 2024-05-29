@@ -158,7 +158,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if (".resi" in fileName):
             with open(fileName, "r") as file:
                 loadedState = json.load(file)
-                self.logger.info("loaded state : {0}".format(loadedState))
 
             print("loadedState len = 1")
             logging.info(" canvas :{0}".format(loadedState))
@@ -170,7 +169,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         elif(".project" in fileName):
             with open(fileName, "r") as file:
                 loadedState = json.load(file)
-                self.logger.info("loaded state : {0}".format(loadedState))
 
             for canvas in loadedState:
                 print("loadedState len > 1")
@@ -341,7 +339,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         graphWidget.changeWidgetsRelSpace(15, 85, 0)
         graphWidget.setAttribute(Qt.WA_NoSystemBackground, True)
         graphWidget.setAttribute(Qt.WA_TranslucentBackground, True)
-        graphWidget.vLineRect.set_visible(True)
+        graphWidget.vLineRect.set_visible(False)
         for i in range(graphWidget.tableWidgetData.rowCount()):
             for j in range(graphWidget.tableWidgetData.columnCount()):
                 item = graphWidget.tableWidgetData.item(i, j)
@@ -471,10 +469,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def closeEvent(self, event):
         if (self.defaultPresetName is not None):
             saveData = [self.nameToColorDict, self.markerPresetList, self.defaultPresetName]
-            self.logger.info("~~~~~~ saveData defaultPresetName is not None ~~~~~~ \n {0}".format(saveData))
         else:
             saveData = [self.nameToColorDict, self.markerPresetList]
-            self.logger.info("~~~~~~ saveData defaultPresetName is None ~~~~~~\n {0}".format(saveData))
         with open("markerSave.json", "w") as f:
             json.dump(saveData, f)
 

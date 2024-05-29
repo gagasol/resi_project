@@ -533,7 +533,7 @@ class WidgetGraph(QWidget):
 
         self.tableWidgetData.setStyleSheet("QTableView::item:selected {background: none;}"
                                            "QTableWidget::item { margin: 0px;"
-                                           "background-color: transparent; }")
+                                           "background-color: white; }")
 
         for i in range(6):
             self.tableWidgetData.setRowHeight(i, 50)
@@ -624,7 +624,7 @@ class WidgetGraph(QWidget):
         self.tableWidgetMarker.setShowGrid(False)
         self.tableWidgetMarker.horizontalHeader().setVisible(False)
         self.tableWidgetMarker.verticalHeader().setVisible(False)
-        self.tableWidgetMarker.setColumnCount(1)
+        self.tableWidgetMarker.setColumnCount(2)
         self.tableWidgetMarker.setRowCount(6)
         self.tableWidgetMarker.verticalHeader().setMinimumSectionSize(0)
         sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
@@ -636,7 +636,7 @@ class WidgetGraph(QWidget):
 
         self.tableWidgetMarker.setStyleSheet("QTableView::item{font: 12pt;}"
                                              "QTableWidget::item { margin: 0px; "
-                                             "background-color: transparent; }")
+                                             "background-color: white; }")
 
         self.horizontalLayout_2.addWidget(self.tableWidgetMarker)
 
@@ -1219,10 +1219,12 @@ class WidgetGraph(QWidget):
 
     def addTableMarkerEntry(self, index, name, color, x, dx):
         # @todo overload class to get a on_item_changed(self, item) signal and use it to change the markers
+        row = index % 6
+        column = index // 6 + 1 * index // 6
         if(index >= 6):
             if (index%6 == 0):
                 n = self.tableWidgetMarker.columnCount()
-                self.tableWidgetMarker.setColumnCount(n+1)
+                self.tableWidgetMarker.setColumnCount(n+2)
 
         if (name != ""):
             x = x - self.dxMarkerForTable
@@ -1240,25 +1242,26 @@ class WidgetGraph(QWidget):
                     if (item is not None):
                         maxLen = max(maxLen, len(item.text().split(":")[0].strip()))
             """
-            item = QTableWidgetItem(name + "\t: {0} - {1}".format(x, dx))
-            item.setIcon(icon)
+            itemName = QTableWidgetItem(name)
+            itemName.setIcon(icon)
+            itemNumbers = QTableWidgetItem(": {0} cm bis {1} cm".format(x, dx))
         else:
-            item = QTableWidgetItem("")
+            itemName = QTableWidgetItem("")
+            itemNumbers = QTableWidgetItem("")
 
-        self.tableWidgetMarker.setItem(index % 6, index // 6, item)
+        self.tableWidgetMarker.setItem(row, column, itemName)
+        self.tableWidgetMarker.setItem(row, column + 1, itemNumbers)
 
     def updateTableMarkerEntry(self, index, name, x, dx):
+        row = index % 6
+        column = index // 6 + 1 * index // 6
+
         try:
             x = x - self.dxMarkerForTable
             dx = dx - self.dxMarkerForTable
-            color = self.mainWindow.nameToColorDict[name]
-            pixmap = QPixmap(30, 30)
-            pixmap.fill(QColor(color))
-            icon = QIcon(pixmap)
 
-            item = QTableWidgetItem(name + "\t: {0} - {1}".format(round(x, 2), round(dx, 2)))
-            item.setIcon(icon)
-            self.tableWidgetMarker.setItem(index % 6, index // 6, item)
+            item = QTableWidgetItem(": {0} cm bis {1} cm".format(round(x, 2), round(dx, 2)))
+            self.tableWidgetMarker.setItem(row, column + 1, item)
 
 
         except KeyError:
