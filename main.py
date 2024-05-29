@@ -361,7 +361,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     item.setFont(font)
 
         graphWidget.tableWidgetMarker.setParent(None)
-        graphWidget.horizontalLayout.insertWidget(2, graphWidget.tableWidgetMarker)
+        graphWidget.horizontalLayout.insertWidget(3, graphWidget.tableWidgetMarker)
         graphWidget.tableWidgetMarker.show()
 
     def printSetupEnd(self, graphWidget, originalFontDataUneven, originalFontDataEven, originalFontMarker):
