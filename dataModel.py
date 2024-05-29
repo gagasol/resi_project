@@ -62,6 +62,9 @@ class DataModel:
                     continue
                 elif (any(s in line for s in ["dateYear", "dateMonth", "dateDay"])):
                     datePart = line.split(":")[1].strip()[:-1]
+                    if (len(datePart) == 1):
+                        datePart = "0" + datePart
+
                     date = datePart + "." + date
                     if ("dateDay" in line):
                         tmpData.append("date; " + date[:-1])
@@ -70,6 +73,8 @@ class DataModel:
                     continue
                 elif (any(s in line for s in ["timeHour", "timeMinute", "timeSecond"])):
                     timePart = line.split(":")[1].strip()[:-1]
+                    if (len(timePart) == 1):
+                        timePart = "0" + timePart
                     time = time + ":" + timePart
                     if ("timeSecond" in line):
                         tmpData.append("time; " + time[1:])
