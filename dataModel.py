@@ -102,6 +102,20 @@ class DataModel:
                     line = f.readline()
                     continue
 
+                elif ("diameter" in line):
+                    self._customData["0_diameter"] = float(line.split(":")[1].strip()[:-1])
+
+                elif ("object\":" in line):
+                    try:
+                        objectData = line.split(":")[1].strip().replace("[", "").replace("]", "").replace("\"", "")[:-1].split(",")
+                        self._customData["1_mHeight"] = objectData[0]
+                        self._customData["2_mDirection"] = objectData[1]
+                        self._customData["3_objecttype"] = objectData[2]
+                        self._customData["4_location"] = objectData[3]
+                        self._customData["5_name"] = objectData[4]
+                    except IndexError:
+                        print("welp")
+
                 tmpData.append(line.replace("\"", "").replace(",", "").replace(":",";"))
                 line = f.readline()
 
@@ -189,9 +203,9 @@ class DataModel:
                 font.setFamily("Tahoma")
                 brush = QBrush(QColor("#1f1bf7"))
                 if (key == "depthMsmt"):
-                    tableItemDataEntry = QTableWidgetItem(self._data[key] + "  ")
+                    tableItemDataEntry = QTableWidgetItem(str(self._data[key]) + "  ")
                 else:
-                    tableItemDataEntry = QTableWidgetItem(self._data[key] + "  ")
+                    tableItemDataEntry = QTableWidgetItem(str(self._data[key]) + "  ")
                 tableItemDataEntry.setFont(fontDataEntry)
                 tableItemDataEntry.setForeground(brush)
             if (1 < i < 12):

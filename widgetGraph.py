@@ -247,14 +247,6 @@ class AutoSizedTable(QTableWidget):
                     self.setCurrentCell(nextItem.row(), nextItem.column())
                     break
 
-            """        
-            if (self.currentRow() + 1 < self.rowCount()):
-                self.setCurrentCell(self.currentRow() + 1, self.currentColumn())
-            else:
-                if (self.currentColumn() + 1 < self.columnCount()):
-                    self.setCurrentCell(0, self.currentColumn() + 1)
-                else:
-                    self.setCurrentCell(0, 0)"""
         else:
             if (self.currentRow() - 1 >= 0):
                 self.setCurrentCell(self.currentRow() - 1, self.currentColumn())
