@@ -576,7 +576,7 @@ class WidgetGraph(QWidget):
         self.canvasGraph.axes.set_xticks(np.arange(0, 42, 2))
         self.canvasGraph.axes.set_yticks(np.arange(0, 110, 10))
         self.canvasGraph.axes.set_xlabel('Tiefe (cm)', fontsize=10)
-        self.canvasGraph.axes.set_ylabel('Wiederstand (%)', fontsize=10)
+        self.canvasGraph.axes.set_ylabel('Widerstand (%)', fontsize=10)
         self.canvasGraph.axes.xaxis.label.set_position((0.98, 1))
         self.canvasGraph.axes.yaxis.label.set_position((1, 0.9))
         self.canvasGraph.axes.xaxis.set_minor_locator(ticker.AutoMinorLocator())

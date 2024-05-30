@@ -345,7 +345,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         graphWidget.setAttribute(Qt.WA_TranslucentBackground, True)
         graphWidget.vLineRect.set_visible(False)
         graphWidget.canvasGraph.axes.set_xlabel('Tiefe (cm)', fontsize=18)
-        graphWidget.canvasGraph.axes.set_ylabel('Wiederstand (%)', fontsize=18)
+        graphWidget.canvasGraph.axes.set_ylabel('Widerstand (%)', fontsize=18)
         graphWidget.canvasGraph.axes.xaxis.label.set_position((0.98, 1))
         graphWidget.canvasGraph.axes.yaxis.label.set_position((1, 0.86))
         for i in range(graphWidget.tableWidgetData.rowCount()):
@@ -406,7 +406,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         graphWidget.tableWidgetMarker.show()
         graphWidget.vLineRect.set_visible(True)
         graphWidget.canvasGraph.axes.set_xlabel('Tiefe (cm)', fontsize=10)
-        graphWidget.canvasGraph.axes.set_ylabel('Wiederstand (%)', fontsize=10)
+        graphWidget.canvasGraph.axes.set_ylabel('Widerstand (%)', fontsize=10)
         graphWidget.canvasGraph.axes.xaxis.label.set_position((0.98, 1))
         graphWidget.canvasGraph.axes.yaxis.label.set_position((1, 0.9))
 
