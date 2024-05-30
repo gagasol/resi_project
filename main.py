@@ -279,7 +279,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # @todo add globally
         filename = self.ui.tabWidget.tabText(self.ui.tabWidget.currentIndex())
         if (".rpg" in filename):
-            filename = filename.replace(".rpg", "." + suffix)
+            filename = filename.replace(".rgp", "." + suffix)
         else:
             filename = filename + "." + suffix
         printWidth = 1920
