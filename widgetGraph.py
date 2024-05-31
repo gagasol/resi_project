@@ -301,6 +301,7 @@ class WidgetGraph(QWidget):
     def __init__(self, MainWindow=None, pathToFile=None, loadedState=None, settingsSet=None, parent=None):
         super().__init__(parent)
 
+        self.horizontalSpacerPrint = None
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
 
@@ -554,14 +555,17 @@ class WidgetGraph(QWidget):
         self.horizontalSpacer = QSpacerItem(0, 20, QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout.addItem(self.horizontalSpacer)
+
+        self.horizontalSpacerPrint = QSpacerItem(0, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout.addItem(self.horizontalSpacerPrint)
+
         self.widgetTop.setContentsMargins(0, 0, 0, 0)
 
         self.verticalLayout_2.addWidget(self.widgetTop)
 
         self.canvasGraph = MplCanvas(self, width=19, height=10, dpi=100)
         self.canvasGraph.axes.set_ylim(-5, 100)
-        self.canvasGraph.axes.set_xlabel('Depth')
-        self.canvasGraph.axes.set_ylabel('Data')
         # @todo remove later
         self.depthMsmt = float(depthMsmt)
         self.canvasGraph.axes.set_xlim(0, self.deviceLength + 0.1)
@@ -726,6 +730,7 @@ class WidgetGraph(QWidget):
 
 
     def onCellChangeTableTop(self, row, column):
+        # todo fix size of last column, check if entry is longer and if make size relative to content again
         print(row, column)
         entry = self.tableWidgetData.item(row, column).text()
         self.dataModel.changeCustomDataEntry(row, column, entry)
@@ -757,7 +762,8 @@ class WidgetGraph(QWidget):
                     self.lastXPos = event.xdata
 
                     if (self.flagMarking):
-                        self.xPosMarkerStart = event.xdata
+                        self.xPosMarkerStart = self.focusedMarker.get_x1()
+                        self.showMarkingAreaRect.set_x(self.xPosMarkerStart)
 
                 # If flag for rectangle being focused on right side is set, resize rectangle from right
                 elif (self.flagMarkerRightFocus):
@@ -767,7 +773,8 @@ class WidgetGraph(QWidget):
                     self.lastXPos = event.xdata
 
                     if (self.flagMarking):
-                        self.xPosMarkerStart = event.xdata
+                        self.xPosMarkerStart = self.focusedMarker.get_x1()
+                        self.showMarkingAreaRect.set_x(self.xPosMarkerStart)
 
                 # If flag for rectangle being focused on left side is set, resize rectangle from left
                 elif (self.flagMarkerLeftFocus):
@@ -777,7 +784,8 @@ class WidgetGraph(QWidget):
                     self.lastXPos = event.xdata
 
                     if (self.flagMarking):
-                        self.xPosMarkerStart = event.xdata
+                        self.xPosMarkerStart = self.focusedMarker.get_x1()
+                        self.showMarkingAreaRect.set_x(self.xPosMarkerStart)
 
             # Redraw canvas after processing actions
             event.canvas.draw()
