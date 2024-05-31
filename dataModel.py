@@ -22,6 +22,29 @@ class DataModel:
         self.jsonData = jsonData
         self.markerStateList = []
         self.dx_xlim = 0
+        self._dataNameDict = {}
+        # todo add this to settings so that the user can choose which data to display
+        # TODO need to change the behaviour on which cells are eidtable from constant to variable!!!
+        self._dataNameDict = {
+            "number": QObject.tr('Messung Nr.'),
+            "idNumber": QObject.tr('ID-Nummer'),
+            "depthMsmt": QObject.tr('Bohrtiefe'),
+            "date": QObject.tr('Datum'),
+            "time": QObject.tr('Uhrzeit'),
+            "speedFeed": QObject.tr('Vorschub'),
+            "speedDrill": QObject.tr('Drehzahl'),
+            "tiltAngle": QObject.tr('Neigung'),
+            "result": QObject.tr('Nadelstatus'),
+            "offset": QObject.tr('Offset'),
+            "graphAvgShow": QObject.tr('Mittelung'),
+            "empty": "",
+            "0_diameter": QObject.tr('Durchmesser'),
+            "1_mHeight": QObject.tr('Messhöhe'),
+            "2_mDirection": QObject.tr('Messrichtung'),
+            "3_objecttype": QObject.tr('Objektart'),
+            "4_location": QObject.tr('Standort'),
+            "5_name": QObject.tr('Name')
+        }
 
         if ("rgp" in datasource.lower()):
             self._data = self._readDataFromRGP(datasource)
@@ -159,26 +182,7 @@ class DataModel:
 
 
     def getTablaTopData(self):#c44a04
-        result_dict = {
-            "number": QObject.tr('Messung Nr.'),
-            "idNumber": QObject.tr('ID-Nummer'),
-            "depthMsmt": QObject.tr('Bohrtiefe'),
-            "date": QObject.tr('Datum'),
-            "time": QObject.tr('Uhrzeit'),
-            "speedFeed": QObject.tr('Vorschub'),
-            "speedDrill": QObject.tr('Drehzahl'),
-            "tiltAngle": QObject.tr('Neigung'),
-            "result": QObject.tr('Nadelstatus'),
-            "offset": QObject.tr('Offset'),
-            "graphAvgShow": QObject.tr('Mittelung'),
-            "empty": "",
-            "0_diameter": QObject.tr('Durchmesser'),
-            "1_mHeight": QObject.tr('Messhöhe'),
-            "2_mDirection": QObject.tr('Messrichtung'),
-            "3_objecttype": QObject.tr('Objektart'),
-            "4_location": QObject.tr('Standort'),
-            "5_name": QObject.tr('Name')
-        }
+        result_dict = self._dataNameDict
         collectedTableNames = []
         collectedTableData = []
         totalCharactersPerRow = []
@@ -224,6 +228,12 @@ class DataModel:
 
         return [collectedTableNames, collectedTableData]
 
+
+    def getDataByKey(self, key):
+        return self._data[key]
+
+    def getNameByKey(self, key):
+        return self._dataNameDict[key]
 
     def changeCustomDataEntry(self, row, column, entry):
         if (column == 1):
