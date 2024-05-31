@@ -359,7 +359,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     font.setPointSize(18)
                     item.setFont(font)
 
-        graphWidget.widgetTop.adjustSize()
 
         if (not graphWidget.tableWidgetMarker.isHidden()):
             for i in range(graphWidget.tableWidgetMarker.rowCount()):
@@ -373,6 +372,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             graphWidget.tableWidgetMarker.setParent(None)
             graphWidget.horizontalLayout.insertWidget(3, graphWidget.tableWidgetMarker)
             graphWidget.tableWidgetMarker.show()
+
+        graphWidget.widgetTop.adjustSize()
 
     def printSetupEnd(self, graphWidget, originalFontDataUneven, originalFontDataEven, originalFontMarker):
         """
@@ -417,6 +418,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         graphWidget.canvasGraph.axes.set_ylabel('Widerstand (%)', fontsize=10)
         graphWidget.canvasGraph.axes.xaxis.label.set_position((0.98, 1))
         graphWidget.canvasGraph.axes.yaxis.label.set_position((1, 0.9))
+        graphWidget.widgetTop.adjustSize()
 
 
     def toggleOverlayButtonClicked(self):

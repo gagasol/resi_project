@@ -301,7 +301,7 @@ class WidgetGraph(QWidget):
     def __init__(self, MainWindow=None, pathToFile=None, loadedState=None, settingsSet=None, parent=None):
         super().__init__(parent)
 
-        self.horizontalSpacerPrint = None
+        self.checkBoxShowInGraphInfo = None
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
 
@@ -392,6 +392,7 @@ class WidgetGraph(QWidget):
         self.verticalLayout = None
         self.widgetDataTop = None
         self.horizontalSpacer0 = None
+        self.horizontalSpacerPrint = None
         # endregion
 # data variables setup
         self.name = None
@@ -403,7 +404,9 @@ class WidgetGraph(QWidget):
         self.dictMeasurementData = {}
 
         self.strsToShowInGraph = []
-
+        self.textInGraph = None
+        # todo delete later
+        self.strsToShowInGraph = ["number", "0_diameter", "1_mHeight", "3_objecttype", "5_name"]
 # arg variables
         self.mainWindow = MainWindow
         self.pathToFile = pathToFile
@@ -420,9 +423,11 @@ class WidgetGraph(QWidget):
             pyplot.style.use('ggplot')
             self.setUpUi()
             self.setupTable()
+
             self.canvasColor = self.canvasGraph.axes.get_facecolor()
             self.canvasGraph.axes.add_patch(self.showMarkingAreaRect)
             self.toolbar = NavigationToolbar(self.canvasGraph, None)
+
             if (pathToFile==""):
                 for markerState in self.dataModel.markerStateList:
                     self.addRectToCurrentCanv(None, markerState)
@@ -602,6 +607,8 @@ class WidgetGraph(QWidget):
         self.widgetGraph = QWidget()
         self.widgetGraph.setObjectName(u"widgetGraph")
 
+
+
         self.verticalLayout_3 = QVBoxLayout(self.widgetGraph)
         self.verticalLayout_3.addWidget(self.canvasGraph)
         self.verticalLayout_3.setSpacing(5)
@@ -612,6 +619,18 @@ class WidgetGraph(QWidget):
         self.widgetGraph.setMinimumHeight(200)
 
         self.verticalLayout_2.addWidget(self.widgetGraph)
+
+        self.textInGraph = QLabel(self.widgetGraph)
+        self.textInGraph.setWordWrap(True)
+        self.textInGraph.setStyleSheet("background-color: white; text-align: bottom;")
+        self.textInGraph.hide()
+        textStr = ""
+        maxLen = 0
+        for key in self.strsToShowInGraph:
+            textStr += f"{self.dataModel.getNameByKey(key)}: {self.dataModel.getDataByKey(key)}\n"
+            maxLen = max(maxLen, len(f"{self.dataModel.getNameByKey(key)}: {self.dataModel.getDataByKey(key)}"))
+        self.textInGraph.resize(6 * maxLen, 16 * len(self.strsToShowInGraph))
+        self.textInGraph.setText(textStr[:-1])
 
         self.widgetBottom = QWidget()
         self.widgetBottom.setObjectName(u"widgetBottom")
@@ -680,11 +699,17 @@ class WidgetGraph(QWidget):
         self.checkBoxHideBot.setText("")
         self.checkBoxHideBot.checkStateChanged.connect(self.toggleHideBot)
 
+        self.checkBoxShowInGraphInfo = QCheckBox(self.widgetMenu)
+        self.checkBoxShowInGraphInfo.setObjectName(u"checkBoxShowInGraphInfo")
+        self.checkBoxShowInGraphInfo.setText("")
+        self.checkBoxShowInGraphInfo.checkStateChanged.connect(self.showInfoInGraph)
+
         self.horizontalSpacer_3 = QSpacerItem(200, 35, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout_3.addItem(self.horizontalSpacer_3)
         self.horizontalLayout_3.addWidget(self.checkBoxHideTop)
         self.horizontalLayout_3.addWidget(self.checkBoxHideBot)
+        self.horizontalLayout_3.addWidget(self.checkBoxShowInGraphInfo)
 
         self.widgetMenu.setLayout(self.horizontalLayout_3)
 
@@ -1323,6 +1348,19 @@ class WidgetGraph(QWidget):
     def toggleHideBot(self):
         rndmBool = (self.checkBoxHideBot.checkState() == Qt.Checked)
         self.widgetBottom.hide() if rndmBool else self.widgetBottom.show()
+
+    def showInfoInGraph(self):
+        # do not question the magic numbers because they work!
+        xPos = 1248 * 7 / 100
+        yPos = 569 * 5 / 100
+
+        self.textInGraph.move(xPos, yPos)
+        if (self.checkBoxShowInGraphInfo.isChecked()):
+            self.textInGraph.show()
+        else:
+            self.textInGraph.hide()
+
+        self.canvasGraph.draw()
 
     def hideEverything(self):
         self.widgetTop.hide()
