@@ -94,16 +94,6 @@ class MarkerPresetWindow(QDialog):
                                                         self.sender().id_number)
             selectMarkerWindow.exec()
             return
-            """
-            self.setWindowModality(Qt.NonModal)
-            selectMarkerWindow.setWindowModality(Qt.ApplicationModal)
-            selectMarkerWindow.setAttribute(Qt.WA_DeleteOnClose)
-            selectMarkerWindow.show()
-
-            waitForMarkerInputLoop = QEventLoop()
-            selectMarkerWindow.destroyed.connect(waitForMarkerInputLoop.quit)
-            waitForMarkerInputLoop.exec()
-            """
 
         print(self.sender().id_number, self.comboBoxCount)
         if ( self.sender().id_number == self.comboBoxCount ):
@@ -133,16 +123,8 @@ class MarkerPresetWindow(QDialog):
 
             selectMarkerWindow = EditMarkerPresetWindow(self, argDictMarker=dictMarker)
             selectMarkerWindow.exec()
-            """
-            self.setWindowModality(Qt.NonModal)
-            selectMarkerWindow.setWindowModality(Qt.ApplicationModal)
-            selectMarkerWindow.setAttribute(Qt.WA_DeleteOnClose)
-            selectMarkerWindow.show()
 
-            waitForMarkerInputLoop = QEventLoop()
-            selectMarkerWindow.destroyed.connect(waitForMarkerInputLoop.quit)
-            waitForMarkerInputLoop.exec()
-            """
+
     def loadPresets(self):
 
         if (self.listComboBoxPresets):

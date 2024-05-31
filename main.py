@@ -181,7 +181,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             widget = WidgetGraph(self, fileName)
             print(fileName)
             self.listGraphWidgets.append(widget)
-            self.ui.tabWidget.addTab(widget, self.nameOfFile+".rpg")
+            self.ui.tabWidget.addTab(widget, self.nameOfFile+".rgp")
 
             self.ui.tabWidget.setCurrentIndex(len(self.listGraphWidgets) - 1)
             self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() - 1)
@@ -271,17 +271,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         try:
             originalFontMarker = graphWidget.tableWidgetMarker.item(0, 0).font()
         except AttributeError:
+            print("aiiii no marker set yet")
             originalFontMarker = None
+            graphWidget.tableWidgetMarker.hide()
             logging.info("No Markers set so far")
 
         self.printSetupStart(graphWidget)
 
         # @todo add globally
         filename = self.ui.tabWidget.tabText(self.ui.tabWidget.currentIndex())
-        if (".rpg" in filename):
-            filename = filename.replace(".rpg", "." + suffix)
+        if (".rgp" in filename):
+            filename = "./data/" + filename.replace(".rgp", ".") + suffix
         else:
-            filename = filename + "." + suffix
+            filename = "./data/" + filename + "." + suffix
+
+        print(filename)
         printWidth = 1920
         printHeight = 1080
         scaledPixmap = QPixmap(QSize(printWidth, printHeight))
@@ -300,13 +304,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         if (suffix == "png"):
             print("printing to png")
-            filename = "./data/" + filename
             scaledPixmap.save(filename)
             graphWidget.resetWidgetsRelSpace()
 
         elif (suffix == "pdf"):
             print("printing to pdf")
-            filename = "./data/" + filename.strip()
             pdfWriter = QPdfWriter(filename)
             pageSize = QPageSize(QSizeF(210, 115), QPageSize.Millimeter)
             pdfWriter.setPageSize(pageSize)
@@ -336,7 +338,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         and shows the table widget marker.
         """
         graphWidget.horizontalSpacer0.changeSize(10, 20)
-        graphWidget.horizontalLayout.invalidate()
+        graphWidget.horizontalSpacerPrint.changeSize(9, 20)
+        #graphWidget.horizontalLayout.invalidate()
         graphWidget.widgetMenu.hide()
         graphWidget.widgetBottom.hide()
         graphWidget.labelData.hide()
@@ -345,7 +348,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         graphWidget.setAttribute(Qt.WA_TranslucentBackground, True)
         graphWidget.vLineRect.set_visible(False)
         graphWidget.canvasGraph.axes.set_xlabel('Tiefe (cm)', fontsize=18)
-        graphWidget.canvasGraph.axes.set_ylabel('Wiederstand (%)', fontsize=18)
+        graphWidget.canvasGraph.axes.set_ylabel('Widerstand (%)', fontsize=18)
         graphWidget.canvasGraph.axes.xaxis.label.set_position((0.98, 1))
         graphWidget.canvasGraph.axes.yaxis.label.set_position((1, 0.86))
         for i in range(graphWidget.tableWidgetData.rowCount()):
@@ -356,17 +359,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     font.setPointSize(18)
                     item.setFont(font)
 
-        for i in range(graphWidget.tableWidgetMarker.rowCount()):
-            for j in range(graphWidget.tableWidgetMarker.columnCount()):
-                item = graphWidget.tableWidgetMarker.item(i, j)
-                if (item):
-                    font = item.font()
-                    font.setPointSize(18)
-                    item.setFont(font)
+        graphWidget.widgetTop.adjustSize()
 
-        graphWidget.tableWidgetMarker.setParent(None)
-        graphWidget.horizontalLayout.insertWidget(3, graphWidget.tableWidgetMarker)
-        graphWidget.tableWidgetMarker.show()
+        if (not graphWidget.tableWidgetMarker.isHidden()):
+            for i in range(graphWidget.tableWidgetMarker.rowCount()):
+                for j in range(graphWidget.tableWidgetMarker.columnCount()):
+                    item = graphWidget.tableWidgetMarker.item(i, j)
+                    if (item):
+                        font = item.font()
+                        font.setPointSize(18)
+                        item.setFont(font)
+
+            graphWidget.tableWidgetMarker.setParent(None)
+            graphWidget.horizontalLayout.insertWidget(3, graphWidget.tableWidgetMarker)
+            graphWidget.tableWidgetMarker.show()
 
     def printSetupEnd(self, graphWidget, originalFontDataUneven, originalFontDataEven, originalFontMarker):
         """
@@ -391,22 +397,24 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     else:
                         item.setFont(originalFontDataEven)
 
-        for i in range(graphWidget.tableWidgetMarker.rowCount()):
-            for j in range(graphWidget.tableWidgetMarker.columnCount()):
-                item = graphWidget.tableWidgetMarker.item(i, j)
-                if  (item):
-                    item.setFont(originalFontMarker)
+        if (not graphWidget.tableWidgetMarker.isHidden()):
+            for i in range(graphWidget.tableWidgetMarker.rowCount()):
+                for j in range(graphWidget.tableWidgetMarker.columnCount()):
+                    item = graphWidget.tableWidgetMarker.item(i, j)
+                    if  (item):
+                        item.setFont(originalFontMarker)
 
+            graphWidget.tableWidgetMarker.setParent(None)
+            graphWidget.horizontalLayout_2.insertWidget(0, graphWidget.tableWidgetMarker)
+
+        graphWidget.tableWidgetMarker.show()
         graphWidget.horizontalSpacer0.changeSize(70, 20)
         graphWidget.widgetMenu.show()
         graphWidget.widgetBottom.show()
         graphWidget.labelData.show()
-        graphWidget.tableWidgetMarker.setParent(None)
-        graphWidget.horizontalLayout_2.insertWidget(0, graphWidget.tableWidgetMarker)
-        graphWidget.tableWidgetMarker.show()
         graphWidget.vLineRect.set_visible(True)
         graphWidget.canvasGraph.axes.set_xlabel('Tiefe (cm)', fontsize=10)
-        graphWidget.canvasGraph.axes.set_ylabel('Wiederstand (%)', fontsize=10)
+        graphWidget.canvasGraph.axes.set_ylabel('Widerstand (%)', fontsize=10)
         graphWidget.canvasGraph.axes.xaxis.label.set_position((0.98, 1))
         graphWidget.canvasGraph.axes.yaxis.label.set_position((1, 0.9))
 
