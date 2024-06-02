@@ -17,5 +17,6 @@
         <file>icons/text-outdent.svg</file>
         <file>icons/file-png.svg</file>
         <file>icons/close.svg</file>
+        <file>icons/keyboard_double_arrow_down_40dp_FILL0_wght400_GRAD0_opsz24.svg</file>
     </qresource>
 </RCC>

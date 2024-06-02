@@ -132,6 +132,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # clicked events
         self.ui.pushButtonOpen.clicked.connect(self.openButtonClicked)
         self.ui.pushButtonSave.clicked.connect(self.saveButtonClicked)
+        self.ui.actionSaveAs.triggered.connect(self.showSaveFileDialog)
         self.ui.pushButtonTabView.clicked.connect(self.tabButtonClicked)
         self.ui.pushButtonWindowView.clicked.connect(self.windowButtonClicked)
         self.ui.pushButtonPdf.clicked.connect(self.pdfButtonClicked)
@@ -189,19 +190,41 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         #self.ui.tabWidget.addTab(widget, widget.name)
 
     # functionality for the pushButtonSave QPushButton
-    # @todo save stuff, duh
     def saveButtonClicked(self):
-        projectSave = []
-        for widget in self.listGraphWidgets:
-            projectSave.append(widget.getCurrentState())
-            self.logger.info("\nproject saved : \n\n{0}".format(projectSave))
-            with open("./data/" + widget.name + ".resi", "w") as file:
-                json.dump(widget.getCurrentState(), file)
-
-        with open("./data/a.project", "w") as file:
-            json.dump(projectSave, file)
-
+        graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
+        self.saveGraphState(self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex()))
         print("saveButtonClicked")
+
+
+    def showSaveFileDialog(self):
+        graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
+        defaultName = graphWidget.name + ".resi"
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+
+        fileName, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()",
+                                                  defaultName, "All Files (*);;Text Files (*.txt)", options=options)
+
+        fileName = fileName if ".resi" in fileName else fileName + ".resi"
+
+        if fileName:
+            self.saveGraphState(graphWidget, fileName)
+
+
+    def saveGraphState(self, graphWidget, path=""):
+        if (graphWidget):
+            if (path == ""):
+                with open("./data/" + graphWidget.name + ".resi", "w") as file:
+                    json.dump(graphWidget.getCurrentState(), file)
+            else:
+                with open(path, "w") as file:
+                    json.dump(graphWidget.getCurrentState(), file)
+        else:
+            for widget in self.listGraphWidgets:
+                with open("./data/" + widget.name + ".resi", "w") as file:
+                    json.dump(widget.getCurrentState(), file)
+
+
 
     # functionality for the pushButtonTabView QPushButton
     def tabButtonClicked(self):
@@ -250,14 +273,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
     def pdfButtonClicked(self):
-        self.saveGraphWidgetAs("pdf")
+        self.printGraphWidgetAs("pdf")
 
 
     def pngButtonClicked(self):
-        self.saveGraphWidgetAs("png")
+        self.printGraphWidgetAs("png")
 
 
-    def saveGraphWidgetAs(self, suffix):
+    def printGraphWidgetAs(self, suffix):
         """
         Save the current graph widget as a file with the specified suffix.
 
@@ -271,7 +294,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         try:
             originalFontMarker = graphWidget.tableWidgetMarker.item(0, 0).font()
         except AttributeError:
-            print("aiiii no marker set yet")
             originalFontMarker = None
             graphWidget.tableWidgetMarker.hide()
             logging.info("No Markers set so far")
@@ -286,7 +308,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             filename = "./data/" + filename + "." + suffix
 
         print(filename)
-        printWidth = 1920
+        printWidth = 1900
         printHeight = 1080
         scaledPixmap = QPixmap(QSize(printWidth, printHeight))
         scaledPixmap.fill(Qt.transparent)
