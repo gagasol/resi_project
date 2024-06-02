@@ -16,9 +16,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QGridLayout,
-    QHBoxLayout, QMainWindow, QMdiArea, QPushButton,
-    QSizePolicy, QSpacerItem, QStackedWidget, QTabWidget,
-    QVBoxLayout, QWidget)
+                               QHBoxLayout, QMainWindow, QMdiArea, QPushButton,
+                               QSizePolicy, QSpacerItem, QStackedWidget, QTabWidget,
+                               QVBoxLayout, QWidget, QMenu)
 import rc_icons
 
 
@@ -89,7 +89,9 @@ class Ui_MainWindow(object):
         self.frameTop.setFrameShape(QFrame.StyledPanel)
         self.frameTop.setFrameShadow(QFrame.Raised)
         self.horizontalLayout = QHBoxLayout(self.frameTop)
+        self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.horizontalLayout.setContentsMargins(3, 3, 3, 3)
         self.pushButtonOpen = QPushButton(self.frameTop)
         self.pushButtonOpen.setObjectName(u"pushButtonOpen")
         self.pushButtonOpen.setMinimumSize(QSize(30, 30))
@@ -100,6 +102,10 @@ class Ui_MainWindow(object):
         self.pushButtonOpen.setIconSize(QSize(25, 25))
 
         self.horizontalLayout.addWidget(self.pushButtonOpen)
+
+        self.horizontalSpacer_2 = QSpacerItem(6, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout.addItem(self.horizontalSpacer_2)
 
         self.pushButtonSave = QPushButton(self.frameTop)
         self.pushButtonSave.setObjectName(u"pushButtonSave")
@@ -119,35 +125,64 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout.addWidget(self.pushButtonSave)
 
+        self.pushButton = QPushButton(self.frameTop)
+        self.pushButton.setObjectName(u"pushButton")
+        self.pushButton.setMinimumSize(QSize(20, 25))
+        self.pushButton.setMaximumSize(QSize(20, 25))
+        self.pushButton.setStyleSheet(u"QPushButton::menu-indicator{ image: none; }")
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/icons/keyboard_double_arrow_down_40dp_FILL0_wght400_GRAD0_opsz24.svg", QSize(),
+                      QIcon.Normal, QIcon.Off)
+        self.pushButton.setIcon(icon2)
+        self.pushButton.setIconSize(QSize(15, 25))
+
+        self.menu = QMenu(self.pushButton)
+
+        self.actionSaveAs = self.menu.addAction(QObject.tr('Save as..'))
+
+        self.pushButton.setMenu(self.menu)
+
+        self.horizontalLayout.addWidget(self.pushButton)
+
+        self.horizontalSpacer_3 = QSpacerItem(6, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout.addItem(self.horizontalSpacer_3)
+
         self.pushButtonPdf = QPushButton(self.frameTop)
         self.pushButtonPdf.setObjectName(u"pushButtonPdf")
         self.pushButtonPdf.setMinimumSize(QSize(30, 30))
         self.pushButtonPdf.setMaximumSize(QSize(30, 30))
-        icon2 = QIcon()
-        icon2.addFile(u":/icons/icons/file-pdf.svg", QSize(), QIcon.Normal, QIcon.Off)
-        self.pushButtonPdf.setIcon(icon2)
+        icon3 = QIcon()
+        icon3.addFile(u":/icons/icons/file-pdf.svg", QSize(), QIcon.Normal, QIcon.Off)
+        self.pushButtonPdf.setIcon(icon3)
         self.pushButtonPdf.setIconSize(QSize(25, 25))
 
         self.horizontalLayout.addWidget(self.pushButtonPdf)
 
+        self.horizontalSpacer_4 = QSpacerItem(6, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout.addItem(self.horizontalSpacer_4)
+
         self.pushButtonPng = QPushButton(self.frameTop)
         self.pushButtonPng.setObjectName(u"pushButtonPng")
-        self.pushButtonPng.setMinimumSize(QSize(30, 30))
-        self.pushButtonPng.setMaximumSize(QSize(30, 30))
-        icon3 = QIcon()
-        icon3.addFile(u":/icons/icons/file-png.svg", QSize(), QIcon.Normal, QIcon.Off)
-        self.pushButtonPng.setIcon(icon3)
+        icon4 = QIcon()
+        icon4.addFile(u":/icons/icons/file-png.svg", QSize(), QIcon.Normal, QIcon.Off)
+        self.pushButtonPng.setIcon(icon4)
         self.pushButtonPng.setIconSize(QSize(25, 25))
 
         self.horizontalLayout.addWidget(self.pushButtonPng)
+
+        self.horizontalSpacer_5 = QSpacerItem(6, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout.addItem(self.horizontalSpacer_5)
 
         self.pushButtonTabView = QPushButton(self.frameTop)
         self.pushButtonTabView.setObjectName(u"pushButtonTabView")
         self.pushButtonTabView.setMinimumSize(QSize(30, 30))
         self.pushButtonTabView.setMaximumSize(QSize(30, 30))
-        icon3 = QIcon()
-        icon3.addFile(u":/icons/icons/tabs.svg", QSize(), QIcon.Normal, QIcon.Off)
-        self.pushButtonTabView.setIcon(icon3)
+        icon5 = QIcon()
+        icon5.addFile(u":/icons/icons/tabs.svg", QSize(), QIcon.Normal, QIcon.Off)
+        self.pushButtonTabView.setIcon(icon5)
         self.pushButtonTabView.setIconSize(QSize(25, 25))
 
         self.horizontalLayout.addWidget(self.pushButtonTabView)
@@ -156,20 +191,24 @@ class Ui_MainWindow(object):
         self.pushButtonWindowView.setObjectName(u"pushButtonWindowView")
         self.pushButtonWindowView.setMinimumSize(QSize(30, 30))
         self.pushButtonWindowView.setMaximumSize(QSize(30, 30))
-        icon4 = QIcon()
-        icon4.addFile(u":/icons/icons/cards-three.svg", QSize(), QIcon.Normal, QIcon.Off)
-        self.pushButtonWindowView.setIcon(icon4)
+        icon6 = QIcon()
+        icon6.addFile(u":/icons/icons/cards-three.svg", QSize(), QIcon.Normal, QIcon.Off)
+        self.pushButtonWindowView.setIcon(icon6)
         self.pushButtonWindowView.setIconSize(QSize(25, 25))
 
         self.horizontalLayout.addWidget(self.pushButtonWindowView)
+
+        self.horizontalSpacer_6 = QSpacerItem(6, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout.addItem(self.horizontalSpacer_6)
 
         self.pushButtonSettings = QPushButton(self.frameTop)
         self.pushButtonSettings.setObjectName(u"pushButtonSettings")
         self.pushButtonSettings.setMinimumSize(QSize(30, 30))
         self.pushButtonSettings.setMaximumSize(QSize(30, 30))
-        icon5 = QIcon()
-        icon5.addFile(u":/icons/icons/gear-six.svg", QSize(), QIcon.Normal, QIcon.Off)
-        self.pushButtonSettings.setIcon(icon5)
+        icon7 = QIcon()
+        icon7.addFile(u":/icons/icons/gear-six.svg", QSize(), QIcon.Normal, QIcon.Off)
+        self.pushButtonSettings.setIcon(icon7)
         self.pushButtonSettings.setIconSize(QSize(25, 25))
 
         self.horizontalLayout.addWidget(self.pushButtonSettings)
