@@ -9,10 +9,6 @@ from PySide6.QtGui import QPixmap, QColor, QIcon
 from PySide6.QtWidgets import QApplication, QWidget, QComboBox, QVBoxLayout, QSpacerItem, QSizePolicy, QLabel, QDialog, \
     QCheckBox, QHBoxLayout, QRadioButton, QButtonGroup
 
-# Important:
-# You need to run the following command to generate the ui_form.py file
-#     pyside6-uic form.ui -o ui_form.py, or
-#     pyside2-uic form.ui -o ui_form.py
 from ui_files.ui_form import Ui_SelectMarkerWindow
 from editMarkerPreset import EditMarkerPresetWindow, TextEntryDialog
 
@@ -89,10 +85,12 @@ class MarkerPresetWindow(QDialog):
         textCurrentItem = self.sender().currentText()
         if (index == 0 or textCurrentItem == "_NameForPreset"):
             return
-        if (textCurrentItem == "Add Marker"):
+        if (index == self.sender().count()-1):
             selectMarkerWindow = EditMarkerPresetWindow(self, self.listPresets[self.sender().id_number],
                                                         self.sender().id_number)
             selectMarkerWindow.exec()
+            self.buttonGroup.buttons()[self.sender().id_number].setChecked(True)
+            self.sender().setCurrentIndex(0)
             return
 
         print(self.sender().id_number, self.comboBoxCount)
@@ -129,6 +127,10 @@ class MarkerPresetWindow(QDialog):
 
         if (self.listComboBoxPresets):
             self.comboBoxCount = 0
+
+            for button in self.buttonGroup.buttons():
+                self.buttonGroup.removeButton(button)
+
             for i in range(len(self.listComboBoxPresets[1])):
                 if (i == len(self.listComboBoxPresets[1]) - 1):
                     self.ui.scrollAreaWidgetContents.layout().removeWidget(self.listComboBoxPresets[1][i])
@@ -144,7 +146,7 @@ class MarkerPresetWindow(QDialog):
         for preset in self.listPresets:
             widget = QWidget()
             verticalLayout = QHBoxLayout()
-            checkBox = QRadioButton('Default')
+            checkBox = QRadioButton(QObject.tr('File Default'))
             checkBox.setObjectName(preset["_NameForPreset"])
             if (preset["_NameForPreset"] == self.mainWindow.defaultPresetName):
                 checkBox.setChecked(True)
@@ -168,7 +170,7 @@ class MarkerPresetWindow(QDialog):
             verticalLayout.addWidget(checkBox)
             widget.setLayout(verticalLayout)
             self.ui.scrollAreaWidgetContents.layout().insertWidget(len(tmpComboBoxMarker), widget)
-            tmpComboBox.addItem("Add Marker")
+            tmpComboBox.addItem(QObject.tr("Change Preset"))
             tmpComboBox.currentIndexChanged.connect(self.onComboBoxItemChanged)
             tmpComboBox.activated.connect(self.onComboBoxActivated)
             tmpComboBoxMarker.append(tmpComboBox)

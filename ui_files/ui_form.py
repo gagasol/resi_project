@@ -83,7 +83,7 @@ class Ui_SelectMarkerWindow(object):
     def retranslateUi(self, SelectMarkerWindow):
         SelectMarkerWindow.setWindowTitle(QCoreApplication.translate("EditMarkerPresetWindow", u"EditMarkerPresetWindow", None))
         self.pushButtonAddPreset.setText(QCoreApplication.translate("EditMarkerPresetWindow", u"Add Preset", None))
-        self.pushButtonChangePreset.setText(QCoreApplication.translate("EditMarkerPresetWindow", u"Change Preset", None))
+        self.pushButtonChangePreset.setText(QCoreApplication.translate("EditMarkerPresetWindow", u"Ok", None))
         self.pushButtonCancel.setText(QCoreApplication.translate("EditMarkerPresetWindow", u"Cancel", None))
     # retranslateUi
 

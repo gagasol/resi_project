@@ -151,7 +151,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # @todo get rid of the fileName argument befeore release
     def openButtonClicked(self, fileName=None):
         self.logger.info("~~~~~~~~~~~~ openButtonClicked ~~~~~~~~~~~~")
-        fileName, _ = QFileDialog.getOpenFileName(None, "Select File", "", "*.rgp;;*.resi")
+        fileName, _ = QFileDialog.getOpenFileName(None, "Select File", "", "*.rgp; *.resi;;*.rpg;;*.resi")
         self.logger.info("filename :{0}".format(fileName))
         if (fileName == ""):
             return
@@ -191,8 +191,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     # functionality for the pushButtonSave QPushButton
     def saveButtonClicked(self):
-        graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
-        self.saveGraphState(self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex()))
+        tabWidget = self.ui.tabWidget
+        currentIndex = tabWidget.currentIndex()
+
+        if ".rgp" in tabWidget.tabText(currentIndex):
+            tabWidget.setTabText(currentIndex, tabWidget.tabText(currentIndex).split(".rgp")[0])
+
+        graphWidget = tabWidget.widget(currentIndex)
+
+        self.saveGraphState(graphWidget)
         print("saveButtonClicked")
 
 
@@ -465,7 +472,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def openPickMarker(self, defaultPresetName):
         defaultDict = None
         for presetDict in self.markerPresetList:
-            if (defaultPresetName in presetDict.values()):
+            if (self.defaultPresetName in presetDict.values()):
                 defaultDict = presetDict
                 break
         if (defaultDict is None):
@@ -480,8 +487,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def overridePickMarkerDict(self, markerDict, name="", col=""):
         if (name != ""):
-            self.pickMarkerWin.loadMarkerDict(markerDict)
-            self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex()).defaultMarkerDictName = markerDict["_NameForPreset"]
             self.pickMarkerWin.markerName = name
             self.pickMarkerWin.markerColor = col
             self.pickMarkerWin.accept()
@@ -542,5 +547,3 @@ app.exec()
 # todo show marking area while marking
 # todo give option to show markers behind graph
 # todo add project option
-
-# @IMPORTANT TODO fix markerPreset
