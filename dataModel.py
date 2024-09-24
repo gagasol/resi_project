@@ -22,6 +22,7 @@ class DataModel:
         self.jsonData = jsonData
         self.markerStateList = []
         self.dx_xlim = 0
+        self.commentRight = ""
         self._dataNameDict = {}
         # todo add this to settings so that the user can choose which data to display
         # TODO need to change the behaviour on which cells are eidtable from constant to variable!!!
@@ -160,6 +161,7 @@ class DataModel:
 
         self._data = loadedState["data"]
         self._name = self._data["selfName"]
+        self.commentRight = self._data["commentRight"]
         self._depthMsmt = self._data["depthMsmt"]
         self._dataDrill = self._data["dataDrill"]
         self._dataFeed = self._data["dataFeed"]
@@ -176,6 +178,14 @@ class DataModel:
         dictData.update(self._customData)
         return dictData
 
+
+    def setComment(self, comment: str):
+        print(comment)
+        self.commentRight = comment
+
+    def getComment(self):
+        print("This is a test!!!!   " + self.commentRight)
+        return self.commentRight
 
     def getGraphData(self):
         return [self._name, self._depthMsmt, self._dataDrill, self._dataFeed]
@@ -268,6 +278,8 @@ class DataModel:
                               "dataDrill": self._dataDrill,
                               "dataFeed": self._dataFeed}
 
+        commentDic = {"commentRight": self.commentRight}
+        keyValuePairs.update(commentDic)
         keyValuePairs.update(graphDataKeyValues)
         return keyValuePairs
 

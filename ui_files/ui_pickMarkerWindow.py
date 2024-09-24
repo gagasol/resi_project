@@ -26,8 +26,8 @@ class Ui_PickMarker(object):
         if not PickMarker.objectName():
             PickMarker.setObjectName(u"PickMarker")
         PickMarker.resize(100, 100)
-        PickMarker.setMinimumSize(QSize(100, 0))
-        PickMarker.setMaximumSize(QSize(100, 300))
+        PickMarker.setMinimumSize(QSize(135, 0))
+        PickMarker.setMaximumSize(QSize(135, 300))
         PickMarker.setWindowOpacity(0.85)
         PickMarker.setStyleSheet(""" 
             QLabel{margin:2px; 
@@ -96,6 +96,7 @@ class Ui_PickMarker(object):
 "                                      stop: 0 #FFFFFF, stop: 1 #dadbde);\n"
 "}")
 
+        self.horizontalLayout.addStretch(1)
         self.horizontalLayout.addWidget(self.pushButtonClose)
 
 

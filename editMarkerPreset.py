@@ -139,9 +139,11 @@ class EditMarkerPresetWindow(QDialog):
         color = self.ui.lineEditColor.text()
 
         if (text == ""):
-           QMessageBox.warning(self, "Warning", "Please enter a name")
+           QMessageBox.warning(self, "Warning", "Please enter a name and press "+" afterwards!")
+           return
         if (color == ""):
             QMessageBox.warning(self, "Warning", "Please enter a color")
+            return
         if (text in self.dictMarker or any(text in tup for tup in self.dictMarkerList)):
             QMessageBox.warning(self, "Warning", "The chosen Name is already in this preset")
             return
@@ -161,13 +163,15 @@ class EditMarkerPresetWindow(QDialog):
 
     def acceptButtonClicked(self):
         self.markerPresetWindow.setWindowModality(Qt.ApplicationModal)
+        dictMarker = dict(self.dictMarkerList)
+        dictMarker["_NameForPreset"] = self.ui.lineEditPresetName.text()
         if (self.presetInd is not None):
-            self.markerPresetWindow.listPresets[self.presetInd] = dict(self.dictMarkerList)
+            self.markerPresetWindow.listPresets[self.presetInd] = dictMarker
         else:
-            self.markerPresetWindow.listPresets.append(dict(self.dictMarkerList))
+            self.markerPresetWindow.listPresets.append(dictMarker)
         self.markerPresetWindow.loadPresets()
         self.dictMarkerList.remove(self.dictMarkerList[0])
-        self.markerPresetWindow.dictAllMarkers.update(dict(self.dictMarkerList))
+        self.markerPresetWindow.dictAllMarkers.update(dictMarker)
         self.close()
 
 
@@ -186,6 +190,7 @@ class EditMarkerPresetWindow(QDialog):
     def colorTextChanged(self):
         if (len(self.ui.lineEditColor.text()) == 7):
             self.ui.lineEditColor.setStyleSheet("color: {color}; background-color: {color};".format(color = str(self.ui.lineEditColor.text())))
+            self.addButtonClicked()
 
 
 # algorithm section

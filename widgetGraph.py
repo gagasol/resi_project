@@ -669,11 +669,6 @@ class WidgetGraph(QWidget):
                                              "QTableWidget::item { margin: 0px; "
                                              "background-color: white; }")
 
-
-        self.horizontalSpacer1 = QSpacerItem(65, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
-
-        self.horizontalLayout_2.addItem(self.horizontalSpacer1)
-
         self.horizontalLayout_2.addWidget(self.tableWidgetMarker)
 
         self.horizontalSpacer_2 = QSpacerItem(369, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)

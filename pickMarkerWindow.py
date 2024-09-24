@@ -104,7 +104,7 @@ class PickMarker(QDialog):
             #newLabel.setStyleSheet("background-color:"+color)
             newLabel.setMinimumHeight(25)
             newLabel.setMaximumHeight(25)
-            newLabel.setFixedWidth(100)
+            newLabel.setFixedWidth(135)
             newLabel.setText(name)
             newLabel.setWindowOpacity(1)
             #self.resize(100, self.height()+30)
