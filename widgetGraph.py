@@ -105,6 +105,7 @@ class CustomRectangle(matplotlib.patches.Rectangle):
         if (self._leftRect != None):
             raise Exception("{0} has leftRect already set".format(self))
         self._leftRect = custRect
+
     # endregion
 
     def getSaveState(self):
@@ -130,9 +131,8 @@ class CustomRectangle(matplotlib.patches.Rectangle):
             else:
                 self.resizeLeftRect(dx)
 
-
         self.lastXPos = self.get_x()
-        self.set_x(self.get_x()+dx)
+        self.set_x(self.get_x() + dx)
         self.updateTableMarker()
 
         if (not calledByScript):
@@ -146,7 +146,7 @@ class CustomRectangle(matplotlib.patches.Rectangle):
         :param calledByScript: boolean to make sure that the program doesn't change all rects but only a max of 3
         :return: None
         """
-        if(self._width - abs(dw) <= 0.1):
+        if (self._width - abs(dw) <= 0.1):
             return
 
         if (direction == "r"):
@@ -161,30 +161,29 @@ class CustomRectangle(matplotlib.patches.Rectangle):
             self.updateTableMarker()
             self.resizeLeftRect(dw)
 
-
     def resizeLinks(self, dx, flagMoves=False, flagSizeChanged=False):
-            if (self._leftRect):
-                if (self._leftRect.get_width()-abs(dx) <= 0.01 and dx < 0):
-                    self._leftRect.move(dx, True)
-                else:
-                    self._leftRect.set_width(self.get_x() - self._leftRect.get_x())
+        if (self._leftRect):
+            if (self._leftRect.get_width() - abs(dx) <= 0.01 and dx < 0):
+                self._leftRect.move(dx, True)
+            else:
+                self._leftRect.set_width(self.get_x() - self._leftRect.get_x())
 
-                self._leftRect.updateTableMarker()
+            self._leftRect.updateTableMarker()
 
-            if (self._rightRect):
-                if (self._rightRect and self._rightRect.get_width()-abs(dx) <= 0.01 and dx > 0):
-                    self._rightRect.move(dx, True)
-                else:
-                    if (flagSizeChanged):
-                        newRectXEnd = self.get_x() + self.get_width()
-                        oldRectXEnd = self._rightRect.get_x() + self._rightRect.get_width()
-                        self._rightRect.set_width(oldRectXEnd - newRectXEnd)
-                        self._rightRect.set_x(self.get_x() + self.get_width())
-                    elif (flagMoves):
-                        self._rightRect.set_width(self._rightRect.get_width() - self.get_x() + self.lastXPos)
-                        self._rightRect.set_x(self.get_x() + self.get_width())
+        if (self._rightRect):
+            if (self._rightRect and self._rightRect.get_width() - abs(dx) <= 0.01 and dx > 0):
+                self._rightRect.move(dx, True)
+            else:
+                if (flagSizeChanged):
+                    newRectXEnd = self.get_x() + self.get_width()
+                    oldRectXEnd = self._rightRect.get_x() + self._rightRect.get_width()
+                    self._rightRect.set_width(oldRectXEnd - newRectXEnd)
+                    self._rightRect.set_x(self.get_x() + self.get_width())
+                elif (flagMoves):
+                    self._rightRect.set_width(self._rightRect.get_width() - self.get_x() + self.lastXPos)
+                    self._rightRect.set_x(self.get_x() + self.get_width())
 
-                self._rightRect.updateTableMarker()
+            self._rightRect.updateTableMarker()
 
     def resizeLeftRect(self, dx):
         if (self._leftRect):
@@ -195,10 +194,9 @@ class CustomRectangle(matplotlib.patches.Rectangle):
 
             self._leftRect.updateTableMarker()
 
-
     def resizeRightRect(self, dx, flagMoves):
         if (self._rightRect):
-            if (self._rightRect.get_width()-abs(dx) <= 0.01 and dx > 0):
+            if (self._rightRect.get_width() - abs(dx) <= 0.01 and dx > 0):
                 self._rightRect.move(dx, True)
             else:
                 if (flagMoves):
@@ -212,11 +210,9 @@ class CustomRectangle(matplotlib.patches.Rectangle):
 
             self._rightRect.updateTableMarker()
 
-
-
     def updateTableMarker(self):
-        self.canvas.parent().parent().updateTableMarkerEntry(self.index, self.name, self.get_x(),
-                                                    self.get_x1())
+        self.canvas.parent().parent().updateTableMarkerEntry(self.index, self.name, self.color, self.get_x(),
+                                                             self.get_x1())
 
 
 class AutoSizedTable(QTableWidget):
@@ -394,7 +390,7 @@ class WidgetGraph(QWidget):
         self.horizontalSpacer0 = None
         self.horizontalSpacerPrint = None
         # endregion
-# data variables setup
+        # data variables setup
         self.name = None
 
         self.dataDrill = []
@@ -407,17 +403,16 @@ class WidgetGraph(QWidget):
         self.textInGraph = None
         # todo delete later
         self.strsToShowInGraph = ["number", "0_diameter", "1_mHeight", "3_objecttype", "5_name"]
-# arg variables
+        # arg variables
         self.mainWindow = MainWindow
         self.pathToFile = pathToFile
 
-# initialize Data and Ui
+        # initialize Data and Ui
         if (self.mainWindow):
             if ("rgp" in pathToFile):
                 self.dataModel = DataModel(pathToFile, self.mainWindow.listNameKeys)
             if (pathToFile == ""):
                 self.dataModel = DataModel(pathToFile, self.mainWindow.listNameKeys, loadedState)
-
 
             self.defaultMarkerDictName = self.mainWindow.defaultPresetName
             pyplot.style.use('ggplot')
@@ -428,7 +423,7 @@ class WidgetGraph(QWidget):
             self.canvasGraph.axes.add_patch(self.showMarkingAreaRect)
             self.toolbar = NavigationToolbar(self.canvasGraph, None)
 
-            if (pathToFile==""):
+            if (pathToFile == ""):
                 for markerState in self.dataModel.markerStateList:
                     self.addRectToCurrentCanv(None, markerState)
                     self.setDxForMarker(self.dataModel.dx_xlim)
@@ -461,7 +456,7 @@ class WidgetGraph(QWidget):
                 self.currentCursor = None
             print("Marking" + str(self.flagMarking))
         if event.text().lower() == "r":
-            self.canvasGraph.axes.set_xlim(0, self.deviceLength+0.1)
+            self.canvasGraph.axes.set_xlim(0, self.deviceLength + 0.1)
             self.canvasGraph.axes.set_ylim(-3, 100)
             self.canvasGraph.draw()
             print("R")
@@ -473,7 +468,6 @@ class WidgetGraph(QWidget):
                 self.flagShiftHeld = True
                 self.toolbar.pan()
         super().keyPressEvent(event)
-
 
     def keyReleaseEvent(self, event):
         if event.text().lower() == "a":
@@ -541,8 +535,6 @@ class WidgetGraph(QWidget):
 
         self.tableWidgetData.setSizePolicy(sizePolicy)
 
-
-
         self.tableWidgetData.setStyleSheet("QTableView::item:selected {background: none;}"
                                            "QTableWidget::item { margin: 0px;"
                                            "background-color: white; }")
@@ -607,8 +599,6 @@ class WidgetGraph(QWidget):
         self.widgetGraph = QWidget()
         self.widgetGraph.setObjectName(u"widgetGraph")
 
-
-
         self.verticalLayout_3 = QVBoxLayout(self.widgetGraph)
         self.verticalLayout_3.addWidget(self.canvasGraph)
         self.verticalLayout_3.setSpacing(5)
@@ -666,8 +656,11 @@ class WidgetGraph(QWidget):
         self.tableWidgetMarker.setSizePolicy(sizePolicy2)
 
         self.tableWidgetMarker.setStyleSheet("QTableView::item{font: 12pt;}"
+                                             "QTableView::item:selected {background: none;}"
                                              "QTableWidget::item { margin: 0px; "
                                              "background-color: white; }")
+
+        self.tableWidgetMarker.cellDoubleClicked.connect(self.onTableMarkerCellClicked)
 
         self.horizontalLayout_2.addWidget(self.tableWidgetMarker)
 
@@ -677,12 +670,12 @@ class WidgetGraph(QWidget):
         self.textEditComment = QTextEdit(self.widgetBottom)
         self.textEditComment.setObjectName(u"textEditComment")
         self.textEditComment.setMaximumSize(QSize(200, 16777215))
+        self.textEditComment.setText(self.dataModel.getComment())
 
         self.horizontalLayout_2.addWidget(self.textEditComment)
         self.widgetBottom.setContentsMargins(0, 0, 0, 0)
 
         self.verticalLayout_2.addWidget(self.widgetBottom)
-
 
         self.widgetMenu = QWidget()
         self.widgetMenu.setMaximumHeight(35)
@@ -719,19 +712,19 @@ class WidgetGraph(QWidget):
 
         sizePolicyMT = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         sizePolicyMT.setHorizontalStretch(0)
-        sizePolicyMT.setVerticalStretch(0)#self.heightWidgetTopPerc)
+        sizePolicyMT.setVerticalStretch(0)  #self.heightWidgetTopPerc)
         sizePolicyMT.setHeightForWidth(self.widgetTop.sizePolicy().hasHeightForWidth())
         self.widgetTop.setSizePolicy(sizePolicyMT)
 
         sizePolicyMG = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         sizePolicyMG.setHorizontalStretch(0)
-        sizePolicyMG.setVerticalStretch(0)#self.heightWidgetGraphPerc)
+        sizePolicyMG.setVerticalStretch(0)  #self.heightWidgetGraphPerc)
         sizePolicyMG.setHeightForWidth(self.widgetTop.sizePolicy().hasHeightForWidth())
         self.widgetTop.setSizePolicy(sizePolicyMG)
 
         sizePolicyMB = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         sizePolicyMB.setHorizontalStretch(0)
-        sizePolicyMB.setVerticalStretch(0)#self.heightWidgetBottomPerc)
+        sizePolicyMB.setVerticalStretch(0)  #self.heightWidgetBottomPerc)
         sizePolicyMB.setHeightForWidth(self.widgetBottom.sizePolicy().hasHeightForWidth())
         self.widgetBottom.setSizePolicy(sizePolicyMB)
 
@@ -746,13 +739,12 @@ class WidgetGraph(QWidget):
         dataSet = self.dataModel.getTablaTopData()
         for i in range(len(dataSet[0])):
             m = i % 6
-            n = (i // 6) + 1 * (i//6)
-            l = i // 6 + 1 + 1 * (i//6)
+            n = (i // 6) + 1 * (i // 6)
+            l = i // 6 + 1 + 1 * (i // 6)
             self.tableWidgetData.setItem(m, n, dataSet[0][i])
             self.tableWidgetData.setItem(m, l, dataSet[1][i])
 
         self.tableWidgetData.cellChanged.connect(self.onCellChangeTableTop)
-
 
     def onCellChangeTableTop(self, row, column):
         # todo fix size of last column, check if entry is longer and if make size relative to content again
@@ -760,12 +752,10 @@ class WidgetGraph(QWidget):
         entry = self.tableWidgetData.item(row, column).text()
         self.dataModel.changeCustomDataEntry(row, column, entry)
 
-
-
     # functionality for the matplotlib canvas
     def onMouseMove(self, event):
         if (event.inaxes):
-            if(self.currentCursor):
+            if (self.currentCursor):
                 self.canvasGraph.setCursor(self.currentCursor)
             if (self.flagMarking):
                 self.showMarkingAreaRect.set_width(event.xdata - self.showMarkingAreaRect.get_x())
@@ -782,7 +772,8 @@ class WidgetGraph(QWidget):
                     self.flagMarkerDragged = True
                     self.focusedMarker.move(event.xdata - self.lastXPos)
                     self.snapOn(event.canvas, self.focusedMarker)
-                    self.updateTableMarkerEntry(self.focusedMarker.index, self.focusedMarker.name, self.focusedMarker.get_x(),
+                    self.updateTableMarkerEntry(self.focusedMarker.index, self.focusedMarker.name,
+                                                self.focusedMarker.color, self.focusedMarker.get_x(),
                                                 self.focusedMarker.get_width() + self.focusedMarker.get_x())
                     self.lastXPos = event.xdata
 
@@ -847,7 +838,8 @@ class WidgetGraph(QWidget):
                     self.xPosMarkerStart = event.xdata
                     self.showMarkingAreaRect.set_x(event.xdata)
                     self.showMarkingAreaRect.set_visible(True)
-                    self.logger.info(" xPosMarkerStart: {0} @clickCount: {1}".format(self.xPosMarkerStart, self.clickCount))
+                    self.logger.info(
+                        " xPosMarkerStart: {0} @clickCount: {1}".format(self.xPosMarkerStart, self.clickCount))
 
                 elif (self.clickCount > 0):
                     if (self.xPosMarkerStart > event.xdata):
@@ -868,7 +860,7 @@ class WidgetGraph(QWidget):
 
                     if (not self.lockMarkerStart):
                         self.logger.info(" xPosMarkerStart: {0} at clickCount: {1}"
-                                    "event.xdata: {2}".format(self.xPosMarkerStart, self.clickCount, event.xdata))
+                                         "event.xdata: {2}".format(self.xPosMarkerStart, self.clickCount, event.xdata))
                         self.xPosMarkerStart = event.xdata
                     else:
                         self.lockMarkerStart = False
@@ -876,16 +868,15 @@ class WidgetGraph(QWidget):
                 self.showMarkingAreaRect.set_x(event.xdata)
                 self.clickCount += 1
 
-
         if (self.flagSetDxForMarker):
             print(" Adjusted x value: " + str(event.xdata))
             self.setDxForMarker(event.xdata)
             for marker in self.markerList:
                 self.updateTableMarkerEntry(marker.index,
                                             marker.name,
+                                            marker.color,
                                             marker.get_x(),
                                             marker.get_x1())
-
 
         if (event.button == MouseButton.RIGHT):
             mode = self.toolbar.mode
@@ -893,7 +884,7 @@ class WidgetGraph(QWidget):
                 self.toolbar.pan()
                 return
 
-            if(not self.flagMarking):
+            if (not self.flagMarking):
                 if (self.markerList is not []):
                     for marker in self.markerList:
                         if self.checkIfClickByRect(event, marker):
@@ -901,8 +892,6 @@ class WidgetGraph(QWidget):
                             return
                         else:
                             self.focusedMarker = None
-
-
 
         if (event.button == MouseButton.MIDDLE and not self.flagMarking):
             self.toolbar.pan()
@@ -917,7 +906,7 @@ class WidgetGraph(QWidget):
             self.flagMarkerDragged = False
             event.canvas.draw()
 
-        self.flagMouseClicked = False#
+        self.flagMouseClicked = False  #
         self.focusedMarker = None
 
     def zoomOnMouseWheel(self, event):
@@ -963,23 +952,23 @@ class WidgetGraph(QWidget):
         self.flagMarkerRightFocus = False
         self.focusedMarker = None
 
-
     def setDxForMarker(self, dx):
         self.dxMarkerForTable = dx
+
         def customFormat(x, pos):
             newTick = round(x - self.dxMarkerForTable, 0)
             return newTick
-        self.canvasGraph.axes.xaxis.set_major_formatter(matplotlib.pyplot.FuncFormatter(customFormat))
-        self.canvasGraph.axes.set_xticks(np.arange(0+dx, 42, 2))
-        self.canvasGraph.axes.set_xlim(0, self.deviceLength+0.1)
-        self.canvasGraph.draw()
 
+        self.canvasGraph.axes.xaxis.set_major_formatter(matplotlib.pyplot.FuncFormatter(customFormat))
+        self.canvasGraph.axes.set_xticks(np.arange(0 + dx, 42, 2))
+        self.canvasGraph.axes.set_xlim(0, self.deviceLength + 0.1)
+        self.canvasGraph.draw()
 
     def windowClosedByUser(self):
         self.flagWindowClosedByUserSignal = True
+
     def windowClosedProgrammatically(self):
         self.flagWindowClosedByUserSignal = False
-
 
     def showMarkingOnScreen(self, show):
         if (show):
@@ -994,7 +983,6 @@ class WidgetGraph(QWidget):
             self.canvasGraph.draw()
             print(self.canvasColor)
 
-
     # region marker functionality
     def addRectToCurrentCanv(self, event=None, markerState=None, noOverlayCheck=False):
         logging.debug("~~~~~~~~~~~~ addRectToCurrentCanv ~~~~~~~~~~~~")
@@ -1003,11 +991,12 @@ class WidgetGraph(QWidget):
         if (markerState):
             self.logger.info("Loading marker {0} ..".format(markerState["name"]))
             self.logger.info("Marker values: index:{4}; xy:{0}; widt:{1}; name{2}; col:{3}".format(markerState["x"],
-                                                                                                markerState["width"],
-                                                                                                markerState["name"],
-                                                                                                markerState["color"],
-                                                                                                markerState["index"]))
-            color = self.mainWindow.nameToColorDict[markerState["name"]]
+                                                                                                   markerState["width"],
+                                                                                                   markerState["name"],
+                                                                                                   markerState["color"],
+                                                                                                   markerState[
+                                                                                                       "index"]))
+            color = markerState["color"]
             tmpRect = CustomRectangle((markerState["x"], -axisHeight * 0.4 / 100), markerState["width"],
                                       - axisHeight * self.heightRectMarkPerc / 100, markerState["index"],
                                       markerState["name"], markerState["color"], self.canvasGraph)
@@ -1029,10 +1018,10 @@ class WidgetGraph(QWidget):
                                       self.markerName, self.markerColor, event.canvas)
             self.logger.info("Created new Marker ..")
             self.logger.info("Marker values: index:{4}; xy:{0}; widt:{1}; name{2}; col:{3}".format(anchorX,
-                                                                                                width,
-                                                                                                self.markerName,
-                                                                                                self.markerColor,
-                                                                                                len(self.markerList)))
+                                                                                                   width,
+                                                                                                   self.markerName,
+                                                                                                   self.markerColor,
+                                                                                                   len(self.markerList)))
             tmpRect.set_edgecolor("black")
             tmpRect.set_linewidth(0.5)
             if (not self.adjustOverlay(event, tmpRect)):
@@ -1043,8 +1032,6 @@ class WidgetGraph(QWidget):
             self.addTableMarkerEntry(tmpRect.index, self.markerName, self.markerColor, round(anchorX, 2),
                                      round(event.xdata, 2))
             self.snapOn(event.canvas, tmpRect)
-
-
 
         # self.updateMarkerRectSave(event.canvas, tmpRect, argColorName=self.colorRect)
 
@@ -1104,7 +1091,7 @@ class WidgetGraph(QWidget):
             focusRectXEnd = focusRectXStart + focusRect.get_width()
 
             if (focusRect.getRightRect() is None
-                    and focusRectXEnd >= fixedRectXStart-snapDelta > focusRectXStart):
+                    and focusRectXEnd >= fixedRectXStart - snapDelta > focusRectXStart):
                 focusRect.set_width(fixedRectXStart - focusRectXStart)
                 self.logger.info(" rightRectTrue selfIndex: {0} rightMarker: {1}".format(focusRect.index, marker.index))
                 focusRect.setRightRect(marker)
@@ -1113,7 +1100,7 @@ class WidgetGraph(QWidget):
                 if (focusRect.getLeftRect()):
                     focusRect.getLeftRect().set_width(focusRect.getLeftRect().get_width() + snapDelta)
             elif (focusRect.getLeftRect() is None
-                  and focusRectXStart <= fixedRectXEnd+snapDelta < focusRectXEnd):
+                  and focusRectXStart <= fixedRectXEnd + snapDelta < focusRectXEnd):
                 self.logger.info(" leftRectTrue selfIndex: {0} leftMarker: {1}".format(focusRect.index, marker.index))
                 focusRect.set_x(fixedRectXEnd)
                 focusRect.setLeftRect(marker)
@@ -1126,7 +1113,6 @@ class WidgetGraph(QWidget):
         for marker in self.markerList:
             marker.updateTableMarker()
         self.canvasGraph.draw()
-
 
     # 90% of this function is actually redundant because CustomRectangles resizeLinks() can take of most of it
     # not gonna change that though.
@@ -1152,8 +1138,8 @@ class WidgetGraph(QWidget):
                 if (startInOld ^ endInOld):
                     if (startInOld):
                         self.logger.info(" startInOld: newX: {0} newW: {1}  oldX: {2} oldW: {3}"
-                                      "".format(newRectXStart, newRectXEnd, oldRectXStart, oldRectXEnd))
-                        marker.set_width(newRectXStart-oldRectXStart)
+                                         "".format(newRectXStart, newRectXEnd, oldRectXStart, oldRectXEnd))
+                        marker.set_width(newRectXStart - oldRectXStart)
                         marker._rightRect = None
                         marker.setRightRect(tmpRect)
                         tmpRect._leftRect = None
@@ -1166,7 +1152,7 @@ class WidgetGraph(QWidget):
 
                     if (endInOld):
                         self.logger.info(" endInOld: newX: {0} newW: {1}  oldX: {2} oldW: {3}"
-                                      "".format(newRectXStart, newRectXEnd, oldRectXStart, oldRectXEnd))
+                                         "".format(newRectXStart, newRectXEnd, oldRectXStart, oldRectXEnd))
                         marker.set_width(oldRectXEnd - newRectXEnd)
                         marker.set_x(newRectXEnd)
                         marker.setLeftRect(None)
@@ -1184,7 +1170,7 @@ class WidgetGraph(QWidget):
                                   'name': marker.name,
                                   'color': marker.color,
                                   'x': newRectXEnd,
-                                  'width': oldRectXEnd-newRectXEnd}
+                                  'width': oldRectXEnd - newRectXEnd}
                     logging.info(" tmpRect: {0}\n newRect: {1}".format(tmpRect, marker))
                     self.addRectToCurrentCanv(markerState=splitMark2, noOverlayCheck=True)
                     self.flagMarking = False
@@ -1204,14 +1190,12 @@ class WidgetGraph(QWidget):
 
         return True
 
-
     def getMarkerAtIndex(self, index):
         for marker in self.markerList:
             if (marker.index == index):
                 return marker
 
         return None
-
 
     def deleteMarker(self, marker):
         print("~~~~~~~~~~deleteMarker~~~~~~~~~~")
@@ -1234,9 +1218,8 @@ class WidgetGraph(QWidget):
         for marker in self.markerList:
             marker.updateTableMarker()
             ind += 1
-        self.addTableMarkerEntry(ind, "","","","")
+        self.addTableMarkerEntry(ind, "", "", "", "")
         self.canvasGraph.draw()
-
 
     def updateMarkerIndices(self):
         logging.debug("~~~~~~~~~~~~ updateMarkerIndices ~~~~~~~~~~~~")
@@ -1246,8 +1229,8 @@ class WidgetGraph(QWidget):
             markerList[i].index = i
             if (i > 0):
                 markerList[i].setPreviousRectInList(markerList[i - 1])
-            if(i < len(self.markerList)-1):
-                markerList[i].setNextRectInList(markerList[i+1])
+            if (i < len(self.markerList) - 1):
+                markerList[i].setNextRectInList(markerList[i + 1])
 
         for marker in markerList:
             print(" index: {0}; self: {1}\n"
@@ -1262,12 +1245,12 @@ class WidgetGraph(QWidget):
         # @todo overload class to get a on_item_changed(self, item) signal and use it to change the markers
         row = index % 6
         column = index // 6 + 1 * index // 6
-        if(index >= 6):
-            if (index%6 == 0):
+        if (index >= 6):
+            if index % 6 == 0:
                 n = self.tableWidgetMarker.columnCount()
-                self.tableWidgetMarker.setColumnCount(n+2)
+                self.tableWidgetMarker.setColumnCount(n + 2)
 
-        if (name != ""):
+        if name != "":
             x = x - self.dxMarkerForTable
             dx = dx - self.dxMarkerForTable
             pixmap = QPixmap(30, 30)
@@ -1297,34 +1280,53 @@ class WidgetGraph(QWidget):
         self.tableWidgetMarker.setItem(row, column, itemName)
         self.tableWidgetMarker.setItem(row, column + 1, itemNumbers)
 
-    def updateTableMarkerEntry(self, index, name, x, dx):
+    def onTableMarkerCellClicked(self, row, column):
+        if column % 2 == 0:
+            name, col = self.mainWindow.openPickMarker(self.defaultMarkerDictName)
+            if name:
+                self.updateTableMarkerEntryNameCol(row+column, name, col,)
+        else:
+            print("Hurray")
+
+    def updateTableMarkerEntry(self, index, name, color, x, dx):
         row = index % 6
         column = index // 6 + 1 * index // 6
 
-        try:
-            x = x - self.dxMarkerForTable
-            dx = dx - self.dxMarkerForTable
-            pixmap = QPixmap(30, 30)
-            pixmap.fill(QColor(self.mainWindow.nameToColorDict[name]))
-            icon = QIcon(pixmap)
+        x = x - self.dxMarkerForTable
+        dx = dx - self.dxMarkerForTable
+        pixmap = QPixmap(30, 30)
+        pixmap.fill(QColor(color))
+        icon = QIcon(pixmap)
 
-            itemName = QTableWidgetItem(name)
-            itemName.setIcon(icon)
-            itemName.setForeground(QColor("#000000"))
+        itemName = QTableWidgetItem(name)
+        itemName.setIcon(icon)
+        itemName.setForeground(QColor("#000000"))
 
-            item = QTableWidgetItem(": {0} cm bis {1} cm".format(round(x, 2), round(dx, 2)))
-            item.setForeground(QColor("#000000"))
+        item = QTableWidgetItem(": {0} cm bis {1} cm".format(round(x, 2), round(dx, 2)))
+        item.setForeground(QColor("#000000"))
 
-            self.tableWidgetMarker.setItem(row, column, itemName)
-            self.tableWidgetMarker.setItem(row, column + 1, item)
+        self.tableWidgetMarker.setItem(row, column, itemName)
+        self.tableWidgetMarker.setItem(row, column + 1, item)
 
+    def updateTableMarkerEntryNameCol(self, index, name, color):
+        row = index % 6
+        column = index // 6 + 1 * index // 6
 
-        except KeyError:
-            print("Not in dic")
+        pixmap = QPixmap(30, 30)
+        pixmap.fill(QColor(color))
+        icon = QIcon(pixmap)
 
+        itemName = QTableWidgetItem(name)
+        itemName.setIcon(icon)
+        itemName.setForeground(QColor("#000000"))
+
+        self.tableWidgetMarker.setItem(row, column, itemName)
+
+    def saveComment(self):
+        self.dataModel.setComment(self.textEditComment.toPlainText())
 
     def changeWidgetsRelSpace(self, topPerc, graphPerc, botPerc, saveValues=False):
-        if (topPerc + graphPerc + botPerc > 100):
+        if topPerc + graphPerc + botPerc > 100:
             raise Exception("Sum must be less than 100")
 
         if (saveValues):
@@ -1371,8 +1373,8 @@ class WidgetGraph(QWidget):
         self.widgetBottom.show()
         self.widgetRight.show()
 
-
     def getCurrentState(self):
+        self.saveComment()
         state = {}
         state.update({"data": self.dataModel.getSaveState()})
         markerStateList = []
@@ -1385,7 +1387,6 @@ class WidgetGraph(QWidget):
         self.logger.info("state: {0}".format(state))
         return state
 
-
     # had to make this function in order to resize the matplotlib because I guess it takes the axes values not the pixel
     def reciprocal_func(self, x, side):
         if side == "l":
@@ -1395,6 +1396,6 @@ class WidgetGraph(QWidget):
         else:
             return 0
 
-        return a / (b*x) + c
+        return a / (b * x) + c
 
 # @todo put the create marker function in here for loading and saving reasons
