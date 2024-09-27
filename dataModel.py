@@ -184,7 +184,6 @@ class DataModel:
         self.commentRight = comment
 
     def getComment(self):
-        print("This is a test!!!!   " + self.commentRight)
         return self.commentRight
 
     def getGraphData(self):
