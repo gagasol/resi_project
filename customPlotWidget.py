@@ -1,27 +1,31 @@
-from typing import List, Dict
+from typing import List
 
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QGraphicsRectItem, QGraphicsItem, QMenu, \
-    QMessageBox
-from PyQt6.QtGui import QColor, QPen, QBrush, QGuiApplication, QMouseEvent, QAction
-from PyQt6.QtCore import Qt, QRectF, QPointF, QObject
 import pyqtgraph as pg
-import numpy as np
+from PySide6.QtCore import Qt, QObject
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import QMessageBox
 
 from markerRectItem import MarkerRectItem
 
+
 class CustomPlotWidget(pg.PlotWidget):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, xLimit, parentWindow, defaultMarkerDictName, markerPresetsList,
+                 *args, **kwargs):
         super(CustomPlotWidget, self).__init__(*args, **kwargs)
 
-        self.setBackground(QColor("#DEE2E2"))
-        self.showGrid(x=True, y=True)
-        self.setLimits(xMin=-0.5, xMax=42, yMin=-2.2, yMax=102)
-        self.setRange(xRange=(-1, 42), yRange=(-3,105))
+        self.setContextMenuPolicy(Qt.NoContextMenu)
 
-        self.getAxis("bottom").setLabel(QObject.tr("Tiefe"), units="cm")
-        self.getAxis("left").setLabel(QObject.tr("Widerstand"), units="%")
+        color = QColor("#DEE2E2")
+        self.setBackground(color)
+        self.showGrid(x=True, y=True)
+        self.setLimits(xMin=0, xMax=xLimit, yMin=-2.2, yMax=102)
+        self.setRange(xRange=(0, 42), yRange=(-3, 105))
+
+        self.getAxis("bottom").setLabel(QObject().tr("Tiefe"), units="cm")
+        self.getAxis("left").setLabel(QObject().tr("Widerstand"), units="%")
 
         self.getViewBox().sigRangeChanged.connect(self.rangeChanged)
+        self.getViewBox().setMenuEnabled(False)
 
         pen_line = pg.mkPen('black')
         self.vLine = pg.InfiniteLine(angle=90, movable=False, pen=pen_line)
@@ -31,9 +35,12 @@ class CustomPlotWidget(pg.PlotWidget):
 
         # TEST
 
+        # variables
+        self.parentWindow = parentWindow
+        self.pickMarkerWin = None
+        self.fileDefaultMarkerDictName = defaultMarkerDictName
+        self.markerPresetNames = markerPresetsList
 
-
-        #variables
         self.lastClicks: List[float] = []
         self.markerList: List[MarkerRectItem] = []
 
@@ -42,12 +49,16 @@ class CustomPlotWidget(pg.PlotWidget):
         self.markingEnabled = False
         self.draggingMarker = False
 
-
+    def enterEvent(self, event):
+        self.setFocus()
+        super().enterEvent(event)
 
     def mousePressEvent(self, event):
         pos = event.position()
+
         if self.sceneBoundingRect().contains(pos):
-            if self.markingEnabled:
+
+            if self.markingEnabled and event.button() == Qt.LeftButton:
                 mousePoint = self.getPlotItem().vb.mapSceneToView(pos)
                 self.lastClicks.append(mousePoint.x())
                 self.markingRegion.setRegion([mousePoint.x(), mousePoint.x()])
@@ -57,9 +68,19 @@ class CustomPlotWidget(pg.PlotWidget):
                     x = min(self.lastClicks)
                     width = abs(self.lastClicks[0] - self.lastClicks[1])
 
+                    name, col = self.parentWindow.openPickMarkerFromGraph(self.fileDefaultMarkerDictName)
+
+                    if not (name or col):
+                        return
+
+                    if not self.markerList:
+                        if "Borke" in name or "Rinde" in name:
+                            self.parentWindow.changeXAxisZero(self.lastClicks[1])
+                            self.parentWindow.dxMarkerForTable = self.lastClicks[1]
+
                     tmpMarkerState = {"index": len(self.markerList),
-                                      "name": "Test",
-                                      "color": "#F92CE1",
+                                      "name": name,
+                                      "color": col,
                                       "x": x,
                                       "width": width}
 
@@ -89,7 +110,6 @@ class CustomPlotWidget(pg.PlotWidget):
             self.lastClicks = []
             self.removeItem(self.markingRegion)
             self.markingEnabled = not self.markingEnabled
-
 
     def changeVLineX(self, x):
         self.vLine.setPos(x)
@@ -124,11 +144,18 @@ class CustomPlotWidget(pg.PlotWidget):
 
         self.checkAndHandleCollision(tmpMarker)
 
+        print(tmpMarker, type(tmpMarker))
         self.addItem(tmpMarker)
+        self.updateTable(tmpMarker.getIndex(), tmpMarker.getName(), tmpMarker.getColor(), tmpMarker.getX0(),
+                         tmpMarker.getX1())
+
+    def changeMarker(self, index, **kwargs):
+        marker = self.markerList[index]
+        marker.changeVariables(**kwargs)
 
     def updateMarkerIndices(self):
         markerList = self.markerList
-        markerList.sort(key=lambda m: m.getXPos())
+        markerList.sort(key=lambda m: m.getX0())
         for i in range(len(markerList)):
             markerList[i].setIndex(i)
             if i > 0:
@@ -139,6 +166,7 @@ class CustomPlotWidget(pg.PlotWidget):
     def deleteMarker(self, marker: MarkerRectItem):
         self.removeItem(marker)
         self.markerList.remove(marker)
+        self.parentWindow.addTableMarkerEntry(marker.getIndex(), "", "", 0, 0)
         self.updateMarkerIndices()
 
     def checkAndHandleCollision(self, marker: MarkerRectItem):
@@ -147,29 +175,43 @@ class CustomPlotWidget(pg.PlotWidget):
             if m is None:
                 continue
 
-            if m.getXPos() < marker.getXPos() < marker.getX1() < m.getX1():
+            if m.getX0() < marker.getX0() < marker.getX1() < m.getX1():
                 markerState = {"index": -1,
                                "name": m.getName(),
                                "color": m.getColor(),
                                "x": marker.getX1(),
                                "width": m.getX1() - marker.getX1()}
-                m.setX1(marker.getXPos())
+                m.setX1(marker.getX0())
                 self.addMarker(markerState)
                 break
 
-            if m.getXPos() <= marker.getX1() < m.getX1():
+            if m.getX0() <= marker.getX1() < m.getX1():
                 marker.linkMarker("right")
                 print("right overlap")
                 continue
-            if m.getX1() >= marker.getXPos() >= m.getXPos():
+            if m.getX1() >= marker.getX0() >= m.getX0():
                 marker.linkMarker("left")
                 print("left overlap")
                 continue
 
-            if m.getXPos() > marker.getXPos() and m.getX1() < marker.getX1():
+            if m.getX0() > marker.getX0() and m.getX1() < marker.getX1():
                 msgBox = QMessageBox()
-                msgBox.setText(QObject.tr("Markers overlap, do you want to delete {0}".format(m.getName())))
+                msgBox.setText(QObject().tr("Markers overlap, do you want to delete {0}".format(m.getName())))
                 msgBox.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
-                if msgBox.exec() == QMessageBox.StandardButton.Yes:
+                if msgBox.exec() == QMessageBox.Rotation.Yes:
                     print("Deleting...")
                     m.deleteSelf()
+
+    def updateTable(self, index: int, name: str, color: str, x: float, dx: float):
+        if "borke" in name or "rinde" in name.lower():
+            self.parentWindow.changeXAxisZero(dx)
+            self.parentWindow.dxMarkerForTable = dx
+
+        self.parentWindow.updateTableMarkerEntry(index, name, color, x, dx)
+
+    def getCanvasState(self):
+        markerStateList = []
+        for marker in self.markerList:
+            markerStateList.append(marker.getState())
+
+        return markerStateList

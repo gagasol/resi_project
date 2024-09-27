@@ -1,7 +1,7 @@
 import pyqtgraph as pg
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QPen, QBrush, QAction
-from PyQt6.QtWidgets import QGraphicsRectItem, QGraphicsItem, QMenu
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor, QPen, QBrush, QAction
+from PySide6.QtWidgets import QGraphicsRectItem, QGraphicsItem, QMenu
 
 
 class MarkerRectItem(QGraphicsRectItem):
@@ -14,11 +14,11 @@ class MarkerRectItem(QGraphicsRectItem):
         self.setZValue(10)
 
         self._index = index
-        self._x = args[0]
+        self._x0 = args[0]
         self._y = args[1]
         self._width = args[2]
         self._height = args[3]
-        self._x1 = self._x + self._width
+        self._x1 = self._x0 + self._width
         self._name = name
         self._color = color
         self._canvas = canvas
@@ -34,61 +34,74 @@ class MarkerRectItem(QGraphicsRectItem):
         self.markerDragArea = None
         self.lastMousePosX = None
 
+        self.toDeleteLater = False
+
         self.addColor(self._color)
 
     def getIndex(self) -> int:
         return self._index
+
     def setIndex(self, index: int):
         self._index = index
 
-    def getXPos(self) -> float:
-        return self._x
-    def setXPos(self, x: float):
-        self._x = x
-        self._x1 = self._x + self._width
+    def getX0(self) -> float:
+        return self._x0
+
+    def setX0(self, x: float):
+        self._x0 = x
+        self._x1 = self._x0 + self._width
         self.updateRect()
 
     def getWidth(self) -> float:
         return self._width
+
     def setWidth(self, width: float):
         self._width = width
-        self._x1 = self._x + self._width
+        self._x1 = self._x0 + self._width
         self.updateRect()
 
     def getX1(self) -> float:
         return self._x1
+
     def setX1(self, x1: float):
         self._x1 = x1
-        self._width = x1 - self._x
+        self._width = x1 - self._x0
         self.updateRect()
 
     def getName(self) -> str:
         return self._name
+
     def setName(self, name: str):
         self._name = name
 
     def getColor(self) -> str:
         return self._color
+
     def setColor(self, color: str):
         self._color = color
+        self.addColor(color)
 
     def getNextMarker(self) -> "MarkerRectItem":
         return self._nextMarker
+
     def setNextMarker(self, marker: "MarkerRectItem"):
         self._nextMarker = marker
 
     def getPreviousMarker(self) -> "MarkerRectItem":
         return self._previousMarker
+
     def setPreviousMarker(self, marker: "MarkerRectItem"):
         self._previousMarker = marker
 
     def getLinkedLeft(self) -> bool:
         return self._linkedLeft
+
     def setLinkedLeft(self, linkedLeft: bool):
         self._linkedLeft = linkedLeft
 
     def getLinkedRight(self) -> bool:
         return self._linkedRight
+
     def setLinkedRight(self, linkedRight: bool):
         self._linkedRight = linkedRight
 
@@ -97,7 +110,7 @@ class MarkerRectItem(QGraphicsRectItem):
         action1 = QAction("Delete Marker")
         menu.addAction(action1)
 
-        action = menu.exec(event.screenPos())
+        action = menu.exec_(event.screenPos())
 
         if action == action1:
             print("Deleting Marker")
@@ -111,12 +124,11 @@ class MarkerRectItem(QGraphicsRectItem):
         self.addColor(self._color)
         super().hoverLeaveEvent(event)
 
-
     def mousePressEvent(self, event):
         if self.isUnderMouse():
             print("Index: {0}; x: {1}; x1: {2}: width: {3}; "
                   "\n leftLink: {4}; rightLink: {5}; previous: {6}; next: {7}".format(self.getIndex(),
-                                                                                      self.getXPos(),
+                                                                                      self.getX0(),
                                                                                       self.getX1(),
                                                                                       self.getWidth(),
                                                                                       self._linkedLeft,
@@ -126,10 +138,10 @@ class MarkerRectItem(QGraphicsRectItem):
 
             self._canvas.draggingMarker = True
             self.lastMousePosX = event.pos().x()
-            if event.pos().x() < self._x + self._width*0.1:
+            if event.pos().x() < self._x0 + self._width * 0.1:
                 self.markerDragArea = "left"
                 print("Clicked on the left!")
-            elif event.pos().x() > self._x1 - self._width*0.1:
+            elif event.pos().x() > self._x1 - self._width * 0.1:
                 self.markerDragArea = "right"
                 print("Clicked on the right!")
             else:
@@ -143,82 +155,85 @@ class MarkerRectItem(QGraphicsRectItem):
         if self.lastMousePosX is not None:
             dx = event.pos().x() - self.lastMousePosX
             if self.markerDragArea is None:
-                self.changeMarkerSize(dx, "middle")
+                self.changeMarkerCoords(dx, "middle")
 
-            elif self._x1 - self._x > self._xAxisViewRange*0.02:
-                self.changeMarkerSize(dx, self.markerDragArea)
+            elif self._x1 - self._x0 > self._xAxisViewRange * 0.02:
+                self.changeMarkerCoords(dx, self.markerDragArea)
 
     def updateRect(self):
-        self.setRect(self._x, self._y, self._width, self._height)
+        self.setRect(self._x0, self._y, self._width, self._height)
 
-    def changeMarkerSize(self, dx: float, direction: str, calledByUser=True):
+    def changeMarkerCoords(self, dx: float, direction: str, calledByUser=True):
         if direction == "middle":
-            self._x = self._x + dx
-            self._x1 = self._x + self._width
+            self._x0 = self._x0 + dx
+            self._x1 = self._x0 + self._width
             self.updateRect()
+            self._canvas.updateTable(self._index, self._name, self._color, self._x0, self._x1)
 
             if dx > 0:
                 self._canvas.changeVLineX(self._x1)
             elif dx < 0:
-                self._canvas.changeVLineX(self._x)
+                self._canvas.changeVLineX(self._x0)
 
             self.lastMousePosX += dx
 
             if self._linkedLeft:
-                self._previousMarker.changeMarkerSize(dx, "right", False)
+                self._previousMarker.changeMarkerCoords(dx, "right", False)
             elif self._previousMarker is not None:
-                if self._x <= self._previousMarker.getX1():
+                if self._x0 <= self._previousMarker.getX1():
                     self.linkMarker("left")
 
             if self._linkedRight:
-                self._nextMarker.changeMarkerSize(dx, "left", False)
+                self._nextMarker.changeMarkerCoords(dx, "left", False)
             elif self._nextMarker is not None:
-                if self._x1 >= self._nextMarker.getXPos():
+                if self._x1 >= self._nextMarker.getX0():
                     self.linkMarker("right")
 
         elif direction == "left":
-            self._x = self._x + dx
+            self._x0 = self._x0 + dx
             self._width = self._width - dx
-            self._x1 = self._x + self._width
+            self._x1 = self._x0 + self._width
             self.updateRect()
+            self._canvas.updateTable(self._index, self._name, self._color, self._x0, self._x1)
 
             if calledByUser:
-                self._canvas.changeVLineX(self._x)
+                self._canvas.changeVLineX(self._x0)
                 self.lastMousePosX += dx
                 if self._linkedLeft:
-                    self._previousMarker.changeMarkerSize(dx, "right", False)
+                    self._previousMarker.changeMarkerCoords(dx, "right", False)
                 elif self._previousMarker is not None:
-                    if self._x <= self._previousMarker.getX1():
+                    if self._x0 <= self._previousMarker.getX1():
                         self.linkMarker("left")
 
         elif direction == "right":
             self._width = self._width + dx
-            self._x1 = self._x + self._width
+            self._x1 = self._x0 + self._width
             self.updateRect()
+            self._canvas.updateTable(self._index, self._name, self._color, self._x0, self._x1)
 
             if calledByUser:
                 self._canvas.changeVLineX(self._x1)
                 self.lastMousePosX += dx
                 if self._linkedRight:
-                    self._nextMarker.changeMarkerSize(dx, "left", False)
+                    self._nextMarker.changeMarkerCoords(dx, "left", False)
                 elif self._nextMarker is not None:
-                    if self._x1 >= self._nextMarker.getXPos():
+                    if self._x1 >= self._nextMarker.getX0():
                         self.linkMarker("right")
 
     def linkMarker(self, direction: str):
         if direction == "left":
             self._linkedLeft = True
             self._previousMarker.setLinkedRight(True)
-            self._previousMarker.setX1(self._x)
+            self._previousMarker.setX1(self._x0)
             print("link left:")
-            print("x value caller: {0}, x1 value called: {1}".format(self._x, self._previousMarker.getX1()))
+            print("x value caller: {0}, x1 value called: {1}".format(self._x0, self._previousMarker.getX1()))
 
         elif direction == "right":
             self._linkedRight = True
             self._nextMarker.setLinkedLeft(True)
-            self._nextMarker.setXPos(self._x1)
+            self._nextMarker.setX0(self._x1)
             print("linked right:")
-            print("x1 value caller: {0}, x value called: {1}".format(self._x1, self._nextMarker.getXPos()))
+            print("x1 value caller: {0}, x value called: {1}".format(self._x1, self._nextMarker.getX0()))
 
     def adjustLinkedMarker(self):
         pass
@@ -231,7 +246,7 @@ class MarkerRectItem(QGraphicsRectItem):
         self._y = y
         self._height = height
         self._xAxisViewRange = xAxisView[1] - xAxisView[0]
-        self.setRect(self._x, self._y, self._width, self._height)
+        self.setRect(self._x0, self._y, self._width, self._height)
 
     def deleteSelf(self):
         if self._previousMarker is not None:
@@ -245,3 +260,20 @@ class MarkerRectItem(QGraphicsRectItem):
         self._nextMarker = None
         self._canvas.deleteMarker(self)
 
+    def getState(self):
+        returnDict = {"index": self._index, "name": self._name, "color": self._color, "x": self._x0,
+                      "width": self._width}
+        print(returnDict)
+        return returnDict
+
+    def changeVariables(self, **kwargs):
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setterMethod = getattr(self, "set" + key[1:].capitalize())
+                if callable(setterMethod):
+                    setterMethod(value)
+                else:
+                    print(f"Setter method for {key} does not exist, setting manually!")
+                    setattr(self, key, value)
+            else:
+                print(f"{key} does not exist in MarkerRectItem class.")

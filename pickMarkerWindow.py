@@ -65,7 +65,7 @@ class PickMarker(QDialog):
 
     def pushButtonOpenPresetsClicked(self):
         markers = self.mainWindow.openChangeMarkerPreset(self.markerDict["_NameForPreset"])
-        if (markers):
+        if markers:
             logging.debug(markers)
             self.markerDict = markers
             self.loadMarkerDict(self.markerDict)

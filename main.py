@@ -472,7 +472,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def openPickMarker(self, defaultPresetName):
         defaultDict = None
         for presetDict in self.markerPresetList:
-            if (self.defaultPresetName in presetDict.values()):
+            if (defaultPresetName in presetDict.values()):
                 defaultDict = presetDict
                 break
         if (defaultDict is None):
