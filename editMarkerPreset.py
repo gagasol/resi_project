@@ -72,6 +72,7 @@ class EditMarkerPresetWindow(QDialog):
         self.dictMarkerList = []
 
         if (self.dictMarker != {}):
+            print(self.dictMarker)
             self.dictMarkerList.append(("_NameForPreset", self.dictMarker["_NameForPreset"]))
             self.ui.lineEditPresetName.setText(self.dictMarker["_NameForPreset"])
         else:

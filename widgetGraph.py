@@ -507,8 +507,16 @@ class WidgetGraph(QWidget):
             itemName.setForeground(QColor("#000000"))
             itemNumbers.setForeground(QColor("#000000"))
         else:
-            itemName = QTableWidgetItem("")
-            itemNumbers = QTableWidgetItem("")
+            itemName = None
+            itemNumbers = None
+
+            rowStart = row % 6 + (1 - row // 6) # get the next row index
+            columnStart = column + row // 6
+            for i in range(columnStart, self.tableWidgetMarker.columnCount()):
+                for j in range(rowStart, self.tableWidgetMarker.rowCount()):
+                    item = self.tableWidgetMarker.item(j, i)
+                    if (item is not None):
+                        item.setText("")
 
         print("~~~~~~~~ addTableMarkerEntry ~~~~~~~~~~")
         print(" Index: {0}\n row: {1}\n column: {2}\n name: {3}".format(index, row, column, itemName))

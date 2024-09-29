@@ -169,6 +169,10 @@ class CustomPlotWidget(pg.PlotWidget):
         self.markerList.remove(marker)
         self.parentWindow.addTableMarkerEntry(marker.getIndex(), "", "", 0, 0)
         self.updateMarkerIndices()
+        self.draggingMarker = False
+        self.markingEnabled = False
+        self.removeItem(self.markingRegion)
+        self.setFocus()
 
     def checkAndHandleCollision(self, marker: MarkerRectItem):
         markerNeighbors = [marker.getPreviousMarker(), marker.getNextMarker()]
