@@ -2,8 +2,8 @@ from typing import List
 
 import pyqtgraph as pg
 from PySide6.QtCore import Qt, QObject
-from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtGui import QColor, QAction
+from PySide6.QtWidgets import QMessageBox, QMenu
 
 from markerRectItem import MarkerRectItem
 
@@ -13,7 +13,7 @@ class CustomPlotWidget(pg.PlotWidget):
                  *args, **kwargs):
         super(CustomPlotWidget, self).__init__(*args, **kwargs)
 
-        self.setContextMenuPolicy(Qt.NoContextMenu)
+        #self.setContextMenuPolicy(Qt.NoContextMenu)
 
         color = QColor("#DEE2E2")
         self.setBackground(color)
@@ -48,6 +48,7 @@ class CustomPlotWidget(pg.PlotWidget):
 
         self.markingEnabled = False
         self.draggingMarker = False
+
 
     def enterEvent(self, event):
         self.setFocus()

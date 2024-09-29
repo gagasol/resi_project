@@ -151,7 +151,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # @todo get rid of the fileName argument befeore release
     def openButtonClicked(self, fileName=None):
         self.logger.info("~~~~~~~~~~~~ openButtonClicked ~~~~~~~~~~~~")
-        fileName, _ = QFileDialog.getOpenFileName(None, "Select File", "", "*.rgp, *.resi;;*.rgp;;*.resi")
+        fileName, _ = QFileDialog.getOpenFileName(None, "Select File", "", "*.rgp *.resi;;*.rgp;;*.resi")
         self.logger.info("filename :{0}".format(fileName))
         if (fileName == ""):
             return
