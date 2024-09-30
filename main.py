@@ -20,6 +20,7 @@ from ui_files.ui_mainwindow import Ui_MainWindow
 from markerpresetwindow import MarkerPresetWindow
 from editMarkerPreset import EditMarkerPresetWindow
 from pickMarkerWindow import PickMarker
+from settingsWindow import SettingsWindow
 
 
 class CustomQMdiArea(QMdiArea):
@@ -87,20 +88,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     # variable setup
 
-        # classes
-        # @markerWindow variable to store a selectMarkerWindow.py
-        # @vLineRect constant that marks the vertical position of the mouse cursor across the MplCanvas
-        # @currentTargetRect variable that holds a rectangle if it has been clicked on
-
         self.pickMarkerWin = None
         self.markerPresetWin = None
+        self.settingsWindow = None
         # @todo IMPORTANT make the nameToColorDict into a real thing!
         self.listGraphWidgets = []
         self.nameToColorDict = {}
         self.listNameKeys = []
         self.markerPresetList = []
 
-        self.defaultPresetName = ""
+        self.defaultMarkerDictName = ""
 
         # @todo delete later
         self.nameToColorDict = {
@@ -120,6 +117,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             "Crimson": "#DC143C"
         }
         self.loadPreset()
+        self.defaultMarkerDictName = self.settingsWindow.getSettingsVariable("defaultMarkerDictName")
 
 
         self.listNameKeys = ["idNumber", "date"]
@@ -138,6 +136,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ui.pushButtonPdf.clicked.connect(self.pdfButtonClicked)
         self.ui.pushButtonToggleOverlay.clicked.connect(self.toggleOverlayButtonClicked)
         self.ui.pushButtonPng.clicked.connect(self.pngButtonClicked)
+        self.ui.pushButtonSettings.clicked.connect(self.settingsButtonClicked)
 
     #TDL!!!!
 
@@ -230,7 +229,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             for widget in self.listGraphWidgets:
                 with open("./data/" + widget.name + ".resi", "w") as file:
                     json.dump(widget.getCurrentState(), file)
-
 
 
     # functionality for the pushButtonTabView QPushButton
@@ -366,26 +364,28 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         Finally, it sets the parent of the tablewidgetmarker to None, inserts it into the horizontal layout at index 2,
         and shows the table widget marker.
         """
+
+        heightTop = self.settingsWindow.getSettingsVariable("printHeightWidgetTopPerc")
+        heightGraph = self.settingsWindow.getSettingsVariable("printHeightWidgetGraphPerc")
+        heightBottom = self.settingsWindow.getSettingsVariable("printHeightWidgetBottomPerc")
+        fontSize = self.settingsWindow.getSettingsVariable("printFontSize")
+
         graphWidget.horizontalSpacer0.changeSize(10, 20)
         graphWidget.horizontalSpacerPrint.changeSize(9, 20)
         #graphWidget.horizontalLayout.invalidate()
         graphWidget.widgetMenu.hide()
         graphWidget.widgetBottom.hide()
         graphWidget.labelData.hide()
-        graphWidget.changeWidgetsRelSpace(18, 82, 0)
+        graphWidget.changeWidgetsRelSpace(heightTop, heightGraph, heightBottom)
         graphWidget.setAttribute(Qt.WA_NoSystemBackground, True)
         graphWidget.setAttribute(Qt.WA_TranslucentBackground, True)
-        graphWidget.vLineRect.set_visible(False)
-        graphWidget.canvasGraph.axes.set_xlabel('Tiefe (cm)', fontsize=18)
-        graphWidget.canvasGraph.axes.set_ylabel('Widerstand (%)', fontsize=18)
-        graphWidget.canvasGraph.axes.xaxis.label.set_position((0.98, 1))
-        graphWidget.canvasGraph.axes.yaxis.label.set_position((1, 0.86))
+        graphWidget.canvasGraph.vLine.hide()
         for i in range(graphWidget.tableWidgetData.rowCount()):
             for j in range(graphWidget.tableWidgetData.columnCount()):
                 item = graphWidget.tableWidgetData.item(i, j)
                 if (item):
                     font = item.font()
-                    font.setPointSize(18)
+                    font.setPointSize(fontSize)
                     item.setFont(font)
 
 
@@ -395,7 +395,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     item = graphWidget.tableWidgetMarker.item(i, j)
                     if (item):
                         font = item.font()
-                        font.setPointSize(18)
+                        font.setPointSize(fontSize)
                         item.setFont(font)
 
             graphWidget.tableWidgetMarker.setParent(None)
@@ -416,6 +416,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         It also adjusts the size of the horizontal spacer and shows the necessary components in the graph widget.
 
         """
+        fontSize = self.settingsWindow.getSettingsVariable("fontSize")
+
         graphWidget.setAttribute(Qt.WA_NoSystemBackground, False)
         graphWidget.setAttribute(Qt.WA_TranslucentBackground, False)
         for i in range(graphWidget.tableWidgetData.rowCount()):
@@ -442,13 +444,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         graphWidget.widgetMenu.show()
         graphWidget.widgetBottom.show()
         graphWidget.labelData.show()
-        graphWidget.vLineRect.set_visible(True)
-        graphWidget.canvasGraph.axes.set_xlabel('Tiefe (cm)', fontsize=10)
-        graphWidget.canvasGraph.axes.set_ylabel('Widerstand (%)', fontsize=10)
-        graphWidget.canvasGraph.axes.xaxis.label.set_position((0.98, 1))
-        graphWidget.canvasGraph.axes.yaxis.label.set_position((1, 0.9))
+        graphWidget.canvasGraph.vLine.show()
         graphWidget.widgetTop.adjustSize()
 
+    def settingsButtonClicked(self):
+        markerPresetWin = MarkerPresetWindow(self, self.nameToColorDict, self.markerPresetList, calledByGraph=False)
+        markerPresetWin.exec()
 
     def toggleOverlayButtonClicked(self):
         # If overlay_widget visible, hide it, else show it
@@ -468,9 +469,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.ui.pushButtonToggleOverlay.setIcon(icon_in)
             self.ui.pushButtonToggleOverlay.setIconSize(QSize(25, 25))
 
-
     def openPickMarker(self, defaultPresetName):
+        if not self.markerPresetList:
+            QMessageBox.warning(self, QObject.tr("Warning"), QObject.tr("No preset available"))
+            return None, None
         defaultDict = None
+
         for presetDict in self.markerPresetList:
             if (defaultPresetName in presetDict.values()):
                 defaultDict = presetDict
@@ -485,15 +489,23 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             return None, None
 
 
-    def overridePickMarkerDict(self, markerDict, name="", col=""):
-        if (name != ""):
+    def overridePickMarkerDict(self, markerDict=None, name="", col=""):
+        if name != "":
             self.pickMarkerWin.markerName = name
             self.pickMarkerWin.markerColor = col
             self.pickMarkerWin.accept()
             self.pickMarkerWin.close()
         else:
+            graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
+            graphWidget.changeFileDefaultPresetName(markerDict["_NameForPreset"])
+            self.pickMarkerWin.markerDict = markerDict
             self.pickMarkerWin.loadMarkerDict(markerDict)
+            self.pickMarkerWin.accept()
+            self.pickMarkerWin.close()
 
+    def getGraphDefaultMarkerDictName(self):
+        graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
+        return graphWidget.defaultMarkerDictName
 
     def openChangeMarkerPreset(self, defaultPresetName=None):
         markerPresetWin = MarkerPresetWindow(self, self.nameToColorDict, self.markerPresetList)
@@ -507,20 +519,38 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def loadPreset(self):
         try:
-            with open("./settings/markerSave.json", "r") as file:
+            with open("./settings/settings.json", "r") as file:
                 loadedFile = json.load(file)
-                self.nameToColorDict = loadedFile[0]
-                self.markerPresetList = loadedFile[1]
-                self.defaultPresetName = loadedFile[2]
+                self.settingsWindow = SettingsWindow(loadedFile[0])
+                self.nameToColorDict = loadedFile[1]
+                self.markerPresetList = loadedFile[2]
         except FileNotFoundError:
+            settingsDict = {"defaultMarkerDictName": "",
+                            "heightWidgetTopPerc": 15,
+                            "heightWidgetGraphPerc": 75,
+                            "heightWidgetBottomPerc": 10,
+                            "colorBackground": "#dfe5e6",
+                            "colorBackgroundMarking": "#8b888f",
+                            "fontSize": 14,
+                            "fontName": "Arial",
+                            "colorFeedPlot": "#5c08c9",
+                            "colorDrillPlot": "#eda31a",
+                            "markerHeightPerc": 0.02,
+                            "printHeightWidgetTopPerc": 18,
+                            "printHeightWidgetGraphPerc": 82,
+                            "printHeightWidgetBottomPerc": 0,
+                            "printFontSize": 18,
+                            "printFontName": "Arial"}
+
+            self.settingsWindow = SettingsWindow(settingsDict)
             print("First startup detected")
 
     def closeEvent(self, event):
-        if (self.defaultPresetName is not None):
-            saveData = [self.nameToColorDict, self.markerPresetList, self.defaultPresetName]
+        if self.defaultMarkerDictName is not None:
+            saveData = [self.settingsWindow.defaultSettingsDict, self.nameToColorDict, self.markerPresetList]
         else:
-            saveData = [self.nameToColorDict, self.markerPresetList]
-        with open("./settings/markerSave.json", "w") as f:
+            saveData = [self.settingsWindow.defaultSettingsDict, self.nameToColorDict, self.markerPresetList]
+        with open("./settings/settings.json", "w") as f:
             json.dump(saveData, f)
 
     # algorithms

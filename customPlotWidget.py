@@ -9,17 +9,16 @@ from markerRectItem import MarkerRectItem
 
 
 class CustomPlotWidget(pg.PlotWidget):
-    def __init__(self, xLimit, parentWindow, defaultMarkerDictName, markerPresetsList,
-                 *args, **kwargs):
+    def __init__(self, xLimit, parentWindow, defaultMarkerDictName, markerPresetsList, colorBackgroundHex,
+                 colorWhileMarkingHex, defaultFont, markerHeightPerc, *args, **kwargs):
         super(CustomPlotWidget, self).__init__(*args, **kwargs)
 
-        #self.setContextMenuPolicy(Qt.NoContextMenu)
-
-        color = QColor("#DEE2E2")
-        self.setBackground(color)
+        self.colorBackgroundHex = QColor(colorBackgroundHex)
+        self.colorWhileMarkingHex = QColor(colorWhileMarkingHex)
+        self.setBackground(colorBackgroundHex)
         self.showGrid(x=True, y=True)
         self.setLimits(xMin=0, xMax=xLimit, yMin=-2.2, yMax=102)
-        self.setRange(xRange=(0, 42), yRange=(-3, 105))
+        self.setRange(xRange=(0, xLimit), yRange=(-3, 105))
 
         self.getAxis("bottom").setLabel(QObject().tr("Tiefe"), units="cm")
         self.getAxis("left").setLabel(QObject().tr("Widerstand"), units="%")
@@ -32,13 +31,15 @@ class CustomPlotWidget(pg.PlotWidget):
         self.addItem(self.vLine)
 
         self.markingRegion = pg.LinearRegionItem([0, 0])
+        self.markingRegion.hide()
+        self.addItem(self.markingRegion)
 
         # TEST
 
         # variables
         self.parentWindow = parentWindow
         self.pickMarkerWin = None
-        self.fileDefaultMarkerDictName = defaultMarkerDictName
+        self.fileDefaultMarkerDictName = self.parentWindow.defaultMarkerDictName
         self.markerPresetNames = markerPresetsList
 
         self.lastClicks: List[float] = []
@@ -63,15 +64,18 @@ class CustomPlotWidget(pg.PlotWidget):
                 mousePoint = self.getPlotItem().vb.mapSceneToView(pos)
                 self.lastClicks.append(mousePoint.x())
                 self.markingRegion.setRegion([mousePoint.x(), mousePoint.x()])
-                self.addItem(self.markingRegion)
+                self.markingRegion.show()
 
                 if len(self.lastClicks) == 2:
                     x = min(self.lastClicks)
                     width = abs(self.lastClicks[0] - self.lastClicks[1])
 
+                    print(self.fileDefaultMarkerDictName)
                     name, col = self.parentWindow.openPickMarkerFromGraph(self.fileDefaultMarkerDictName)
 
                     if not (name or col):
+                        self.markingRegion.hide()
+                        self.switchMarking()
                         return
 
                     if not self.markerList:
@@ -108,9 +112,14 @@ class CustomPlotWidget(pg.PlotWidget):
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Alt:
-            self.lastClicks = []
-            self.removeItem(self.markingRegion)
-            self.markingEnabled = not self.markingEnabled
+            self.switchMarking()
+
+    def switchMarking(self):
+        self.lastClicks = []
+        self.markingRegion.hide()
+        self.markingEnabled = not self.markingEnabled
+        color = self.colorWhileMarkingHex if self.markingEnabled else self.colorBackgroundHex
+        self.setBackground(color)
 
     def changeVLineX(self, x):
         self.vLine.setPos(x)
@@ -127,6 +136,12 @@ class CustomPlotWidget(pg.PlotWidget):
         for marker in self.markerList:
             marker.canvasViewChanged(y, height, xAxisView, yAxisView)
         print("rangeChanged")
+
+    def changeAxisLabel(self, axis, font):
+        if axis == "bottom":
+            self.getAxis("bottom").setLabelFont(font)
+        elif axis == "left":
+            self.getAxis("left").setLabelFont(font)
 
     def addMarker(self, markerState):
         yAxisView = self.getViewBox().viewRange()[1]
@@ -159,10 +174,14 @@ class CustomPlotWidget(pg.PlotWidget):
         markerList.sort(key=lambda m: m.getX0())
         for i in range(len(markerList)):
             markerList[i].setIndex(i)
+            self.updateTable(markerList[i].getIndex(),  markerList[i].getName(),  markerList[i].getColor(),
+                             markerList[i].getX0(),  markerList[i].getX1())
             if i > 0:
                 markerList[i].setPreviousMarker(markerList[i - 1])
             if i < len(self.markerList) - 1:
                 markerList[i].setNextMarker(markerList[i + 1])
+
+        self.parentWindow.addTableMarkerEntry(markerList[-1].getIndex() + 1, "", "", -1, -1)
 
     def deleteMarker(self, marker: MarkerRectItem):
         self.removeItem(marker)
@@ -171,7 +190,7 @@ class CustomPlotWidget(pg.PlotWidget):
         self.updateMarkerIndices()
         self.draggingMarker = False
         self.markingEnabled = False
-        self.removeItem(self.markingRegion)
+        self.markingRegion.hide()
         self.setFocus()
 
     def checkAndHandleCollision(self, marker: MarkerRectItem):
@@ -208,7 +227,7 @@ class CustomPlotWidget(pg.PlotWidget):
                     m.deleteSelf()
 
     def updateTable(self, index: int, name: str, color: str, x: float, dx: float):
-        if "borke" in name or "rinde" in name.lower():
+        if "borke" in name or "rinde" in name.lower() and index == 0:
             self.parentWindow.changeXAxisZero(dx)
             self.parentWindow.dxMarkerForTable = dx
 

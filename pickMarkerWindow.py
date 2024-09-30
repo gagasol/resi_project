@@ -30,6 +30,7 @@ class CustomLabel(QLabel):
         hexColor = hexColor.lstrip("#")  # Remove '#' if it exists
         return tuple(int(hexColor[i:i + 2], 16) for i in (0, 2, 4))
 
+
 class PickMarker(QDialog):
     signalCanceled = Signal()
     signalAccepted = Signal()
@@ -51,6 +52,7 @@ class PickMarker(QDialog):
         self.ui.pushButtonOpenPresets.clicked.connect(self.pushButtonOpenPresetsClicked)
         self.ui.pushButtonClose.clicked.connect(self.cancel)
 
+        print(markerDict)
         self.loadMarkerDict(markerDict)
 
 
@@ -68,7 +70,7 @@ class PickMarker(QDialog):
         if markers:
             logging.debug(markers)
             self.markerDict = markers
-            self.loadMarkerDict(self.markerDict)
+            self.loadMarkerDict(markers)
 
 
     def cancel(self):

@@ -24,6 +24,7 @@ class DataModel:
         self.dx_xlim = 0
         self.commentRight = ""
         self._dataNameDict = {}
+        self.fileDefaultPresetName = ""
         # todo add this to settings so that the user can choose which data to display
         # TODO need to change the behaviour on which cells are eidtable from constant to variable!!!
         self._dataNameDict = {
@@ -162,12 +163,13 @@ class DataModel:
         self._data = loadedState["data"]
         self._name = self._data["selfName"]
         self.commentRight = self._data["commentRight"]
+        self.dx_xlim = loadedState["dx_xlim"]
+        self.fileDefaultPresetName = self._data["fileDefaultPresetName"]
         self._depthMsmt = self._data["depthMsmt"]
         self._dataDrill = self._data["dataDrill"]
         self._dataFeed = self._data["dataFeed"]
         for markerState in loadedState["markerState"]:
             self.markerStateList.append(markerState)
-        self.dx_xlim = loadedState["dx_xlim"]
 
 
     def _formatListToDict(self, tmpData):
@@ -278,7 +280,9 @@ class DataModel:
                               "dataFeed": self._dataFeed}
 
         commentDic = {"commentRight": self.commentRight}
+        defaultMarkerNameDic = {"fileDefaultPresetName": self.fileDefaultPresetName}
         keyValuePairs.update(commentDic)
+        keyValuePairs.update(defaultMarkerNameDic)
         keyValuePairs.update(graphDataKeyValues)
         return keyValuePairs
 

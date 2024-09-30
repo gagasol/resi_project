@@ -17,7 +17,7 @@ class MarkerPresetWindow(QDialog):
     closedByUser = Signal()
     closedProgrammatically = Signal()
 
-    def __init__(self, MainWindow, nameToColorDict=None, markerPresetList=None, parent=None):
+    def __init__(self, MainWindow, nameToColorDict=None, markerPresetList=None, parent=None, calledByGraph=True):
         super().__init__(parent)
         if markerPresetList is None:
             markerPresets = []
@@ -29,6 +29,8 @@ class MarkerPresetWindow(QDialog):
         self.mainWindow = MainWindow
         self.dictAllMarkers = nameToColorDict
         self.listPresets = markerPresetList
+
+        self.calledByGraph = calledByGraph
 
         self.flagDelete = False
         self.flagCanceled = False
@@ -66,7 +68,7 @@ class MarkerPresetWindow(QDialog):
 
     def okButtonClicked(self):
         self.checkSelection()
-        print("[Debug Info] New defaultPresetName: " + self.mainWindow.defaultPresetName)
+        print("[Debug Info] New defaultPresetName: " + self.mainWindow.defaultMarkerDictName)
         self.accept()
 
     def cancelMarker(self):
@@ -77,9 +79,13 @@ class MarkerPresetWindow(QDialog):
     def checkSelection(self):
         checkedButton = self.buttonGroup.checkedButton()
         if checkedButton is not None:
-            self.mainWindow.defaultPresetName = checkedButton.objectName()
+            if not self.calledByGraph:
+                self.mainWindow.defaultMarkerDictName = checkedButton.objectName()
+                self.mainWindow.settingsWindow.setSettingsVariable("defaultMarkerDictName", checkedButton.objectName())
+
             for preset in self.listPresets:
-                if preset["_NameForPreset"] == checkedButton.objectName():
+                if self.calledByGraph and preset["_NameForPreset"] == checkedButton.objectName():
+                    print("markerpresetwindow markerDictName: " + preset["_NameForPreset"])
                     self.mainWindow.overridePickMarkerDict(preset)
                     break
 
@@ -136,7 +142,7 @@ class MarkerPresetWindow(QDialog):
 
     def loadPresets(self):
 
-        if (self.listComboBoxPresets):
+        if self.listComboBoxPresets:
             self.comboBoxCount = 0
 
             for button in self.buttonGroup.buttons():
@@ -159,8 +165,14 @@ class MarkerPresetWindow(QDialog):
             deleteButton = QPushButton(QObject.tr('Delete'))
             deleteButton.setObjectName(preset["_NameForPreset"])
             deleteButton.clicked.connect(self.deletePreset)
-            if (preset["_NameForPreset"] == self.mainWindow.defaultPresetName):
+            if self.calledByGraph and preset["_NameForPreset"] == self.mainWindow.getGraphDefaultMarkerDictName():
                 checkBox.setChecked(True)
+            if not self.calledByGraph and preset["_NameForPreset"] == self.mainWindow.defaultMarkerDictName:
+                checkBox.setChecked(True)
+
+            if len(self.listPresets) == 1:
+                checkBox.setChecked(True)
+
             tmpComboBox = QComboBox(self)
             tmpComboBox.id_number = self.comboBoxCount
             self.comboBoxCount += 1
@@ -179,6 +191,7 @@ class MarkerPresetWindow(QDialog):
             verticalLayout.addWidget(tmpComboBox)
             verticalLayout.addWidget(deleteButton)
             verticalLayout.addWidget(checkBox)
+
 
             widget.setLayout(verticalLayout)
             self.ui.scrollAreaWidgetContents.layout().insertWidget(len(tmpComboBoxMarker), widget)

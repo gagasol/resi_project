@@ -5,7 +5,7 @@ import numpy as np
 import pyqtgraph as pg
 from PySide6.QtCore import (QSize, Qt, )
 from PySide6.QtGui import (QColor, QIcon,
-                           QPixmap, QKeyEvent)
+                           QPixmap, QKeyEvent, QFont)
 from PySide6.QtWidgets import QCheckBox, QTableWidget, \
     QHeaderView, QAbstractScrollArea, QLabel, QTableWidgetItem, QStyledItemDelegate, QLineEdit
 from PySide6.QtWidgets import (QHBoxLayout, QSizePolicy, QSpacerItem, QTextEdit,
@@ -131,11 +131,11 @@ class WidgetGraph(QWidget):
         # region settings variable
         self.verticalLayout_3 = None
         self.tableWidgetMarker = None
-        self.heightWidgetTopPerc = 15
-        self.heightWidgetGraphPerc = 75
-        self.heightWidgetBottomPerc = 10
-        self.heightRectMarkPerc = 3
-        self.percMarkerFocusHeight = 5
+        self.settingsWindow = MainWindow.settingsWindow
+        self.heightWidgetTopPerc = self.settingsWindow.getSettingsVariable("heightWidgetTopPerc")
+        self.heightWidgetGraphPerc = self.settingsWindow.getSettingsVariable("heightWidgetGraphPerc")
+        self.heightWidgetBottomPerc = self.settingsWindow.getSettingsVariable("heightWidgetBottomPerc")
+        self.markerHeightPerc = self.settingsWindow.getSettingsVariable("markerHeightPerc")
         # endregion
 
         self.pickMarkerWin = None
@@ -199,11 +199,12 @@ class WidgetGraph(QWidget):
         if self.mainWindow:
             if "rgp" in pathToFile:
                 self.dataModel = DataModel(pathToFile, self.mainWindow.listNameKeys)
+                self.defaultMarkerDictName = self.mainWindow.defaultMarkerDictName
             if (pathToFile == ""):
                 self.dataModel = DataModel(pathToFile, self.mainWindow.listNameKeys, loadedState)
+                self.defaultMarkerDictName = self.dataModel.fileDefaultPresetName
 
 
-            self.defaultMarkerDictName = self.mainWindow.defaultPresetName
             self.setUpUi()
             self.initializeData()
 
@@ -300,13 +301,22 @@ class WidgetGraph(QWidget):
         self.widgetGraph.setObjectName(u"widgetGraph")
 
         bottom_axis = CustomAxis(orientation="bottom")
-
-        self.canvasGraph = CustomPlotWidget(self.deviceLength + 0.5, self, self.defaultMarkerDictName,
-                                            self.mainWindow.markerPresetList, axisItems={"bottom": bottom_axis})
+        xLimit = self.deviceLength + 0.5
+        colorBackground = self.settingsWindow.getSettingsVariable("colorBackground")
+        colorBackgroundMarking = self.settingsWindow.getSettingsVariable("colorBackgroundMarking")
+        colorFeedPlot = self.settingsWindow.getSettingsVariable("colorFeedPlot")
+        colorDrillPlot = self.settingsWindow.getSettingsVariable("colorDrillPlot")
+        markerHeightPerc = self.settingsWindow.getSettingsVariable("markerHeightPerc")
+        fontName = self.settingsWindow.getSettingsVariable("fontName")
+        fontSize = self.settingsWindow.getSettingsVariable("fontSize")
+        font = QFont(fontName, fontSize)
+        self.canvasGraph = CustomPlotWidget(xLimit, self, self.defaultMarkerDictName, self.mainWindow.markerPresetList,
+                                            colorBackground, colorBackgroundMarking, font, markerHeightPerc,
+                                            axisItems={"bottom": bottom_axis})
         self.canvasGraph.showGrid(x=False, y=False)
 
-        penDrill = pg.mkPen(color="#FF0000", width=0.7)
-        penFeed = pg.mkPen(color="#00FF00", width=0.7)
+        penDrill = pg.mkPen(color=colorDrillPlot, width=0.7)
+        penFeed = pg.mkPen(color=colorFeedPlot, width=0.7)
 
 
         self.canvasGraph.plot(self.x, dataDrill, pen=penFeed)
@@ -509,15 +519,15 @@ class WidgetGraph(QWidget):
         else:
             itemName = None
             itemNumbers = None
-
+            '''
             rowStart = row % 6 + (1 - row // 6) # get the next row index
             columnStart = column + row // 6
             for i in range(columnStart, self.tableWidgetMarker.columnCount()):
                 for j in range(rowStart, self.tableWidgetMarker.rowCount()):
                     item = self.tableWidgetMarker.item(j, i)
-                    if (item is not None):
+                    if item is not None:
                         item.setText("")
-
+            '''
         print("~~~~~~~~ addTableMarkerEntry ~~~~~~~~~~")
         print(" Index: {0}\n row: {1}\n column: {2}\n name: {3}".format(index, row, column, itemName))
         self.tableWidgetMarker.setItem(row, column, itemName)
@@ -573,6 +583,11 @@ class WidgetGraph(QWidget):
         bottom_axis.setTicks([[(v+xOffset, str(v)) for v in ticks]]  )
         self.canvasGraph.getPlotItem().setAxisItems({"bottom": bottom_axis})
         self.canvasGraph.getPlotItem().update()
+
+    def changeFileDefaultPresetName(self, defaultPresetName):
+        self.canvasGraph.fileDefaultMarkerDictName = defaultPresetName
+        self.defaultMarkerDictName = defaultPresetName
+        self.dataModel.fileDefaultPresetName = defaultPresetName
 
     def changeWidgetsRelSpace(self, topPerc, graphPerc, botPerc, saveValues=False):
         if topPerc + graphPerc + botPerc > 100:
