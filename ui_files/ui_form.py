@@ -59,7 +59,7 @@ class Ui_SelectMarkerWindow(object):
         self.pushButtonAddPreset = QPushButton(self.widget)
         self.pushButtonAddPreset.setObjectName(u"pushButtonAddPreset")
 
-        self.horizontalLayout.addWidget(self.pushButtonAddPreset)
+        self.scrollAreaWidgetContents.layout().insertWidget(0, self.pushButtonAddPreset)
 
         self.pushButtonChangePreset = QPushButton(self.widget)
         self.pushButtonChangePreset.setObjectName(u"pushButtonChangePreset")

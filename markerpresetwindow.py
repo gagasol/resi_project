@@ -68,7 +68,6 @@ class MarkerPresetWindow(QDialog):
 
     def okButtonClicked(self):
         self.checkSelection()
-        print("[Debug Info] New defaultPresetName: " + self.mainWindow.defaultMarkerDictName)
         self.accept()
 
     def cancelMarker(self):
@@ -85,7 +84,6 @@ class MarkerPresetWindow(QDialog):
 
             for preset in self.listPresets:
                 if self.calledByGraph and preset["_NameForPreset"] == checkedButton.objectName():
-                    print("markerpresetwindow markerDictName: " + preset["_NameForPreset"])
                     self.mainWindow.overridePickMarkerDict(preset)
                     break
 
@@ -93,9 +91,9 @@ class MarkerPresetWindow(QDialog):
     def onComboBoxItemChanged(self, index):
 
         textCurrentItem = self.sender().currentText()
-        if (index == 0 or textCurrentItem == "_NameForPreset"):
+        if index == 0 or textCurrentItem == "_NameForPreset":
             return
-        if (index == self.sender().count()-1):
+        if index == self.sender().count()-1:
             selectMarkerWindow = EditMarkerPresetWindow(self, self.listPresets[self.sender().id_number],
                                                         self.sender().id_number)
             selectMarkerWindow.exec()
@@ -167,7 +165,7 @@ class MarkerPresetWindow(QDialog):
             deleteButton.clicked.connect(self.deletePreset)
             if self.calledByGraph and preset["_NameForPreset"] == self.mainWindow.getGraphDefaultMarkerDictName():
                 checkBox.setChecked(True)
-            if not self.calledByGraph and preset["_NameForPreset"] == self.mainWindow.defaultMarkerDictName:
+            elif not self.calledByGraph and preset["_NameForPreset"] == self.mainWindow.defaultMarkerDictName:
                 checkBox.setChecked(True)
 
             if len(self.listPresets) == 1:
@@ -200,23 +198,6 @@ class MarkerPresetWindow(QDialog):
             tmpComboBox.activated.connect(self.onComboBoxActivated)
             tmpComboBoxMarker.append(tmpComboBox)
             tmpComboBoxes.append(tmpComboBox)
-
-        widget = QWidget()
-        verticalLayout = QHBoxLayout()
-        tmpComboBox = QComboBox()
-        tmpComboBox.addItem(QObject.tr("All markers"))
-        for index, (key, value) in enumerate(self.dictAllMarkers.items()):
-            pixmap = QPixmap(30, 30)
-            pixmap.fill(QColor(value))
-            icon = QIcon(pixmap)
-            tmpComboBox.addItem(key)
-            tmpComboBox.setItemIcon(index+1, icon)
-
-        verticalLayout.addWidget(tmpComboBox)
-        widget.setLayout(verticalLayout)
-        tmpComboBoxes.append(tmpComboBox)
-
-        self.ui.scrollAreaWidgetContents.layout().insertWidget(self.comboBoxCount, widget)
 
         self.listComboBoxPresets = [tmpComboBoxMarker, tmpComboBoxes]
 

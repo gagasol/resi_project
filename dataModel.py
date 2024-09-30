@@ -182,7 +182,6 @@ class DataModel:
 
 
     def setComment(self, comment: str):
-        print(comment)
         self.commentRight = comment
 
     def getComment(self):
