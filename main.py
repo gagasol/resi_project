@@ -312,12 +312,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             filename = "./data/" + filename + "." + suffix
 
-        print(filename)
         printWidth = 1900
         printHeight = 1080
         scaledPixmap = QPixmap(QSize(printWidth, printHeight))
         scaledPixmap.fill(Qt.transparent)
-        print(scaledPixmap.size())
 
         # @todo as soon as I have a load function in widgetGraph I can change the way I take an image
         # instead of printWidget = graphWidget I copy the state not the instance (maybe add load state? overkill..)
@@ -337,7 +335,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         elif (suffix == "pdf"):
             print("printing to pdf")
             pdfWriter = QPdfWriter(filename)
-            pageSize = QPageSize(QSizeF(210, 115), QPageSize.Millimeter)
+            pageSize = QPageSize(QSizeF(210, 125), QPageSize.Millimeter)
             pdfWriter.setPageSize(pageSize)
             pdfWriter.setResolution(230)
             pdfWriter.setPageMargins(QMarginsF(0, 0, 0, 0))
@@ -380,6 +378,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         graphWidget.setAttribute(Qt.WA_NoSystemBackground, True)
         graphWidget.setAttribute(Qt.WA_TranslucentBackground, True)
         graphWidget.canvasGraph.vLine.hide()
+        graphWidget.canvasGraph.changeAxisFontsize(26)
         for i in range(graphWidget.tableWidgetData.rowCount()):
             for j in range(graphWidget.tableWidgetData.columnCount()):
                 item = graphWidget.tableWidgetData.item(i, j)
@@ -418,6 +417,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         fontSize = self.settingsWindow.getSettingsVariable("fontSize")
 
+        graphWidget.canvasGraph.changeAxisFontsize(11)
         graphWidget.setAttribute(Qt.WA_NoSystemBackground, False)
         graphWidget.setAttribute(Qt.WA_TranslucentBackground, False)
         for i in range(graphWidget.tableWidgetData.rowCount()):
@@ -476,13 +476,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         defaultDict = None
 
         for presetDict in self.markerPresetList:
-            if (defaultPresetName in presetDict.values()):
+            if defaultPresetName in presetDict.values():
                 defaultDict = presetDict
                 break
-        if (defaultDict is None):
-            raise Exception("No preset named '" + defaultPresetName + "'")
+        if defaultDict is None:
+            for presetDict in self.markerPresetList:
+                if self.defaultMarkerDictName in presetDict.values():
+                    defaultDict = presetDict
+            QMessageBox.warning(self, QObject.tr("Warning"),
+                                QObject.tr(f"Preset {defaultPresetName} not found, changing to default"))
 
         self.pickMarkerWin = PickMarker(self, defaultDict)
+        self.overridePickMarkerDict(defaultDict)
         if (self.pickMarkerWin.exec()):
             return self.pickMarkerWin.markerName, self.pickMarkerWin.markerColor
         else:
@@ -490,18 +495,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
     def overridePickMarkerDict(self, markerDict=None, name="", col=""):
+        graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
         if name != "":
             self.pickMarkerWin.markerName = name
             self.pickMarkerWin.markerColor = col
             self.pickMarkerWin.accept()
             self.pickMarkerWin.close()
-        else:
-            graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
+        elif markerDict is not None:
             graphWidget.changeFileDefaultPresetName(markerDict["_NameForPreset"])
             self.pickMarkerWin.markerDict = markerDict
             self.pickMarkerWin.loadMarkerDict(markerDict)
             self.pickMarkerWin.accept()
             self.pickMarkerWin.close()
+        else:
+            graphWidget.changeFileDefaultPresetName(self.defaultMarkerDictName)
 
     def getGraphDefaultMarkerDictName(self):
         graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
@@ -539,7 +546,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                             "printHeightWidgetTopPerc": 18,
                             "printHeightWidgetGraphPerc": 82,
                             "printHeightWidgetBottomPerc": 0,
-                            "printFontSize": 18,
+                            "printFontSize": 30,
                             "printFontName": "Arial"}
 
             self.settingsWindow = SettingsWindow(settingsDict)

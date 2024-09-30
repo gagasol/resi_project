@@ -257,6 +257,8 @@ class WidgetGraph(QWidget):
         self.tableWidgetData.horizontalHeader().setVisible(False)
         self.tableWidgetData.verticalHeader().setVisible(False)
         self.tableWidgetData.verticalHeader().setMinimumSectionSize(0)
+        self.tableWidgetData.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.tableWidgetData.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)

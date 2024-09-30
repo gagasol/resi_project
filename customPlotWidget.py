@@ -22,6 +22,7 @@ class CustomPlotWidget(pg.PlotWidget):
 
         self.getAxis("bottom").setLabel(QObject().tr("Tiefe"), units="cm")
         self.getAxis("left").setLabel(QObject().tr("Widerstand"), units="%")
+        self.changeAxisFontsize(11)
 
         self.getViewBox().sigRangeChanged.connect(self.rangeChanged)
         self.getViewBox().setMenuEnabled(False)
@@ -50,6 +51,9 @@ class CustomPlotWidget(pg.PlotWidget):
         self.markingEnabled = False
         self.draggingMarker = False
 
+    def changeAxisFontsize(self, fontSize):
+        self.getAxis("bottom").setLabel(QObject().tr("Tiefe"), units="cm", **{'font-size': str(fontSize)+"pt"})
+        self.getAxis("left").setLabel(QObject().tr("Widerstand"), units="%", **{'font-size': str(fontSize)+"pt"})
 
     def enterEvent(self, event):
         self.setFocus()
