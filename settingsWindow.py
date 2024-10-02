@@ -83,13 +83,13 @@ class SettingsWindow(QDialog):
 
         self.ui.lineEditFeedColor.textChanged.connect(self.validateField)
         self.ui.lineEditDrillColor.textChanged.connect(self.validateField)
-        self.ui.lineEditGraphBackground.textChanged.connect(self.validateField)
-        self.ui.lineEditMarkingGraphBackground.textChanged.connect(self.validateField)
+        self.ui.lineEditGraphBackgroundColor.textChanged.connect(self.validateField)
+        self.ui.lineEditMarkingGraphBackgroundColor.textChanged.connect(self.validateField)
 
         self.initUi()
 
-        colorTextFields = [self.ui.lineEditFeedColor, self.ui.lineEditDrillColor, self.ui.lineEditGraphBackground,
-                           self.ui.lineEditMarkingGraphBackground]
+        colorTextFields = [self.ui.lineEditFeedColor, self.ui.lineEditDrillColor, self.ui.lineEditGraphBackgroundColor,
+                           self.ui.lineEditMarkingGraphBackgroundColor]
         spinBoxes = [self.ui.doubleSpinBoxMarkerHeight]
 
         self.validator.addToValidator('textColor', colorTextFields, [notEmpty, isHexColor])
@@ -103,9 +103,9 @@ class SettingsWindow(QDialog):
         self.ui.doubleSpinBoxBotPerc.setValue(self.getSettingsVariable("heightWidgetBottomPerc"))
         self.ui.lineEditFeedColor.setText(self.getSettingsVariable("colorFeedPlot"))
         self.ui.lineEditDrillColor.setText(self.getSettingsVariable("colorDrillPlot"))
-        self.ui.lineEditGraphBackground.setText(self.getSettingsVariable("colorBackground"))
-        self.ui.lineEditMarkingGraphBackground.setText(self.getSettingsVariable("colorBackgroundMarking"))
-        self.ui.doubleSpinBoxMarkerHeight.setValue(self.getSettingsVariable("markerHeightPerc"))
+        self.ui.lineEditGraphBackgroundColor.setText(self.getSettingsVariable("colorBackground"))
+        self.ui.lineEditMarkingGraphBackgroundColor.setText(self.getSettingsVariable("colorBackgroundMarking"))
+        self.ui.doubleSpinBoxMarkerHeight.setValue(self.getSettingsVariable("markerHeightPerc")*100)
 
     def accept(self):
         if self.validator.isFormValid() and not self.blockSave:
@@ -114,9 +114,9 @@ class SettingsWindow(QDialog):
                             "heightWidgetBottomPerc": self.ui.doubleSpinBoxBotPerc.value(),
                             "colorFeedPlot": self.ui.lineEditFeedColor.text(),
                             "colorDrillPlot": self.ui.lineEditDrillColor.text(),
-                            "colorBackground": self.ui.lineEditGraphBackground.text(),
-                            "colorBackgroundMarking": self.ui.lineEditMarkingGraphBackground.text(),
-                            "markerHeightPerc": self.ui.doubleSpinBoxMarkerHeight.value()}
+                            "colorBackground": self.ui.lineEditGraphBackgroundColor.text(),
+                            "colorBackgroundMarking": self.ui.lineEditMarkingGraphBackgroundColor.text(),
+                            "markerHeightPerc": self.ui.doubleSpinBoxMarkerHeight.value()/100}
 
             for key, value in overrideDict.items():
                 self.setSettingsVariable(key, value)
@@ -138,7 +138,7 @@ class SettingsWindow(QDialog):
         self.ui.stackedWidget.setCurrentIndex(1)
 
     def preferenceButtonClicked(self):
-        self.ui.stackedWidget.setCurrentIndex(0)
+        self.ui.stackedWidget.setCurrentIndex(2)
 
     def presetsButtonClicked(self):
         self.ui.stackedWidget.setCurrentIndex(0)
