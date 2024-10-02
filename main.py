@@ -4,7 +4,7 @@ import logging
 import sys
 
 from PySide6.QtCore import Qt, QEventLoop, QPoint, QRect, QSize, QSizeF, QMarginsF, QObject
-from PySide6.QtGui import QIcon, QPdfWriter, QPageSize, QPainter, QPixmap
+from PySide6.QtGui import QIcon, QPdfWriter, QPageSize, QPainter, QPixmap, QGuiApplication, QCursor
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, QWidget, QFileDialog, QMdiArea, QMdiSubWindow, \
     QMessageBox
 from PySide6 import QtWidgets
@@ -491,7 +491,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.pickMarkerWin = PickMarker(self, defaultDict)
         self.overridePickMarkerDict(defaultDict)
-        if (self.pickMarkerWin.exec()):
+        # generate window at cursor and check if window is in screen, if not create at corner
+        mousePos = QCursor.pos()
+        screenGeometry = QApplication.primaryScreen().availableGeometry()
+
+        xEnd = mousePos.x() + self.pickMarkerWin.width()
+        yEnd = mousePos.y() + self.pickMarkerWin.height()
+        moveX = mousePos.x() if xEnd < screenGeometry.width() else screenGeometry.width()-self.pickMarkerWin.width()
+        moveY = mousePos.y() if yEnd < screenGeometry.height() else screenGeometry.height()-self.pickMarkerWin.height()
+        movePos = QPoint(moveX, moveY)
+
+        self.pickMarkerWin.move(movePos)
+        if self.pickMarkerWin.exec():
             return self.pickMarkerWin.markerName, self.pickMarkerWin.markerColor
         else:
             return None, None

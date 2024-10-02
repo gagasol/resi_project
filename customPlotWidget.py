@@ -252,7 +252,8 @@ class CustomPlotWidget(pg.PlotWidget):
         self.parentWindow.addTableMarkerEntry(marker.getIndex(), "", "", 0, 0)
         self.updateMarkerIndices()
         self.draggingMarker = False
-        self.markingEnabled = False
+        if self.markingEnabled:
+            self.switchMarking()
         self.markingRegion.hide()
         self.setFocus()
 
