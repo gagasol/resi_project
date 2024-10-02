@@ -458,6 +458,14 @@ class WidgetGraph(QWidget):
         self.verticalLayout_2.setStretchFactor(self.widgetGraph, self.heightWidgetGraphPerc)
         self.setLayout(self.verticalLayout_2)
 
+    def updateUi(self):
+        self.heightWidgetTopPerc = self.settingsWindow.getSettingsVariable("heightWidgetTopPerc")
+        self.heightWidgetGraphPerc = self.settingsWindow.getSettingsVariable("heightWidgetGraphPerc")
+        self.heightWidgetBottomPerc = self.settingsWindow.getSettingsVariable("heightWidgetBottomPerc")
+        self.markerHeightPerc = self.settingsWindow.getSettingsVariable("markerHeightPerc")
+        self.canvasGraph.colorBackgroundHex = QColor(self.settingsWindow.getSettingsVariable("colorBackground"))
+        self.canvasGraph.colorWhileMarkingHex = QColor(self.settingsWindow.getSettingsVariable("colorWhileMarking"))
+
     def initializeData(self):
         dataSet = self.dataModel.getTablaTopData()
         for i in range(len(dataSet[0])):

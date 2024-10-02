@@ -170,6 +170,7 @@ class MarkerPresetWindow(QDialog):
 
             if len(self.listPresets) == 1:
                 checkBox.setChecked(True)
+                self.mainWindow.defaultMarkerDictName = preset["_NameForPreset"]
 
             tmpComboBox = QComboBox(self)
             tmpComboBox.id_number = self.comboBoxCount

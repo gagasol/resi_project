@@ -451,8 +451,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         graphWidget.widgetTop.adjustSize()
 
     def settingsButtonClicked(self):
-        markerPresetWin = MarkerPresetWindow(self, self.nameToColorDict, self.markerPresetList, calledByGraph=False)
-        markerPresetWin.exec()
+        self.markerPresetWin = MarkerPresetWindow(self, self.nameToColorDict, self.markerPresetList, calledByGraph=False)
+        if self.settingsWindow.exec():
+            with open("./settings/settings.json", "w") as file:
+                json.dump(self.settingsWindow.defaultSettingsDict, file, indent=2)
+        #markerPresetWin.exec()
 
     def toggleOverlayButtonClicked(self):
         # If overlay_widget visible, hide it, else show it
@@ -542,7 +545,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         try:
             with open("./settings/settings.json", "r") as file:
                 loadedFile = json.load(file)
-                self.settingsWindow = SettingsWindow(loadedFile[0])
+                self.settingsWindow = SettingsWindow(loadedFile[0], mainWindow=self)
                 self.nameToColorDict = loadedFile[1]
                 self.markerPresetList = loadedFile[2]
         except FileNotFoundError:
@@ -563,7 +566,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                             "printFontSize": 30,
                             "printFontName": "Arial"}
 
-            self.settingsWindow = SettingsWindow(settingsDict)
+            self.settingsWindow = SettingsWindow(settingsDict, mainWindow=self)
             print("First startup detected")
 
     def closeEvent(self, event):
