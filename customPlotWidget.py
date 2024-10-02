@@ -1,6 +1,7 @@
 from typing import List
 
 import pyqtgraph as pg
+from PySide6 import QtCore
 from PySide6.QtCore import Qt, QObject
 from PySide6.QtGui import QColor, QAction
 from PySide6.QtWidgets import QMessageBox, QMenu
@@ -42,6 +43,7 @@ class CustomPlotWidget(pg.PlotWidget):
         self.pickMarkerWin = None
         self.fileDefaultMarkerDictName = self.parentWindow.defaultMarkerDictName
         self.markerPresetNames = markerPresetsList
+        self.xLimit = xLimit
 
         self.lastClicks: List[float] = []
         self.markerList: List[MarkerRectItem] = []
@@ -54,6 +56,46 @@ class CustomPlotWidget(pg.PlotWidget):
     def changeAxisFontsize(self, fontSize):
         self.getAxis("bottom").setLabel(QObject().tr("Tiefe"), units="cm", **{'font-size': str(fontSize)+"pt"})
         self.getAxis("left").setLabel(QObject().tr("Widerstand"), units="%", **{'font-size': str(fontSize)+"pt"})
+
+    def contextMenuEvent(self, event):
+        contextMenu = QMenu()
+
+        pos = event.pos()
+        axisPos = self.mapToScene(pos)
+        mousePoint = self.getPlotItem().vb.mapSceneToView(axisPos)
+        marker = self.getMarkerAtPos(mousePoint)
+
+        item1 = QAction(QObject.tr("Reset zoom"), self)
+        item1.triggered.connect(self.resetZoom)
+        contextMenu.addAction(item1)
+
+        contextMenuMarkingStr = 'Stop marking' if self.markingEnabled else 'Start marking'
+
+        item2 = QAction(QObject.tr(contextMenuMarkingStr), self)
+        item2.triggered.connect(self.switchMarkingContextMenu)
+        contextMenu.addAction(item2)
+
+        if marker:
+            itemDelMarker = QAction(QObject.tr("Delete marker"), self)
+            itemDelMarker.triggered.connect(marker.deleteSelf)
+            contextMenu.addAction(itemDelMarker)
+
+        contextMenu.exec_(event.globalPos())
+
+    def setZoom(self, x0, x1, y0, y1):
+        self.setRange(xRange=(x0, x1), yRange=(y0, y1))
+
+    def resetZoom(self):
+        self.setRange(xRange=(0, self.xLimit), yRange=(-3, 105))
+
+    def switchMarkingContextMenu(self):
+        x = self.lastClicks[0]
+        self.switchMarking()
+        if self.markingEnabled:
+            self.lastClicks.append(x)
+            self.markingRegion.setRegion([x, x])
+            self.markingRegion.show()
+
 
     def enterEvent(self, event):
         self.setFocus()
@@ -96,6 +138,10 @@ class CustomPlotWidget(pg.PlotWidget):
                     self.addMarker(tmpMarkerState)
                     self.lastClicks.remove(self.lastClicks[0])
 
+            elif not self.lastClicks and event.button() == Qt.RightButton:
+                mousePoint = self.getPlotItem().vb.mapSceneToView(pos)
+                self.lastClicks.append(mousePoint.x())
+
         super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
@@ -117,6 +163,8 @@ class CustomPlotWidget(pg.PlotWidget):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Alt:
             self.switchMarking()
+        elif event.key() == Qt.Key.Key_R:
+            self.resetZoom()
 
     def switchMarking(self):
         self.lastClicks = []
@@ -169,23 +217,34 @@ class CustomPlotWidget(pg.PlotWidget):
         self.updateTable(tmpMarker.getIndex(), tmpMarker.getName(), tmpMarker.getColor(), tmpMarker.getX0(),
                          tmpMarker.getX1())
 
+    def getMarkerAtPos(self, pos):
+        if pos.y() > 0:
+            return None
+        for marker in self.markerList:
+            if marker.getX0() <= pos.x() <= marker.getX1():
+                print(f"markerX0 {marker.getX0()} pos {pos.x()} markerX1 {marker.getX1()}")
+                return marker
+
+        return None
+
     def changeMarker(self, index, **kwargs):
         marker = self.markerList[index]
         marker.changeVariables(**kwargs)
 
     def updateMarkerIndices(self):
-        markerList = self.markerList
-        markerList.sort(key=lambda m: m.getX0())
-        for i in range(len(markerList)):
-            markerList[i].setIndex(i)
-            self.updateTable(markerList[i].getIndex(),  markerList[i].getName(),  markerList[i].getColor(),
-                             markerList[i].getX0(),  markerList[i].getX1())
-            if i > 0:
-                markerList[i].setPreviousMarker(markerList[i - 1])
-            if i < len(self.markerList) - 1:
-                markerList[i].setNextMarker(markerList[i + 1])
+        if self.markerList:
+            markerList = self.markerList
+            markerList.sort(key=lambda m: m.getX0())
+            for i in range(len(markerList)):
+                markerList[i].setIndex(i)
+                self.updateTable(markerList[i].getIndex(),  markerList[i].getName(),  markerList[i].getColor(),
+                                 markerList[i].getX0(),  markerList[i].getX1())
+                if i > 0:
+                    markerList[i].setPreviousMarker(markerList[i - 1])
+                if i < len(self.markerList) - 1:
+                    markerList[i].setNextMarker(markerList[i + 1])
 
-        self.parentWindow.addTableMarkerEntry(markerList[-1].getIndex() + 1, "", "", -1, -1)
+            self.parentWindow.addTableMarkerEntry(markerList[-1].getIndex() + 1, "", "", -1, -1)
 
     def deleteMarker(self, marker: MarkerRectItem):
         self.removeItem(marker)

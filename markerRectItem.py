@@ -105,16 +105,18 @@ class MarkerRectItem(QGraphicsRectItem):
     def setLinkedRight(self, linkedRight: bool):
         self._linkedRight = linkedRight
 
-    def contextMenuEvent(self, event):
+    def contextMenuEvent(self, pos):
         menu = QMenu()
         action1 = QAction("Delete Marker")
         menu.addAction(action1)
 
-        action = menu.exec_(event.screenPos())
+        print(pos)
+        action = menu.exec_(pos)
 
         if action == action1:
             print("Deleting Marker")
             self.deleteSelf()
+
 
     def hoverEnterEvent(self, event):
         self.addColor("#000000")
@@ -126,16 +128,6 @@ class MarkerRectItem(QGraphicsRectItem):
 
     def mousePressEvent(self, event):
         if self.isUnderMouse():
-            print("Index: {0}; x: {1}; x1: {2}: width: {3}; "
-                  "\n leftLink: {4}; rightLink: {5}; previous: {6}; next: {7}".format(self.getIndex(),
-                                                                                      self.getX0(),
-                                                                                      self.getX1(),
-                                                                                      self.getWidth(),
-                                                                                      self._linkedLeft,
-                                                                                      self._linkedRight,
-                                                                                      self.getPreviousMarker(),
-                                                                                      self.getNextMarker()))
-
             self._canvas.draggingMarker = True
             self.lastMousePosX = event.pos().x()
             if event.pos().x() < self._x0 + self._width * 0.1:

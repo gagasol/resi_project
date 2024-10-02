@@ -262,6 +262,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     # functionality for the pushButtonWindowView QPushButton
     def windowButtonClicked(self):
+        QMessageBox.warning(self, "Under construction", "This function is still under construction")
+        return
+
         if (self.ui.stackedWidgetWorkArea.currentIndex() != 1):
             for graphWidget in self.listGraphWidgets:
                 self.ui.tabWidget.clear()
