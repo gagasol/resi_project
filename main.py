@@ -3,7 +3,7 @@ import json
 import logging
 import sys
 
-from PySide6.QtCore import Qt, QEventLoop, QPoint, QRect, QSize, QSizeF, QMarginsF, QObject
+from PySide6.QtCore import Qt, QEventLoop, QPoint, QRect, QSize, QSizeF, QMarginsF, QObject, QRectF
 from PySide6.QtGui import QIcon, QPdfWriter, QPageSize, QPainter, QPixmap, QGuiApplication, QCursor
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, QWidget, QFileDialog, QMdiArea, QMdiSubWindow, \
     QMessageBox
@@ -315,11 +315,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             filename = "./data/" + filename + "." + suffix
 
-        printWidth = 1900
+        printWidth = 1920
         printHeight = 1080
-        scaledPixmap = QPixmap(QSize(printWidth, printHeight))
-        scaledPixmap.fill(Qt.transparent)
-
         # @todo as soon as I have a load function in widgetGraph I can change the way I take an image
         # instead of printWidget = graphWidget I copy the state not the instance (maybe add load state? overkill..)
         # printWidget.setAttribute(Qt.WA_DontShowOnScreen, True)
@@ -328,21 +325,38 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         graphWidget.resize(printWidth, printHeight)
 
 
-        graphWidget.render(scaledPixmap)
+
 
         if (suffix == "png"):
             print("printing to png")
+            scaledPixmap = QPixmap(QSize(printWidth, printHeight))
+            scaledPixmap.fill(Qt.transparent)
+
+            graphWidget.render(scaledPixmap)
             scaledPixmap.save(filename)
             graphWidget.resetWidgetsRelSpace()
 
         elif (suffix == "pdf"):
             print("printing to pdf")
+            dpi = 232
+            widthA4px = 8.27 * dpi
+            heightA4px = 11.69 * dpi
+            scale_x = widthA4px / printWidth
+            scale_y = heightA4px / printHeight
+            scale = min(scale_x, scale_y)
+            scale = 5
+            print(scale)
             pdfWriter = QPdfWriter(filename)
-            pageSize = QPageSize(QSizeF(210, 125), QPageSize.Millimeter)
+            a4_w_mm = 210
+            height_in_mm = a4_w_mm * printHeight / printWidth
+            pageSize = QPageSize(QSizeF(a4_w_mm, height_in_mm), QPageSize.Millimeter)
             pdfWriter.setPageSize(pageSize)
-            pdfWriter.setResolution(230)
+            pdfWriter.setResolution(dpi)
             pdfWriter.setPageMargins(QMarginsF(0, 0, 0, 0))
 
+            scaledPixmap = QPixmap(QSize(int(printWidth*scale), int(printHeight*scale)))
+            scaledPixmap.fill(Qt.transparent)
+            graphWidget.render(scaledPixmap)
             pdfPainter = QPainter(pdfWriter)
             pdfPainter.drawPixmap(0, 0, scaledPixmap)
             pdfPainter.end()

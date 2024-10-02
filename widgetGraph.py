@@ -324,6 +324,8 @@ class WidgetGraph(QWidget):
         self.canvasGraph.plot(self.x, dataDrill, pen=penFeed)
         self.canvasGraph.plot(self.x, dataFeed, pen=penDrill)
 
+        self.canvasGraph.setContentsMargins(0, 0, 0, 0)
+
         self.verticalLayout_3 = QVBoxLayout(self.widgetGraph)
         self.verticalLayout_3.addWidget(self.canvasGraph)
         self.verticalLayout_3.setSpacing(5)
@@ -396,6 +398,7 @@ class WidgetGraph(QWidget):
         self.textEditComment.setObjectName(u"textEditComment")
         self.textEditComment.setMaximumSize(QSize(200, 16777215))
         self.textEditComment.setText(self.dataModel.getComment())
+        self.textEditComment.setStyleSheet("QTextEdit { background-color: white; color: black; }")
 
         self.horizontalLayout_2.addWidget(self.textEditComment)
         self.widgetBottom.setContentsMargins(0, 0, 0, 0)
@@ -482,7 +485,6 @@ class WidgetGraph(QWidget):
 
     def onCellChangeTableTop(self, row, column):
         # todo fix size of last column, check if entry is longer and if make size relative to content again
-        print(row, column)
         entry = self.tableWidgetData.item(row, column).text()
         self.dataModel.changeCustomDataEntry(row, column, entry)
 
