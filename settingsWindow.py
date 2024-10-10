@@ -106,6 +106,7 @@ class SettingsWindow(QDialog):
         self.ui.lineEditGraphBackgroundColor.setText(self.getSettingsVariable("colorBackground"))
         self.ui.lineEditMarkingGraphBackgroundColor.setText(self.getSettingsVariable("colorBackgroundMarking"))
         self.ui.doubleSpinBoxMarkerHeight.setValue(self.getSettingsVariable("markerHeightPerc")*100)
+        self.ui.spinBoxLabelSize.setValue(self.getSettingsVariable("labelFontSize"))
 
     def accept(self):
         if self.validator.isFormValid() and not self.blockSave:
@@ -116,7 +117,10 @@ class SettingsWindow(QDialog):
                             "colorDrillPlot": self.ui.lineEditDrillColor.text(),
                             "colorBackground": self.ui.lineEditGraphBackgroundColor.text(),
                             "colorBackgroundMarking": self.ui.lineEditMarkingGraphBackgroundColor.text(),
-                            "markerHeightPerc": self.ui.doubleSpinBoxMarkerHeight.value()/100}
+                            "markerHeightPerc": self.ui.doubleSpinBoxMarkerHeight.value()/100,
+                            "fontSize": 14,
+                            "labelFontSize": self.ui.spinBoxLabelSize.value()
+                            }
 
             for key, value in overrideDict.items():
                 self.setSettingsVariable(key, value)

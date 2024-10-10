@@ -83,7 +83,6 @@ class CustomAxis(pg.AxisItem):
         print("Finished updating")
 
     def tickStrings(self, values, scale, spacing):
-        print("tickStrings called")
         return [str(val - self.offset) for val in values]
 
 
@@ -259,10 +258,11 @@ class WidgetGraph(QWidget):
                 self.dataModel = DataModel(pathToFile, self.mainWindow.listNameKeys, loadedState)
                 self.defaultMarkerDictName = self.dataModel.fileDefaultPresetName
 
+            self.labelFontSize = self.mainWindow.settingsWindow.getSettingsVariable("labelFontSize")
             self.setUpUi()
             self.initializeData()
 
-        self.markerHeightPerc = self.mainWindow.settingsWindow.getSettingsVariable("markerHeightPerc")
+            self.markerHeightPerc = self.mainWindow.settingsWindow.getSettingsVariable("markerHeightPerc")
 
     def setUpUi(self):
 
@@ -364,7 +364,7 @@ class WidgetGraph(QWidget):
         colorDrillPlot = self.settingsWindow.getSettingsVariable("colorDrillPlot")
         markerHeightPerc = self.settingsWindow.getSettingsVariable("markerHeightPerc")
         fontName = self.settingsWindow.getSettingsVariable("fontName")
-        fontSize = self.settingsWindow.getSettingsVariable("fontSize")
+        fontSize = self.labelFontSize
         font = QFont(fontName, fontSize)
         self.canvasGraph = CustomPlotWidget(xLimit, self, self.defaultMarkerDictName, self.mainWindow.markerPresetList,
                                             colorBackground, colorBackgroundMarking, font, markerHeightPerc,
@@ -376,6 +376,8 @@ class WidgetGraph(QWidget):
 
         self.canvasGraph.plot(self.x, dataDrill, pen=penFeed)
         self.canvasGraph.plot(self.x, dataFeed, pen=penDrill)
+
+        self.canvasGraph.changeAxisFontsize(self.labelFontSize)
 
         self.canvasGraph.setContentsMargins(0, 0, 0, 0)
 
@@ -520,7 +522,8 @@ class WidgetGraph(QWidget):
         self.heightWidgetBottomPerc = self.settingsWindow.getSettingsVariable("heightWidgetBottomPerc")
         self.markerHeightPerc = self.settingsWindow.getSettingsVariable("markerHeightPerc")
         self.canvasGraph.colorBackgroundHex = QColor(self.settingsWindow.getSettingsVariable("colorBackground"))
-        self.canvasGraph.colorWhileMarkingHex = QColor(self.settingsWindow.getSettingsVariable("colorWhileMarking"))
+        self.canvasGraph.colorWhileMarkingHex = QColor(self.settingsWindow.getSettingsVariable("colorBackgroundMarking"))
+        self.canvasGraph.changeAxisFontsize(self.settingsWindow.getSettingsVariable("labelFontSize"))
 
     def initializeData(self):
         dataSet = self.dataModel.getTablaTopData()

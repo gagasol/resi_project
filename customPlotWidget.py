@@ -23,7 +23,7 @@ class CustomPlotWidget(pg.PlotWidget):
 
         self.getAxis("bottom").setLabel(QObject().tr("Tiefe"), units="cm")
         self.getAxis("left").setLabel(QObject().tr("Widerstand"), units="%")
-        self.changeAxisFontsize(11)
+        #self.changeAxisFontsize(11)
 
         self.getViewBox().sigRangeChanged.connect(self.rangeChanged)
         self.getViewBox().setMenuEnabled(False)

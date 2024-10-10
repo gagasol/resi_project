@@ -16,9 +16,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QAbstractButton, QApplication, QDialog, QDialogButtonBox,
-    QDoubleSpinBox, QHBoxLayout, QLabel, QLineEdit,
-    QPushButton, QScrollArea, QSizePolicy, QSpacerItem,
-    QStackedWidget, QVBoxLayout, QWidget)
+                               QDoubleSpinBox, QHBoxLayout, QLabel, QLineEdit,
+                               QPushButton, QScrollArea, QSizePolicy, QSpacerItem,
+                               QStackedWidget, QVBoxLayout, QWidget, QSpinBox)
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
@@ -257,6 +257,42 @@ class Ui_Dialog(object):
 
         self.verticalLayout_4.addWidget(self.widget_3)
 
+        self.widget_9 = QWidget(self.scrollAreaWidgetContents)
+        self.widget_9.setObjectName(u"widget_9")
+        self.horizontalLayout_7 = QHBoxLayout(self.widget_9)
+        self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
+        self.labelLabelSize = QLabel(self.widget_9)
+        self.labelLabelSize.setObjectName(u"labelLabelSize")
+
+        self.horizontalLayout_7.addWidget(self.labelLabelSize)
+
+        self.spinBoxLabelSize = QSpinBox(self.widget_9)
+        self.spinBoxLabelSize.setObjectName(u"spinBoxLabelSize")
+
+        self.horizontalLayout_7.addWidget(self.spinBoxLabelSize)
+
+        self.labelLabelColor = QLabel(self.widget_9)
+        self.labelLabelColor.setObjectName(u"labelLabelColor")
+
+        self.horizontalLayout_7.addWidget(self.labelLabelColor)
+
+        self.lineEditLabelColor = QLineEdit(self.widget_9)
+        self.lineEditLabelColor.setObjectName(u"lineEditLabelColor")
+        self.lineEditLabelColor.setMaximumSize(QSize(55, 16777215))
+
+        self.horizontalLayout_7.addWidget(self.lineEditLabelColor)
+
+        self.pushButtonColor_4 = QPushButton(self.widget_9)
+        self.pushButtonColor_4.setObjectName(u"pushButtonColor_4")
+
+        self.horizontalLayout_7.addWidget(self.pushButtonColor_4)
+
+        self.horizontalSpacer_7 = QSpacerItem(268, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout_7.addItem(self.horizontalSpacer_7)
+
+        self.verticalLayout_4.addWidget(self.widget_9)
+
         self.verticalSpacer_2 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.verticalLayout_4.addItem(self.verticalSpacer_2)
@@ -378,5 +414,8 @@ class Ui_Dialog(object):
         self.labelTopPerc.setText(QCoreApplication.translate("Dialog", u"Size of top Table", None))
         self.labelGraphPerc.setText(QCoreApplication.translate("Dialog", u"Size of Graph", None))
         self.labelBotPerc.setText(QCoreApplication.translate("Dialog", u"Size of bot Table", None))
+        self.labelLabelSize.setText(QCoreApplication.translate("Dialog", u"Label Size", None))
+        self.labelLabelColor.setText(QCoreApplication.translate("Dialog", u"Label Color", None))
+        self.pushButtonColor_4.setText("")
     # retranslateUi
 

@@ -341,6 +341,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             graphWidget.resetWidgetsRelSpace()
 
         elif (suffix == "pdf"):
+            graphWidget.resetWidgetsRelSpace()
+
+            '''
             print("printing to pdf")
             dpi = 232
             widthA4px = 8.27 * 300
@@ -357,14 +360,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             pdfWriter.setResolution(dpi)
             pdfWriter.setPageMargins(QMarginsF(0, 0, 0, 0))
 
-            scaledPixmap = QPixmap(QSize(int(printWidth*scale), int(printHeight*scale)))
+            scaledPixmap = QPixmap(QSize(int(printWidth), int(printHeight)))
             scaledPixmap.fill(Qt.transparent)
-            graphWidget.resize(printWidth*scale, printHeight*scale)
+            graphWidget.resize(pdfWriter.width(), pdfWriter.width() * 9/16)
             graphWidget.render(scaledPixmap)
             pdfPainter = QPainter(pdfWriter)
             pdfPainter.drawPixmap(0, 0, scaledPixmap)
             pdfPainter.end()
             graphWidget.resetWidgetsRelSpace()
+            '''
 
         self.printSetupEnd(graphWidget, originalFontDataUneven, originalFontDataEven, originalFontMarker)
 
@@ -471,6 +475,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def settingsButtonClicked(self):
         self.markerPresetWin = MarkerPresetWindow(self, self.nameToColorDict, self.markerPresetList, calledByGraph=False)
         if self.settingsWindow.exec():
+            for canvas in self.listGraphWidgets:
+                canvas.updateUi()
             with open("./settings/settings.json", "w") as file:
                 json.dump(self.settingsWindow.defaultSettingsDict, file, indent=2)
         #markerPresetWin.exec()
@@ -560,32 +566,51 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
     def loadPreset(self):
+        settingsDict = {"defaultMarkerDictName": "",
+                        "heightWidgetTopPerc": 15,
+                        "heightWidgetGraphPerc": 75,
+                        "heightWidgetBottomPerc": 10,
+                        "colorBackground": "#dfe5e6",
+                        "colorBackgroundMarking": "#8b888f",
+                        "labelFontSize": 12,
+                        "fontSize": 14,
+                        "fontName": "Arial",
+                        "colorFeedPlot": "#5c08c9",
+                        "colorDrillPlot": "#eda31a",
+                        "markerHeightPerc": 0.02,
+                        "printHeightWidgetTopPerc": 18,
+                        "printHeightWidgetGraphPerc": 82,
+                        "printHeightWidgetBottomPerc": 0,
+                        "printFontSize": 30,
+                        "printFontName": "Arial"}
         try:
             with open("./settings/settings.json", "r") as file:
                 loadedFile = json.load(file)
+                keysDefault = set(settingsDict)
+                keysLoaded = set(loadedFile[0])
+                for key in keysDefault - keysLoaded:
+                    loadedFile[0][key] = settingsDict[key]
                 self.settingsWindow = SettingsWindow(loadedFile[0], mainWindow=self)
                 self.nameToColorDict = loadedFile[1]
                 self.markerPresetList = loadedFile[2]
         except FileNotFoundError:
-            settingsDict = {"defaultMarkerDictName": "",
-                            "heightWidgetTopPerc": 15,
-                            "heightWidgetGraphPerc": 75,
-                            "heightWidgetBottomPerc": 10,
-                            "colorBackground": "#dfe5e6",
-                            "colorBackgroundMarking": "#8b888f",
-                            "fontSize": 14,
-                            "fontName": "Arial",
-                            "colorFeedPlot": "#5c08c9",
-                            "colorDrillPlot": "#eda31a",
-                            "markerHeightPerc": 0.02,
-                            "printHeightWidgetTopPerc": 18,
-                            "printHeightWidgetGraphPerc": 82,
-                            "printHeightWidgetBottomPerc": 0,
-                            "printFontSize": 30,
-                            "printFontName": "Arial"}
 
             self.settingsWindow = SettingsWindow(settingsDict, mainWindow=self)
             print("First startup detected")
+
+        except KeyError as ke:
+            if str(ke) in settingsDict:
+                response = QMessageBox.question(self, 'Reset Settings', f'{str(ke)} was not found in settings,'
+                                                                        f'do you want to reset?',
+                                                QMessageBox.Yes | QMessageBox.No)
+                if response == QMessageBox.Yes:
+                    print('yes')
+                    self.settingsWindow = SettingsWindow(settingsDict, mainWindow=self)
+                elif response == QMessageBox.No:
+                    print('no')
+
+
+
 
     def closeEvent(self, event):
         if self.defaultMarkerDictName is not None:
