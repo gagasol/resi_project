@@ -48,7 +48,7 @@ class CustomPlotWidget(pg.PlotWidget):
         self.lastClicks: List[float] = []
         self.markerList: List[MarkerRectItem] = []
 
-        self.markerHeightPerc = 0.02
+        self.markerHeightPerc = parentWindow.markerHeightPerc
 
         self.markingEnabled = False
         self.draggingMarker = False

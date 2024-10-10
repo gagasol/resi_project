@@ -315,8 +315,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             filename = "./data/" + filename + "." + suffix
 
-        printWidth = 1920
-        printHeight = 1080
+        widthTables = graphWidget.tableWidgetMarker.width() + graphWidget.tableWidgetData.width()
+        widthTables = widthTables + widthTables * 0.02
+        printWidth = max(1920, widthTables)
+        print(printWidth)
+        printHeight = printWidth * 9/16
+        print(printHeight)
         # @todo as soon as I have a load function in widgetGraph I can change the way I take an image
         # instead of printWidget = graphWidget I copy the state not the instance (maybe add load state? overkill..)
         # printWidget.setAttribute(Qt.WA_DontShowOnScreen, True)
@@ -339,12 +343,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         elif (suffix == "pdf"):
             print("printing to pdf")
             dpi = 232
-            widthA4px = 8.27 * dpi
-            heightA4px = 11.69 * dpi
+            widthA4px = 8.27 * 300
+            heightA4px = 11.69 * 300
             scale_x = widthA4px / printWidth
             scale_y = heightA4px / printHeight
             scale = min(scale_x, scale_y)
-            scale = 5
             print(scale)
             pdfWriter = QPdfWriter(filename)
             a4_w_mm = 210
@@ -356,6 +359,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
             scaledPixmap = QPixmap(QSize(int(printWidth*scale), int(printHeight*scale)))
             scaledPixmap.fill(Qt.transparent)
+            graphWidget.resize(printWidth*scale, printHeight*scale)
             graphWidget.render(scaledPixmap)
             pdfPainter = QPainter(pdfWriter)
             pdfPainter.drawPixmap(0, 0, scaledPixmap)

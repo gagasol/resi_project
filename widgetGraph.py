@@ -3,16 +3,71 @@ import logging
 
 import numpy as np
 import pyqtgraph as pg
-from PySide6.QtCore import (QSize, Qt, )
+from PySide6.QtCore import (QSize, Qt, QObject, )
 from PySide6.QtGui import (QColor, QIcon,
                            QPixmap, QKeyEvent, QFont)
 from PySide6.QtWidgets import QCheckBox, QTableWidget, \
-    QHeaderView, QAbstractScrollArea, QLabel, QTableWidgetItem, QStyledItemDelegate, QLineEdit
+    QHeaderView, QAbstractScrollArea, QLabel, QTableWidgetItem, QStyledItemDelegate, QLineEdit, QAbstractItemView, \
+    QDialog, QPushButton
 from PySide6.QtWidgets import (QHBoxLayout, QSizePolicy, QSpacerItem, QTextEdit,
                                QVBoxLayout, QWidget)
 
 from customPlotWidget import CustomPlotWidget
 from dataModel import DataModel
+
+
+class RangeDialog(QDialog):
+    def __init__(self, x0=0, x1=0, parent=None):
+        super(RangeDialog, self).__init__(parent)
+
+        self.setWindowTitle("Range Dialog")
+        # First widget with label and line edit
+        self.labelFrom = QLabel(QObject.tr("From") + ": ", self)
+        self.editFrom = QLineEdit(self)
+        layout1 = QHBoxLayout()
+        layout1.addWidget(self.labelFrom)
+        layout1.addWidget(self.editFrom)
+
+        # Second widget with label and line edit
+        self.labelTo = QLabel(QObject.tr("To") + ": ", self)
+        self.editTo = QLineEdit(self)
+        layout2 = QHBoxLayout()
+        layout2.addWidget(self.labelTo)
+        layout2.addWidget(self.editTo)
+
+        if x0 != x1:
+            self.editFrom.setText(str(x0))
+            self.editTo.setText(str(x1))
+
+        # Ok and close buttons
+        self.okButton = QPushButton("OK", self)
+        self.closeButton = QPushButton("Close", self)
+
+        # Connect the buttons to their respective slots
+        self.okButton.clicked.connect(self.on_ok_clicked)
+        self.closeButton.clicked.connect(self.on_close_clicked)
+
+        buttonLayout = QHBoxLayout()
+        buttonLayout.addWidget(self.okButton)
+        buttonLayout.addWidget(self.closeButton)
+
+        # Main Vertical Layout
+        main_layout = QVBoxLayout(self)
+        main_layout.addLayout(layout1)
+        main_layout.addLayout(layout2)
+        main_layout.addLayout(buttonLayout)
+
+        # Slot for ok button click
+
+    def on_ok_clicked(self):
+        if float(self.editFrom.text()) < float(self.editTo.text()):
+            self.accept()
+
+        # Slot for close button click
+
+    def on_close_clicked(self):
+        # Close the dialog
+        self.reject()
 
 
 class CustomAxis(pg.AxisItem):
@@ -204,10 +259,10 @@ class WidgetGraph(QWidget):
                 self.dataModel = DataModel(pathToFile, self.mainWindow.listNameKeys, loadedState)
                 self.defaultMarkerDictName = self.dataModel.fileDefaultPresetName
 
-
             self.setUpUi()
             self.initializeData()
 
+        self.markerHeightPerc = self.mainWindow.settingsWindow.getSettingsVariable("markerHeightPerc")
 
     def setUpUi(self):
 
@@ -243,7 +298,7 @@ class WidgetGraph(QWidget):
         self.tableWidgetData = AutoSizedTable(self.widgetDataTop)
         self.tableWidgetData.setObjectName(u"tableWidgetData")
         self.tableWidgetData.setMinimumSize(QSize(0, 0))
-        self.tableWidgetData.setMaximumSize(QSize(1000, 500))
+        self.tableWidgetData.setMaximumSize(QSize(2000, 500))
         self.tableWidgetData.setAutoScroll(False)
         self.tableWidgetData.setProperty("isWrapping", True)
         self.tableWidgetData.setColumnCount(6)
@@ -298,7 +353,6 @@ class WidgetGraph(QWidget):
         #stepFeed = self.deviceLength / len(dataFeed)
         self.x = np.arange(0, self.depthMsmt, step)[:len(dataDrill)]
 
-
         self.widgetGraph = QWidget()
         self.widgetGraph.setObjectName(u"widgetGraph")
 
@@ -319,7 +373,6 @@ class WidgetGraph(QWidget):
 
         penDrill = pg.mkPen(color=colorDrillPlot, width=0.7)
         penFeed = pg.mkPen(color=colorFeedPlot, width=0.7)
-
 
         self.canvasGraph.plot(self.x, dataDrill, pen=penFeed)
         self.canvasGraph.plot(self.x, dataFeed, pen=penDrill)
@@ -348,7 +401,6 @@ class WidgetGraph(QWidget):
             maxLen = max(maxLen, len(f"{self.dataModel.getNameByKey(key)}: {self.dataModel.getDataByKey(key)}"))
         self.textInGraph.setText(textStr[:-1])
 
-
         self.widgetBottom = QWidget()
         self.widgetBottom.setObjectName(u"widgetBottom")
         self.widgetBottom.setContentsMargins(0, 0, 0, 0)
@@ -362,7 +414,7 @@ class WidgetGraph(QWidget):
         self.tableWidgetMarker = AutoSizedTable(self.widgetBottom)
         self.tableWidgetMarker.setObjectName(u"tableWidgetMarker")
         self.tableWidgetMarker.setMinimumSize(QSize(0, 0))
-        self.tableWidgetMarker.setMaximumSize(QSize(1000, 500))
+        self.tableWidgetMarker.setMaximumSize(QSize(2500, 500))
         self.tableWidgetMarker.setAutoScroll(False)
         self.tableWidgetMarker.setProperty("isWrapping", True)
         self.tableWidgetMarker.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
@@ -388,6 +440,7 @@ class WidgetGraph(QWidget):
                                              "background-color: white; }")
 
         self.tableWidgetMarker.cellDoubleClicked.connect(self.onTableMarkerCellClicked)
+        self.tableWidgetMarker.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         self.horizontalLayout_2.addWidget(self.tableWidgetMarker)
 
@@ -549,10 +602,18 @@ class WidgetGraph(QWidget):
         if column % 2 == 0:
             name, col = self.mainWindow.openPickMarker(self.defaultMarkerDictName)
             if name:
-                self.updateTableMarkerEntryNameCol(row+column, name, col,)
-                self.canvasGraph.changeMarker(row+column, _name=name, _color=col)
+                self.updateTableMarkerEntryNameCol(row + column, name, col, )
+                self.canvasGraph.changeMarker(row + column, _name=name, _color=col)
         else:
-            print("Hurray")
+            item = self.tableWidgetMarker.item(row, column)
+            x0 = float(item.text().split(" ")[1])
+            x1 = float(item.text().split(" ")[4])
+            test = RangeDialog(x0, x1)
+            if test.exec():
+                x0 = float(test.editFrom.text()) + self.dxMarkerForTable
+                x1 = float(test.editTo.text()) + self.dxMarkerForTable
+                self.updateTableMarkerEntryRangeCol(row, column, x0, x1)
+                self.canvasGraph.changeMarker(row + column - 1, _x0=x0, _x1=x1)
 
     def updateTableMarkerEntry(self, index, name, color, xPar, dxPar):
         row = index % 6
@@ -587,12 +648,18 @@ class WidgetGraph(QWidget):
 
         self.tableWidgetMarker.setItem(row, column, itemName)
 
+    def updateTableMarkerEntryRangeCol(self, row, column, x0Par, x1Par):
+        x0 = x0Par - self.dxMarkerForTable
+        x1 = x1Par - self.dxMarkerForTable
+        item = QTableWidgetItem(": {0} cm bis {1} cm".format(round(x0, 2), round(x1, 2)))
+        self.tableWidgetMarker.setItem(row, column, item)
+
     def changeXAxisZero(self, xOffset):
         bottom_axis = self.canvasGraph.getPlotItem().getAxis("bottom")
         bottom_axis.setOffset(xOffset)
         ticks = np.arange(0, 40, 5)
         minTicks = np.arange(0, 10, 1)
-        bottom_axis.setTicks([[(v+xOffset, str(v)) for v in ticks]]  )
+        bottom_axis.setTicks([[(v + xOffset, str(v)) for v in ticks]])
         self.canvasGraph.getPlotItem().setAxisItems({"bottom": bottom_axis})
         self.canvasGraph.getPlotItem().update()
 
@@ -660,6 +727,5 @@ class WidgetGraph(QWidget):
 
     def openPickMarkerFromGraph(self, defaultPresetName):
         return self.mainWindow.openPickMarker(defaultPresetName)
-
 
 # @todo put the create marker function in here for loading and saving reasons

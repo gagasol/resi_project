@@ -63,7 +63,7 @@ class EditMarkerPresetWindow(QDialog):
         self.ui.setupUi(self)
 
         self.markerPresetWindow = MarkerPresetWindow
-        self.allMarkerDict = self.markerPresetWindow.dictAllMarkers
+        self.markerPresetList = self.markerPresetWindow.markerPresetList
 
 # variable setup
         self.listLabel = []
@@ -145,9 +145,6 @@ class EditMarkerPresetWindow(QDialog):
         if (color == ""):
             QMessageBox.warning(self, "Warning", "Please enter a color")
             return
-        if (text in self.dictMarker or any(text in tup for tup in self.dictMarkerList)):
-            QMessageBox.warning(self, "Warning", "The chosen Name is already in this preset")
-            return
 
         self.ui.lineEditName.setText("")
         self.ui.lineEditColor.setText("")
@@ -167,12 +164,11 @@ class EditMarkerPresetWindow(QDialog):
         dictMarker = dict(self.dictMarkerList)
         dictMarker["_NameForPreset"] = self.ui.lineEditPresetName.text()
         if (self.presetInd is not None):
-            self.markerPresetWindow.listPresets[self.presetInd] = dictMarker
+            self.markerPresetWindow.markerPresetList[self.presetInd] = dictMarker
         else:
-            self.markerPresetWindow.listPresets.append(dictMarker)
+            self.markerPresetWindow.markerPresetList.append(dictMarker)
         self.markerPresetWindow.loadPresets()
         self.dictMarkerList.remove(self.dictMarkerList[0])
-        self.markerPresetWindow.dictAllMarkers.update(dictMarker)
         self.close()
 
 
@@ -181,17 +177,23 @@ class EditMarkerPresetWindow(QDialog):
 
 
     def onIndexChange(self, index):
-        if (index == 0):
+        if index == 0:
             return
 
-        self.ui.lineEditName.setText(self.sender().currentText())
-        self.ui.lineEditColor.setText(self.allMarkerDict[self.ui.comboBox.currentText()])
+        senderText = self.sender().currentText()
+        self.ui.lineEditName.setText(senderText)
+
+        icon = self.sender().itemIcon(index)
+        pixmap = icon.pixmap(30, 30)
+        color = pixmap.toImage().pixelColor(0, 0)
+        self.ui.lineEditColor.setText(color.name())
+
 
 
     def colorTextChanged(self):
         if (len(self.ui.lineEditColor.text()) == 7):
             self.ui.lineEditColor.setStyleSheet("color: {color}; background-color: {color};".format(color = str(self.ui.lineEditColor.text())))
-            self.addButtonClicked()
+            #self.addButtonClicked()
 
 
 # algorithm section
@@ -244,7 +246,7 @@ class EditMarkerPresetWindow(QDialog):
         tmpLabel.setAlignment(Qt.AlignRight)
         tmpLabel.setMaximumHeight(45)
         tmpLabel.setMinimumWidth(150)
-        tmpLabel.setMaximumWidth(150)
+        tmpLabel.setMaximumWidth(200)
         tmpLabel.setText(text)
 
         self.listLabel.append(tmpLabel)
@@ -262,15 +264,25 @@ class EditMarkerPresetWindow(QDialog):
 
     def loadAllMarkers(self):
 
-        self.ui.comboBox.currentIndexChanged.connect(self.onIndexChange)
-        self.ui.comboBox.addItem("Add existing marker")
-        for key, value in self.allMarkerDict.items():
-            pixmap = QPixmap(30, 30)
-            pixmap.fill(QColor(value))
-            icon = QIcon(pixmap)
-            fakeIndex = self.ui.comboBox.count()
-            self.ui.comboBox.addItem(key)
-            self.ui.comboBox.setItemIcon(fakeIndex, icon)
+        allMarkersList = []
+
+        self.ui.comboBoxAddExistingMarker.currentIndexChanged.connect(self.onIndexChange)
+        self.ui.comboBoxAddExistingMarker.addItem("Add existing marker")
+        for preset in self.markerPresetList:
+            for key, value in preset.items():
+                if "_NameForPreset" in key:
+                    continue
+                if key+value in allMarkersList:
+                    continue
+
+                allMarkersList.append(key+value)
+                pixmap = QPixmap(30, 30)
+                pixmap.fill(QColor(value))
+                print(pixmap.toImage().pixelColor(0, 0))
+                icon = QIcon(pixmap)
+                fakeIndex = self.ui.comboBoxAddExistingMarker.count()
+                self.ui.comboBoxAddExistingMarker.addItem(key)
+                self.ui.comboBoxAddExistingMarker.setItemIcon(fakeIndex, icon)
 
 # IMPORTANT : Add a function that updates the main marker list when self.addOrChangeMarker(self) is called
 '''

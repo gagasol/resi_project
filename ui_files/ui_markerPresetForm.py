@@ -23,12 +23,40 @@ class Ui_markerPresetWindow(object):
     def setupUi(self, markerPresetWindow):
         if not markerPresetWindow.objectName():
             markerPresetWindow.setObjectName(u"markerPresetWindow")
-        markerPresetWindow.resize(400, 150)
+        markerPresetWindow.resize(300, 250)
+
+
         self.verticalLayout = QVBoxLayout(markerPresetWindow)
         self.verticalLayout.setObjectName(u"verticalLayout")
+
+        self.widget_4 = QWidget(markerPresetWindow)
+        self.widget_4.setObjectName(u"widget_4")
+        self.widget_4.setMinimumSize(QSize(0, 45))
+        self.widget_4.setMaximumSize(QSize(16777215, 45))
+        self.horizontalLayout_3 = QHBoxLayout(self.widget_4)
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+
+        self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout_3.addItem(self.horizontalSpacer_2)
+
+        self.comboBoxAddExistingMarker = QComboBox(self.widget_4)
+        self.comboBoxAddExistingMarker.setObjectName(u"comboBoxAddExistingMarker")
+        self.comboBoxAddExistingMarker.setMinimumSize(QSize(0, 0))
+        self.comboBoxAddExistingMarker.setStyleSheet(u"QComboBox QAbstractItemView {\n"
+                       "  border: 1px solid grey;\n"
+                       "  background: white;\n"
+                       "  selection-background-color: blue;\n"
+                       "color: black;\n"
+                       "}")
+
+        self.horizontalLayout_3.addWidget(self.comboBoxAddExistingMarker)
+
+        self.verticalLayout.addWidget(self.widget_4)
+
         self.widget = QWidget(markerPresetWindow)
         self.widget.setObjectName(u"widget")
-        self.widget.setMinimumSize(QSize(600, 45))
+        self.widget.setMinimumSize(QSize(400, 45))
         self.widget.setMaximumSize(QSize(16777215, 25))
         self.widget.setStyleSheet(u"QPushButton{\n"
 "border: none;\n"
@@ -55,17 +83,10 @@ class Ui_markerPresetWindow(object):
 "}")
         self.horizontalLayout = QHBoxLayout(self.widget)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.comboBox = QComboBox(self.widget)
-        self.comboBox.setObjectName(u"comboBox")
-        self.comboBox.setMinimumSize(QSize(0, 0))
-        self.comboBox.setStyleSheet(u"QComboBox QAbstractItemView {\n"
-                       "  border: 1px solid grey;\n"
-                       "  background: white;\n"
-                       "  selection-background-color: blue;\n"
-                       "color: black;\n"
-                       "}")
 
-        self.horizontalLayout.addWidget(self.comboBox)
+        self.horizontalSpacerManuel_0 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout.addItem(self.horizontalSpacerManuel_0)
 
         self.lineEditName = QLineEdit(self.widget)
         self.lineEditName.setObjectName(u"lineEditName")
@@ -75,7 +96,7 @@ class Ui_markerPresetWindow(object):
         sizePolicy.setHeightForWidth(self.lineEditName.sizePolicy().hasHeightForWidth())
         self.lineEditName.setSizePolicy(sizePolicy)
         self.lineEditName.setMinimumSize(QSize(60, 0))
-        self.lineEditName.setMaximumSize(QSize(150, 16777215))
+        self.lineEditName.setMaximumSize(QSize(200, 16777215))
 
         self.horizontalLayout.addWidget(self.lineEditName)
 

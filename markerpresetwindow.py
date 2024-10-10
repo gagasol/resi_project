@@ -28,7 +28,7 @@ class MarkerPresetWindow(QDialog):
 
         self.mainWindow = MainWindow
         self.dictAllMarkers = nameToColorDict
-        self.listPresets = markerPresetList
+        self.markerPresetList = markerPresetList
 
         self.calledByGraph = calledByGraph
 
@@ -43,12 +43,14 @@ class MarkerPresetWindow(QDialog):
 
         self.buttonGroup = QButtonGroup()
 
+        print(self.markerPresetList)
+
         # bunch of stuff for trying stuff out
 
 
-        if not self.listPresets:
-            for dic in self.listPresets:
-                self.listPresets.append(dic)
+        if not self.markerPresetList:
+            for dic in self.markerPresetList:
+                self.markerPresetList.append(dic)
         if not self.dictAllMarkers:
             self.listPresetToFlatList()
 
@@ -82,7 +84,7 @@ class MarkerPresetWindow(QDialog):
                 self.mainWindow.defaultMarkerDictName = checkedButton.objectName()
                 self.mainWindow.settingsWindow.setSettingsVariable("defaultMarkerDictName", checkedButton.objectName())
 
-            for preset in self.listPresets:
+            for preset in self.markerPresetList:
                 if self.calledByGraph and preset["_NameForPreset"] == checkedButton.objectName():
                     self.mainWindow.overridePickMarkerDict(preset)
                     break
@@ -94,7 +96,7 @@ class MarkerPresetWindow(QDialog):
         if index == 0 or textCurrentItem == "_NameForPreset":
             return
         if index == self.sender().count()-1:
-            selectMarkerWindow = EditMarkerPresetWindow(self, self.listPresets[self.sender().id_number],
+            selectMarkerWindow = EditMarkerPresetWindow(self, self.markerPresetList[self.sender().id_number],
                                                         self.sender().id_number)
             selectMarkerWindow.exec()
             self.buttonGroup.buttons()[self.sender().id_number].setChecked(True)
@@ -105,16 +107,16 @@ class MarkerPresetWindow(QDialog):
         if ( self.sender().id_number == self.comboBoxCount ):
             pass
 
-        preset = self.listPresets[self.sender().id_number]
+        preset = self.markerPresetList[self.sender().id_number]
         if (textCurrentItem in preset):
             col = preset[textCurrentItem]
             name = textCurrentItem
         else:
             col = ""
             name = ""
-        self.mainWindow.overridePickMarkerDict(self.listPresets[self.sender().id_number], name, col)
+        self.mainWindow.overridePickMarkerDict(self.markerPresetList[self.sender().id_number], name, col)
         self.close()
-        #return self.listPresets[self.sender().id_number]
+        #return self.markerPresetList[self.sender().id_number]
 
 
     def onComboBoxActivated(self, index):
@@ -132,9 +134,9 @@ class MarkerPresetWindow(QDialog):
     def deletePreset(self):
         presetName = self.sender().objectName()
         print(presetName)
-        for preset in self.listPresets:
+        for preset in self.markerPresetList:
             if preset["_NameForPreset"] == presetName:
-                self.listPresets.remove(preset)
+                self.markerPresetList.remove(preset)
                 self.loadPresets()
                 break
 
@@ -155,7 +157,7 @@ class MarkerPresetWindow(QDialog):
         tmpComboBoxMarker = []
         tmpComboBoxes = []
 
-        for preset in self.listPresets:
+        for preset in self.markerPresetList:
             widget = QWidget()
             verticalLayout = QHBoxLayout()
             checkBox = QRadioButton(QObject.tr('File Default'))
@@ -168,7 +170,7 @@ class MarkerPresetWindow(QDialog):
             elif not self.calledByGraph and preset["_NameForPreset"] == self.mainWindow.defaultMarkerDictName:
                 checkBox.setChecked(True)
 
-            if len(self.listPresets) == 1:
+            if len(self.markerPresetList) == 1:
                 checkBox.setChecked(True)
                 self.mainWindow.defaultMarkerDictName = preset["_NameForPreset"]
 
@@ -203,7 +205,7 @@ class MarkerPresetWindow(QDialog):
         self.listComboBoxPresets = [tmpComboBoxMarker, tmpComboBoxes]
 
     def listPresetToFlatList(self):
-        for preset in self.listPresets:
+        for preset in self.markerPresetList:
             self.dictAllMarkers.update(preset)
 
         self.dictAllMarkers.pop("_NameForPreset")
