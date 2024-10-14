@@ -286,7 +286,7 @@ class CustomPlotWidget(pg.PlotWidget):
                 msgBox = QMessageBox()
                 msgBox.setText(QObject().tr("Markers overlap, do you want to delete {0}".format(m.getName())))
                 msgBox.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
-                if msgBox.exec() == QMessageBox.Rotation.Yes:
+                if msgBox.exec() == QMessageBox.Yes:
                     print("Deleting...")
                     m.deleteSelf()
 
