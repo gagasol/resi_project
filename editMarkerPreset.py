@@ -2,40 +2,22 @@
 import sys
 
 from PySide6.QtWidgets import QApplication, QWidget, QDialog, QMainWindow, QPushButton, QVBoxLayout, QLineEdit, \
-    QInputDialog, QLabel, QMessageBox
+    QInputDialog, QLabel, QMessageBox, QScrollArea
 from PySide6.QtGui import QColor, QPixmap, QIcon, QDrag, QCursor
 from PySide6.QtCore import Qt, QSize, QMimeData
 from PySide6 import QtWidgets
+
+import pickMarkerWindow
 # Important:
 # You need to run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py, or
 #     pyside2-uic form.ui -o ui_form.py
 from ui_files.ui_markerPresetForm import Ui_markerPresetWindow
 
-'''
-Cool way to overload a function
- ###
- need to add the following :
-     tmpLabel = ClickableLabel(self.onLabelClicked)
 
-     def onLabelClicked(self, event):
-         button = event.button()
-         modifiers = event.modifiers()
 
-         if modifiers == Qt.NoModifier and button == Qt.LeftButton:
-             print("event")
-
- ###
-class ClickableLabel(QtWidgets.QLabel):
-    def __init__(self, whenClicked, parent=None):
-        QtWidgets.QLabel.__init__(self, parent)
-        self._whenClicked = whenClicked
-
-    def mousePressEvent(self, event):
-        print(self.text(), self.palette().color(self.backgroundRole()).name())
-        self._whenClicked(event)
-'''
 # @todo implement the text fields as the input after the button is clicked, check if fields are not None and if color is a hex nr
+
 
 
 class TextEntryDialog(QDialog):
@@ -88,7 +70,7 @@ class EditMarkerPresetWindow(QDialog):
 
         self.ui.pushButtonColorPick.clicked.connect(self.colorButtonClicked)
         self.ui.pushButtonChgMrk.clicked.connect(self.addButtonClicked)
-        self.ui.pushButtonDelMrk.clicked.connect(self.delButtonClicked)
+        #self.ui.pushButtonDelMrk.clicked.connect(self.delButtonClicked)
 
         self.ui.buttonBox.accepted.connect(self.acceptButtonClicked)
         self.ui.buttonBox.rejected.connect(self.rejectedButtonClicked)
@@ -118,14 +100,6 @@ class EditMarkerPresetWindow(QDialog):
         event.accept()
     '''
 
-    def mousePressEvent(self, event):
-
-        widget = self.childAt(event.pos())
-
-        if (type(widget) == QLabel):
-            text = widget.text()
-            col = widget.palette().color(widget.backgroundRole()).name()
-            self.addOrChangeMarker(text, col, widget)
 
 # buttons clicked functions
     def colorButtonClicked(self):
@@ -160,10 +134,13 @@ class EditMarkerPresetWindow(QDialog):
             self.setCursor(QCursor(Qt.ArrowCursor))
 
     def acceptButtonClicked(self):
+        returnList = self.ui.scrollAreaWidgetContents.getAllMarkers()
+        returnList.insert(0, ("_NameForPreset", self.ui.lineEditPresetName))
         self.markerPresetWindow.setWindowModality(Qt.ApplicationModal)
-        dictMarker = dict(self.dictMarkerList)
+        dictMarker = dict(returnList)
         dictMarker["_NameForPreset"] = self.ui.lineEditPresetName.text()
-        if (self.presetInd is not None):
+        print(dictMarker)
+        if self.presetInd is not None:
             self.markerPresetWindow.markerPresetList[self.presetInd] = dictMarker
         else:
             self.markerPresetWindow.markerPresetList.append(dictMarker)
@@ -189,7 +166,6 @@ class EditMarkerPresetWindow(QDialog):
         self.ui.lineEditColor.setText(color.name())
 
 
-
     def colorTextChanged(self):
         if (len(self.ui.lineEditColor.text()) == 7):
             self.ui.lineEditColor.setStyleSheet("color: {color}; background-color: {color};".format(color = str(self.ui.lineEditColor.text())))
@@ -210,52 +186,15 @@ class EditMarkerPresetWindow(QDialog):
         if (argText == "_NameForPreset"):
             return
 
-        if (widget != None):
-            if(not self.flagDelete):
-                dialog = QInputDialog()
-                if (dialog.exec()):
-
-                    text = dialog.textValue()
-                    color = QtWidgets.QColorDialog.getColor().name()
-
-                    color = argColor if color == "#ffffff" or color == "#000000" else color
-                    text = argText if text == "" else text
-            for i in range(len(self.dictMarkerList)):
-                if (argText == self.dictMarkerList[i][0]):
-                    if (self.flagDelete):
-                        del self.dictMarkerList[i]
-                        del self.listLabel[i-1]
-                        widget.hide()
-                        widget.setParent(None)
-                        widget.deleteLater()
-                        self.delButtonClicked()
-                        return
-                    else:
-                        self.dictMarkerList[i] = (text, color)
-                        break
-
-            widget.setText(text)
-            widget.setStyleSheet("background-color:" + color)
-            return
-
         text = argText
         color = argColor
 
-        tmpLabel = QLabel()
-        tmpLabel.setStyleSheet("background-color:" + color)
-        tmpLabel.setAlignment(Qt.AlignRight)
-        tmpLabel.setMaximumHeight(45)
-        tmpLabel.setMinimumWidth(150)
-        tmpLabel.setMaximumWidth(200)
-        tmpLabel.setText(text)
+        self.ui.scrollAreaWidgetContents.addMarkerLabel(argText, argColor)
 
-        self.listLabel.append(tmpLabel)
         self.dictMarkerList.append((text, color))
-        #self.lineEditList.append(tmpLabel)
-        scrollAreaSize = min((self.ui.scrollArea.size() + QSize(0, 35)).height(), 350)
+        scrollAreaSize = min((self.ui.scrollArea.size() + QSize(0, 35)).height(), 500)
         self.ui.scrollArea.setMinimumHeight(scrollAreaSize)
         self.ui.scrollArea.setMaximumHeight(scrollAreaSize)
-        self.ui.scrollAreaWidgetContents.layout().insertWidget(len(self.listLabel) - 1, tmpLabel)
 
     def loadPresetMarkers(self):
         if self.dictMarker:

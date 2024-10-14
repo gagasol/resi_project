@@ -1,23 +1,97 @@
 # -*- coding: utf-8 -*-
 
-################################################################################
-## Form generated from reading UI file 'markerPresetForm.ui'
-##
-## Created by: Qt User Interface Compiler version 6.7.0
-##
-## WARNING! All changes made in this file will be lost when recompiling UI file!
-################################################################################
 
-from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
-    QMetaObject, QObject, QPoint, QRect,
-    QSize, QTime, QUrl, Qt)
-from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
-    QFont, QFontDatabase, QGradient, QIcon,
-    QImage, QKeySequence, QLinearGradient, QPainter,
-    QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QAbstractButton, QApplication, QComboBox, QDialogButtonBox,
+
+from PySide6.QtCore import (QCoreApplication, QMetaObject, QRect,
+                            QSize, Qt)
+from PySide6.QtGui import (QIcon)
+from PySide6.QtWidgets import (QComboBox, QDialogButtonBox,
                                QHBoxLayout, QLineEdit, QPushButton, QScrollArea,
-                               QSizePolicy, QSpacerItem, QVBoxLayout, QWidget, QLabel)
+                               QSizePolicy, QSpacerItem, QVBoxLayout, QWidget, QMessageBox)
+
+from pickMarkerWindow import CustomLabel
+
+
+class CustomLabelContainer(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.listMarkerLabels = []
+
+    def deleteWidget(self):
+        label = self.sender().parent().layout().itemAt(0).widget()
+        name = label.text()
+        response = QMessageBox.question(self, 'Confirm Delete', f'Are you sure you want to delete \"{name}\"?',
+                                        QMessageBox.Yes | QMessageBox.Cancel)
+
+        if response == QMessageBox.Yes:
+            index = label.index
+            for widget in self.listMarkerLabels[index:]:
+                widget.layout().itemAt(0).widget().index -= 1
+
+            self.listMarkerLabels[index].deleteLater()
+            self.listMarkerLabels.pop(index)
+
+
+    def addMarkerLabel(self, name, col):
+        markerLabel = QWidget(self)
+        horizontalLayout = QHBoxLayout()
+        horizontalLayout.setContentsMargins(0, 0, 0, 0)
+        tmpMarkerLabel = CustomLabel(col, len(self.listMarkerLabels))
+        tmpMarkerLabel.setText(name)
+        tmpMarkerLabel.setMaximumHeight(20)
+        tmpMarkerLabel.setMinimumWidth(100)
+        horizontalLayout.addWidget(tmpMarkerLabel)
+
+        buttonDeleteMarker = self._createDeleteMarker(markerLabel)
+        horizontalLayout.addWidget(buttonDeleteMarker)
+        markerLabel.setLayout(horizontalLayout)
+        self.listMarkerLabels.append(markerLabel)
+        self.layout().addWidget(markerLabel)
+
+    def getAllMarkers(self):
+        returnList = []
+        for widget in self.listMarkerLabels:
+            if isinstance(widget, QWidget):
+                label = widget.layout().itemAt(0).widget()
+                if isinstance(label, CustomLabel):
+                    name = label.text()
+                    color = label.color
+                    returnList.append((name, color))
+
+        return returnList
+
+    def _createDeleteMarker(self, parent):
+        pushButtonDelMrk = QPushButton(parent)
+        pushButtonDelMrk.setMinimumSize(QSize(20, 0))
+        pushButtonDelMrk.setMaximumSize(QSize(20, 20))
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/icons/minus-square.svg", QSize(), QIcon.Normal, QIcon.Off)
+        pushButtonDelMrk.setIcon(icon2)
+        pushButtonDelMrk.setIconSize(QSize(20, 20))
+        pushButtonDelMrk.clicked.connect(self.deleteWidget)
+        self._setButtonStyleShield(pushButtonDelMrk)
+
+        return pushButtonDelMrk
+
+
+    def _setButtonStyleShield(self, button):
+        button.setStyleSheet(u"QPushButton{\n"
+                           "border: none;\n"
+                           "padding-left: -2px;\n"
+                           "}\n"
+                           "\n"
+                           "QPushButton:hover{\n"
+                           "	background-color: white;\n"
+                           "}\n"
+                           "\n"
+                           "QPushButton:pressed{\n"
+                           "	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n"
+                           "                                      stop: 0 #FFFFFF, stop: 1 #dadbde);\n"
+                           "}")
+    def goodParent(self):
+        print("I'm a good parent")
+
 
 class Ui_markerPresetWindow(object):
     def setupUi(self, markerPresetWindow):
@@ -29,6 +103,30 @@ class Ui_markerPresetWindow(object):
         self.verticalLayout = QVBoxLayout(markerPresetWindow)
         self.verticalLayout.setObjectName(u"verticalLayout")
 
+        self.widgetM_0 = QWidget(markerPresetWindow)
+
+        self.horizontalLayoutM_0 = QHBoxLayout(self.widgetM_0)
+        self.horizontalLayoutM_0.setObjectName(u"horizontalLayoutM_0")
+
+        self.lineEditPresetName = QLineEdit(self.widgetM_0)
+        self.lineEditPresetName.setObjectName(u"lineEditPresetName")
+        sizePolicy3 = QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding)
+        sizePolicy3.setHorizontalStretch(0)
+        sizePolicy3.setVerticalStretch(0)
+        # sizePolicy3.setHeightForWidth(self.labelPresetName.sizePolicy().hasHeightForWidth())
+        self.lineEditPresetName.setSizePolicy(sizePolicy3)
+        self.lineEditPresetName.setMaximumSize(5000, 100)
+        self.lineEditPresetName.setStyleSheet(u"font: 700 30pt \"Bahnschrift\";\n"
+                                              "border: none;\n"
+                                              "background-color: transparent")
+
+        #self.horizontalSpacerM_2 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        #self.horizontalLayoutM_0.addItem(self.horizontalSpacerM_2)
+        self.horizontalLayoutM_0.addWidget(self.lineEditPresetName)
+
+        self.verticalLayout.addWidget(self.widgetM_0)
+
         self.widget_4 = QWidget(markerPresetWindow)
         self.widget_4.setObjectName(u"widget_4")
         self.widget_4.setMinimumSize(QSize(0, 45))
@@ -38,7 +136,6 @@ class Ui_markerPresetWindow(object):
 
         self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
-        self.horizontalLayout_3.addItem(self.horizontalSpacer_2)
 
         self.comboBoxAddExistingMarker = QComboBox(self.widget_4)
         self.comboBoxAddExistingMarker.setObjectName(u"comboBoxAddExistingMarker")
@@ -51,6 +148,7 @@ class Ui_markerPresetWindow(object):
                        "}")
 
         self.horizontalLayout_3.addWidget(self.comboBoxAddExistingMarker)
+        self.horizontalLayout_3.addItem(self.horizontalSpacer_2)
 
         self.verticalLayout.addWidget(self.widget_4)
 
@@ -99,6 +197,7 @@ class Ui_markerPresetWindow(object):
         self.lineEditName.setMaximumSize(QSize(200, 16777215))
 
         self.horizontalLayout.addWidget(self.lineEditName)
+        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
 
         self.lineEditColor = QLineEdit(self.widget)
         self.lineEditColor.setObjectName(u"lineEditColor")
@@ -147,16 +246,7 @@ class Ui_markerPresetWindow(object):
 
         self.horizontalLayout.addWidget(self.pushButtonChgMrk)
 
-        self.pushButtonDelMrk = QPushButton(self.widget)
-        self.pushButtonDelMrk.setObjectName(u"pushButtonDelMrk")
-        self.pushButtonDelMrk.setMinimumSize(QSize(25, 0))
-        self.pushButtonDelMrk.setMaximumSize(QSize(25, 16777215))
-        icon2 = QIcon()
-        icon2.addFile(u":/icons/icons/minus-square.svg", QSize(), QIcon.Normal, QIcon.Off)
-        self.pushButtonDelMrk.setIcon(icon2)
-        self.pushButtonDelMrk.setIconSize(QSize(30, 30))
-
-        self.horizontalLayout.addWidget(self.pushButtonDelMrk)
+        #self.horizontalLayout.addWidget(self.pushButtonDelMrk)
 
 
         self.verticalLayout.addWidget(self.widget)
@@ -165,31 +255,15 @@ class Ui_markerPresetWindow(object):
         self.widget_3.setObjectName(u"widget_3")
         self.widget_3.setStyleSheet(u"QLabel{\n"
 "	font: 12pt \"NSimSun\";\n"
-"	border-style: none outset outset none;\n"
-"	border-width: 4px;\n"
-"	border-color: black;\n"
 "	text-decoration: underline;\n"
 "}")
         self.horizontalLayout_3 = QHBoxLayout(self.widget_3)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-
-        self.lineEditPresetName = QLineEdit(self.widget_3)
-        self.lineEditPresetName.setObjectName(u"lineEditPresetName")
-        sizePolicy3 = QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding)
-        sizePolicy3.setHorizontalStretch(0)
-        sizePolicy3.setVerticalStretch(0)
-        #sizePolicy3.setHeightForWidth(self.labelPresetName.sizePolicy().hasHeightForWidth())
-        self.lineEditPresetName.setSizePolicy(sizePolicy3)
-        self.lineEditPresetName.setMaximumSize(5000, 100)
-        self.lineEditPresetName.setStyleSheet(u"font: 700 40pt \"Bahnschrift\";\n"
-                                              "border: none;\n"
-                                              "background-color: transparent")
-
-        self.horizontalLayout_3.addWidget(self.lineEditPresetName)
+        self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
 
         self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
-        self.horizontalLayout_3.addItem(self.horizontalSpacer)
+        #self.horizontalLayout_3.addItem(self.horizontalSpacer)
 
         self.scrollArea = QScrollArea(self.widget_3)
         self.scrollArea.setObjectName(u"scrollArea")
@@ -198,10 +272,10 @@ class Ui_markerPresetWindow(object):
         sizePolicy2.setVerticalStretch(0)
         sizePolicy2.setHeightForWidth(self.scrollArea.sizePolicy().hasHeightForWidth())
         self.scrollArea.setSizePolicy(sizePolicy2)
-        self.scrollArea.setMinimumSize(QSize(190, 0))
-        self.scrollArea.setMaximumSize(QSize(190, 0))
+        self.scrollArea.setMinimumSize(QSize(200, 0))
+        self.scrollArea.setMaximumSize(QSize(400, 0))
         self.scrollArea.setWidgetResizable(True)
-        self.scrollAreaWidgetContents = QWidget()
+        self.scrollAreaWidgetContents = CustomLabelContainer()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
         self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 168, 48))
         self.verticalLayout_2 = QVBoxLayout(self.scrollAreaWidgetContents)
@@ -211,7 +285,7 @@ class Ui_markerPresetWindow(object):
 
 
         self.verticalLayout_2.addItem(self.verticalSpacer)
-
+        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
 
         self.horizontalLayout_3.addWidget(self.scrollArea)
@@ -246,6 +320,6 @@ class Ui_markerPresetWindow(object):
         self.lineEditColor.setText("")
         self.pushButtonColorPick.setText("")
         self.pushButtonChgMrk.setText("")
-        self.pushButtonDelMrk.setText("")
+        #self.pushButtonDelMrk.setText("")
     # retranslateUi
 

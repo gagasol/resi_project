@@ -160,7 +160,10 @@ class MarkerPresetWindow(QDialog):
         for preset in self.markerPresetList:
             widget = QWidget()
             verticalLayout = QHBoxLayout()
-            checkBox = QRadioButton(QObject.tr('File Default'))
+            if self.calledByGraph:
+                checkBox = QRadioButton(QObject.tr('File Default'))
+            else:
+                checkBox = QRadioButton(QObject.tr('Default'))
             checkBox.setObjectName(preset["_NameForPreset"])
             deleteButton = QPushButton(QObject.tr('Delete'))
             deleteButton.setObjectName(preset["_NameForPreset"])
@@ -175,6 +178,8 @@ class MarkerPresetWindow(QDialog):
                 self.mainWindow.defaultMarkerDictName = preset["_NameForPreset"]
 
             tmpComboBox = QComboBox(self)
+            tmpComboBox.setMinimumWidth(150)
+            tmpComboBox.setMaximumWidth(150)
             tmpComboBox.id_number = self.comboBoxCount
             self.comboBoxCount += 1
             tmpComboBox.addItem(preset["_NameForPreset"])

@@ -4,16 +4,16 @@ import sys
 
 from PySide6 import QtCore
 from PySide6.QtCore import Signal, Qt
-from PySide6.QtWidgets import QApplication, QWidget, QLabel, QDialog
+from PySide6.QtWidgets import QApplication, QWidget, QLabel, QDialog, QInputDialog, QColorDialog
 
 from ui_files.ui_pickMarkerWindow import Ui_PickMarker
-from markerpresetwindow import MarkerPresetWindow
 
 
 class CustomLabel(QLabel):
-    def __init__(self, color, *args, **kwargs):
+    def __init__(self, color, index=None, *args, **kwargs):
         QLabel.__init__(self, *args, **kwargs)
         self.color = color
+        self.index = index
         self.setStyleSheet(("background-color : {0}; color : black;").format(self.color))
 
     def enterEvent(self, event):
@@ -26,8 +26,25 @@ class CustomLabel(QLabel):
     def leaveEvent(self, event):
         self.setStyleSheet(("background-color : {0}; color : black;").format(self.color))
 
+    def mousePressEvent(self, event):
+        if self.index is not None:
+            name, ok = QInputDialog.getText(self, "Name Input", "Enter marker name", text=self.text())
+            if ok:
+                color = QColorDialog.getColor(self.color).name()
+
+                if color == '#000000':
+                    color = self.color
+
+                self.setText(name)
+                self.color = color
+
+                self.setStyleSheet(("background-color : {0}; color : black;").format(self.color))
+                self.parent().goodParent()
+        else:
+            super().mousePressEvent(event)
+
     def hexToRgb(self, hexColor):
-        hexColor = hexColor.lstrip("#")  # Remove '#' if it exists
+        hexColor = hexColor.lstrip("#")
         return tuple(int(hexColor[i:i + 2], 16) for i in (0, 2, 4))
 
 
@@ -81,8 +98,8 @@ class PickMarker(QDialog):
     def mousePressEvent(self, event):
 
         widget = self.childAt(event.pos())
-
-        if (type(widget) == CustomLabel):
+        print('OK OK OK')
+        if type(widget) == CustomLabel and widget.index is None:
             text = widget.text()
             col = widget.color
             self.markerColor = col

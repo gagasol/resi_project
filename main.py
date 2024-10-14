@@ -600,8 +600,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         except KeyError as ke:
             if str(ke) in settingsDict:
-                response = QMessageBox.question(self, 'Reset Settings', f'{str(ke)} was not found in settings,'
-                                                                        f'do you want to reset?',
+                response = QMessageBox.question(self, 'Reset Settings', f'{str(ke)} was not found in settings.json,'
+                                                                        f'do you want to reset the file?',
                                                 QMessageBox.Yes | QMessageBox.No)
                 if response == QMessageBox.Yes:
                     print('yes')
@@ -618,7 +618,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             saveData = [self.settingsWindow.defaultSettingsDict, self.nameToColorDict, self.markerPresetList]
         with open("./settings/settings.json", "w") as f:
-            json.dump(saveData, f)
+            json.dump(saveData, f, indent=2)
 
     # algorithms
 
