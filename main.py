@@ -4,7 +4,7 @@ import logging
 import sys
 
 from PySide6.QtCore import Qt, QEventLoop, QPoint, QRect, QSize, QSizeF, QMarginsF, QObject, QRectF
-from PySide6.QtGui import QIcon, QPdfWriter, QPageSize, QPainter, QPixmap, QGuiApplication, QCursor
+from PySide6.QtGui import QIcon, QPdfWriter, QPageSize, QPainter, QPixmap, QGuiApplication, QCursor, QFont
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, QWidget, QFileDialog, QMdiArea, QMdiSubWindow, \
     QMessageBox
 from PySide6 import QtWidgets
@@ -409,6 +409,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 item = graphWidget.tableWidgetData.item(i, j)
                 if (item):
                     font = item.font()
+                    font.setWeight(QFont.Normal)
                     font.setPointSize(fontSize)
                     item.setFont(font)
 
@@ -581,7 +582,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         "printHeightWidgetTopPerc": 18,
                         "printHeightWidgetGraphPerc": 82,
                         "printHeightWidgetBottomPerc": 0,
-                        "printFontSize": 30,
+                        "printFontSize": 20,
                         "printFontName": "Arial"}
         try:
             with open("./settings/settings.json", "r") as file:
