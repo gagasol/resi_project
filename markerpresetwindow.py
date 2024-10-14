@@ -115,6 +115,7 @@ class MarkerPresetWindow(QDialog):
             col = ""
             name = ""
         self.mainWindow.overridePickMarkerDict(self.markerPresetList[self.sender().id_number], name, col)
+        self.checkSelection()
         self.close()
         #return self.markerPresetList[self.sender().id_number]
 
