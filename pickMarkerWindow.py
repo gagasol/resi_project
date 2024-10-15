@@ -24,7 +24,7 @@ class CustomLabel(QLabel):
             f"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 {hex_color2}, stop:1 {hex_color1}); color : white;" +
             f"}}")
     def leaveEvent(self, event):
-        self.setStyleSheet(("background-color : {0}; color : black;").format(self.color))
+        self.setStyleSheet("background-color : {0}; color : black;".format(self.color))
 
     def mousePressEvent(self, event):
         if self.index is not None:
@@ -43,7 +43,8 @@ class CustomLabel(QLabel):
         else:
             super().mousePressEvent(event)
 
-    def hexToRgb(self, hexColor):
+    @staticmethod
+    def hexToRgb(hexColor):
         hexColor = hexColor.lstrip("#")
         return tuple(int(hexColor[i:i + 2], 16) for i in (0, 2, 4))
 

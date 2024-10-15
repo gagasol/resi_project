@@ -15,9 +15,7 @@ import pickMarkerWindow
 from ui_files.ui_markerPresetForm import Ui_markerPresetWindow
 
 
-
 # @todo implement the text fields as the input after the button is clicked, check if fields are not None and if color is a hex nr
-
 
 
 class TextEntryDialog(QDialog):
@@ -47,7 +45,7 @@ class EditMarkerPresetWindow(QDialog):
         self.markerPresetWindow = MarkerPresetWindow
         self.markerPresetList = self.markerPresetWindow.markerPresetList
 
-# variable setup
+        # variable setup
         self.listLabel = []
         self.dictMarker = argDictMarker if argDictMarker else {}
 
@@ -59,6 +57,7 @@ class EditMarkerPresetWindow(QDialog):
             self.ui.lineEditPresetName.setText(self.dictMarker["_NameForPreset"])
         else:
             dialog = TextEntryDialog(self)
+            dialog.resize(460, 300)
             if dialog.exec():
                 text = dialog.text_entry.text()
                 self.dictMarkerList.append(("_NameForPreset", text))
@@ -80,8 +79,7 @@ class EditMarkerPresetWindow(QDialog):
         self.loadAllMarkers()
         self.loadPresetMarkers()
 
-
-# event functions
+    # event functions
     '''
     def dragEnterEvent(self, event):
         event.accept()
@@ -100,13 +98,11 @@ class EditMarkerPresetWindow(QDialog):
         event.accept()
     '''
 
-
-# buttons clicked functions
+    # buttons clicked functions
     def colorButtonClicked(self):
 
         color = QtWidgets.QColorDialog.getColor().name()
         self.ui.lineEditColor.setText(color)
-
 
     def addButtonClicked(self):
 
@@ -114,8 +110,8 @@ class EditMarkerPresetWindow(QDialog):
         color = self.ui.lineEditColor.text()
 
         if (text == ""):
-           QMessageBox.warning(self, "Warning", "Please enter a name and press "+" afterwards!")
-           return
+            QMessageBox.warning(self, "Warning", "Please enter a name and press " + " afterwards!")
+            return
         if (color == ""):
             QMessageBox.warning(self, "Warning", "Please enter a color")
             return
@@ -125,10 +121,9 @@ class EditMarkerPresetWindow(QDialog):
         self.ui.lineEditColor.setStyleSheet("color: #000000; background-color: #ffffff;")
         self.addOrChangeMarker(argText=text, argColor=color)
 
-
     def delButtonClicked(self):
         self.flagDelete = not self.flagDelete
-        if(self.flagDelete):
+        if (self.flagDelete):
             self.setCursor(QCursor(Qt.PointingHandCursor))
         else:
             self.setCursor(QCursor(Qt.ArrowCursor))
@@ -148,10 +143,8 @@ class EditMarkerPresetWindow(QDialog):
         self.dictMarkerList.remove(self.dictMarkerList[0])
         self.close()
 
-
     def rejectedButtonClicked(self):
         self.close()
-
 
     def onIndexChange(self, index):
         if index == 0:
@@ -165,16 +158,14 @@ class EditMarkerPresetWindow(QDialog):
         color = pixmap.toImage().pixelColor(0, 0)
         self.ui.lineEditColor.setText(color.name())
 
-
     def colorTextChanged(self):
-        if (len(self.ui.lineEditColor.text()) == 7):
-            self.ui.lineEditColor.setStyleSheet("color: {color}; background-color: {color};".format(color = str(self.ui.lineEditColor.text())))
-            #self.addButtonClicked()
+        if len(self.ui.lineEditColor.text()) == 7:
+            self.ui.lineEditColor.setStyleSheet(
+                "color: {color}; background-color: {color};".format(color=str(self.ui.lineEditColor.text())))
 
+    # algorithm section
 
-# algorithm section
-
-# algorithmic
+    # algorithmic
     def addOrChangeMarker(self, argText, argColor, widget=None):
         """
         creates a new marker entry and adds it as a label or changes it if widget != None
@@ -183,7 +174,7 @@ class EditMarkerPresetWindow(QDialog):
         argColor (str): the color of the marker
         widget (QLabel): the widget to change
         """
-        if (argText == "_NameForPreset"):
+        if argText == "_NameForPreset":
             return
 
         text = argText
@@ -211,10 +202,10 @@ class EditMarkerPresetWindow(QDialog):
             for key, value in preset.items():
                 if "_NameForPreset" in key:
                     continue
-                if key+value in allMarkersList:
+                if key + value in allMarkersList:
                     continue
 
-                allMarkersList.append(key+value)
+                allMarkersList.append(key + value)
                 pixmap = QPixmap(30, 30)
                 pixmap.fill(QColor(value))
                 print(pixmap.toImage().pixelColor(0, 0))
@@ -222,6 +213,7 @@ class EditMarkerPresetWindow(QDialog):
                 fakeIndex = self.ui.comboBoxAddExistingMarker.count()
                 self.ui.comboBoxAddExistingMarker.addItem(key)
                 self.ui.comboBoxAddExistingMarker.setItemIcon(fakeIndex, icon)
+
 
 # IMPORTANT : Add a function that updates the main marker list when self.addOrChangeMarker(self) is called
 '''

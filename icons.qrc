@@ -18,5 +18,9 @@
         <file>icons/file-png.svg</file>
         <file>icons/close.svg</file>
         <file>icons/keyboard_double_arrow_down_40dp_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/arrow_upward.svg</file>
+        <file>icons/arrow_downward.svg</file>
+        <file>icons/arrow_downward_30dp.svg</file>
+        <file>icons/arrow_upward_30dp.svg</file>
     </qresource>
 </RCC>

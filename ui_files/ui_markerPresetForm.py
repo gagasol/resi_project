@@ -17,6 +17,7 @@ class CustomLabelContainer(QWidget):
         super().__init__(parent)
 
         self.listMarkerLabels = []
+        self.dictMarkerLabels = {}
 
     def deleteWidget(self):
         label = self.sender().parent().layout().itemAt(0).widget()
@@ -34,20 +35,79 @@ class CustomLabelContainer(QWidget):
 
 
     def addMarkerLabel(self, name, col):
+        print(f'name: {name}')
         markerLabel = QWidget(self)
+        index = len(self.listMarkerLabels)
+        print(f'index in addMarkerLabel: {index}')
         horizontalLayout = QHBoxLayout()
         horizontalLayout.setContentsMargins(0, 0, 0, 0)
-        tmpMarkerLabel = CustomLabel(col, len(self.listMarkerLabels))
+        tmpMarkerLabel = CustomLabel(col, index)
         tmpMarkerLabel.setText(name)
         tmpMarkerLabel.setMaximumHeight(20)
         tmpMarkerLabel.setMinimumWidth(100)
         horizontalLayout.addWidget(tmpMarkerLabel)
 
+        buttonUp = self._createUpButton(markerLabel)
+        horizontalLayout.addWidget(buttonUp)
+
+        buttonDown = self._createDownButton(markerLabel)
+        horizontalLayout.addWidget(buttonDown)
+
         buttonDeleteMarker = self._createDeleteMarker(markerLabel)
         horizontalLayout.addWidget(buttonDeleteMarker)
         markerLabel.setLayout(horizontalLayout)
         self.listMarkerLabels.append(markerLabel)
-        self.layout().addWidget(markerLabel)
+        self.layout().insertWidget(index, markerLabel)
+
+    def upButtonPressed(self):
+        widget = self.sender().parent()
+        index = widget.layout().itemAt(0).widget().index
+
+        if 0 < index:
+            widgetAbove = self.listMarkerLabels[index-1]
+            indexAbove = widgetAbove.layout().itemAt(0).widget().index
+
+            widget.setParent(None)
+            widgetAbove.setParent(None)
+
+            self.layout().removeWidget(widgetAbove)
+            self.layout().removeWidget(widget)
+
+            self.listMarkerLabels[index] = widgetAbove
+            self.listMarkerLabels[index-1] = widget
+
+            widget.layout().itemAt(0).widget().index -= 1
+            widgetAbove.layout().itemAt(0).widget().index += 1
+
+            self.layout().insertWidget(indexAbove, widget)
+            self.layout().insertWidget(index, widgetAbove)
+
+            QCoreApplication.processEvents()
+
+    def downButtonPressed(self):
+        widget = self.sender().parent()
+        index = widget.layout().itemAt(0).widget().index
+
+        if index < len(self.listMarkerLabels) - 1:
+            widgetBelow = self.listMarkerLabels[index + 1]
+            indexBelow = widgetBelow.layout().itemAt(0).widget().index
+
+            widgetBelow.setParent(None)
+            widget.setParent(None)
+
+            self.layout().removeWidget(widgetBelow)
+            self.layout().removeWidget(widget)
+
+            self.listMarkerLabels[index] = widgetBelow
+            self.listMarkerLabels[index + 1] = widget
+
+            widget.layout().itemAt(0).widget().index += 1
+            widgetBelow.layout().itemAt(0).widget().index -= 1
+
+            self.layout().insertWidget(index, widgetBelow)
+            self.layout().insertWidget(indexBelow, widget)
+
+            QCoreApplication.processEvents()
 
     def getAllMarkers(self):
         returnList = []
@@ -74,8 +134,34 @@ class CustomLabelContainer(QWidget):
 
         return pushButtonDelMrk
 
+    def _createUpButton(self, parent):
+        pushButtonUp = QPushButton(parent)
+        pushButtonUp.setMinimumSize(QSize(20, 0))
+        pushButtonUp.setMaximumSize(QSize(20, 20))
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/icons/arrow_upward_30dp.svg", QSize(), QIcon.Normal, QIcon.Off)
+        pushButtonUp.setIcon(icon2)
+        pushButtonUp.setIconSize(QSize(20, 20))
+        pushButtonUp.clicked.connect(self.upButtonPressed)
+        self._setButtonStyleShield(pushButtonUp)
 
-    def _setButtonStyleShield(self, button):
+        return pushButtonUp
+
+    def _createDownButton(self, parent):
+        pushButtonDown = QPushButton(parent)
+        pushButtonDown.setMinimumSize(QSize(20, 0))
+        pushButtonDown.setMaximumSize(QSize(20, 20))
+        icon = QIcon()
+        icon.addFile(u':/icons/icons/arrow_downward_30dp.svg', QSize(), QIcon.Normal, QIcon.Off)
+        pushButtonDown.setIcon(icon)
+        pushButtonDown.setIconSize(QSize(20, 20))
+        pushButtonDown.clicked.connect(self.downButtonPressed)
+        self._setButtonStyleShield(pushButtonDown)
+
+        return pushButtonDown
+
+    @staticmethod
+    def _setButtonStyleShield(button):
         button.setStyleSheet(u"QPushButton{\n"
                            "border: none;\n"
                            "padding-left: -2px;\n"
@@ -89,8 +175,6 @@ class CustomLabelContainer(QWidget):
                            "	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n"
                            "                                      stop: 0 #FFFFFF, stop: 1 #dadbde);\n"
                            "}")
-    def goodParent(self):
-        print("I'm a good parent")
 
 
 class Ui_markerPresetWindow(object):
