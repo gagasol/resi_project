@@ -21,6 +21,7 @@ from markerpresetwindow import MarkerPresetWindow
 from editMarkerPreset import EditMarkerPresetWindow
 from pickMarkerWindow import PickMarker
 from settingsWindow import SettingsWindow
+from printWindow import PrintWindow
 
 
 class CustomQMdiArea(QMdiArea):
@@ -281,197 +282,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
     def pdfButtonClicked(self):
-        self.printGraphWidgetAs("pdf")
+        pass
 
 
     def pngButtonClicked(self):
-        self.printGraphWidgetAs("png")
-
-
-    def printGraphWidgetAs(self, suffix):
-        """
-        Save the current graph widget as a file with the specified suffix.
-
-        :param suffix: The suffix of the file to be saved (e.g. "png", "pdf").
-        :return: None
-        """
         graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
-
-        originalFontDataUneven = graphWidget.tableWidgetData.item(0, 0).font()
-        originalFontDataEven = graphWidget.tableWidgetData.item(0, 1).font()
-        try:
-            originalFontMarker = graphWidget.tableWidgetMarker.item(0, 0).font()
-        except AttributeError:
-            originalFontMarker = None
-            graphWidget.tableWidgetMarker.hide()
-            logging.info("No Markers set so far")
-
-        self.printSetupStart(graphWidget)
-
-        # @todo add globally
         filename = self.ui.tabWidget.tabText(self.ui.tabWidget.currentIndex())
-        if (".rgp" in filename):
-            filename = "./data/" + filename.replace(".rgp", ".") + suffix
-        else:
-            filename = "./data/" + filename + "." + suffix
+        PrintWindow(graphWidget, self.settingsWindow, 'png', filename)
 
-        widthTables = graphWidget.tableWidgetMarker.width() + graphWidget.tableWidgetData.width()
-        widthTables = widthTables + widthTables * 0.02
-        printWidth = max(1920, widthTables)
-        print(printWidth)
-        printHeight = printWidth * 9/16
-        print(printHeight)
-        # @todo as soon as I have a load function in widgetGraph I can change the way I take an image
-        # instead of printWidget = graphWidget I copy the state not the instance (maybe add load state? overkill..)
-        # printWidget.setAttribute(Qt.WA_DontShowOnScreen, True)
-        # printWidget.setAttribute(Qt.WA_Mapped, True)
-
-        graphWidget.resize(printWidth, printHeight)
-
-
-
-
-        if (suffix == "png"):
-            print("printing to png")
-            scaledPixmap = QPixmap(QSize(printWidth, printHeight))
-            scaledPixmap.fill(Qt.transparent)
-
-            graphWidget.render(scaledPixmap)
-            scaledPixmap.save(filename)
-            graphWidget.resetWidgetsRelSpace()
-
-        elif (suffix == "pdf"):
-            graphWidget.resetWidgetsRelSpace()
-
-            '''
-            print("printing to pdf")
-            dpi = 232
-            widthA4px = 8.27 * 300
-            heightA4px = 11.69 * 300
-            scale_x = widthA4px / printWidth
-            scale_y = heightA4px / printHeight
-            scale = min(scale_x, scale_y)
-            print(scale)
-            pdfWriter = QPdfWriter(filename)
-            a4_w_mm = 210
-            height_in_mm = a4_w_mm * printHeight / printWidth
-            pageSize = QPageSize(QSizeF(a4_w_mm, height_in_mm), QPageSize.Millimeter)
-            pdfWriter.setPageSize(pageSize)
-            pdfWriter.setResolution(dpi)
-            pdfWriter.setPageMargins(QMarginsF(0, 0, 0, 0))
-
-            scaledPixmap = QPixmap(QSize(int(printWidth), int(printHeight)))
-            scaledPixmap.fill(Qt.transparent)
-            graphWidget.resize(pdfWriter.width(), pdfWriter.width() * 9/16)
-            graphWidget.render(scaledPixmap)
-            pdfPainter = QPainter(pdfWriter)
-            pdfPainter.drawPixmap(0, 0, scaledPixmap)
-            pdfPainter.end()
-            graphWidget.resetWidgetsRelSpace()
-            '''
-
-        self.printSetupEnd(graphWidget, originalFontDataUneven, originalFontDataEven, originalFontMarker)
-
-
-    def printSetupStart(self, graphWidget):
-        """
-        :param graphWidget: The graph widget on which the setup changes will be applied.
-        :return: None
-
-        This method is used to make initial setup changes to the given graph widget before printing. It changes the size
-        of the horizontal spacer, invalidates the horizontal layout, hides the widget menu, hides the widget bottom,
-        hides the label data, and changes the relative space of the widgets.
-
-        It also adjusts the font size of the items in the table widget data and table widget marker to 15 point size.
-
-        Finally, it sets the parent of the tablewidgetmarker to None, inserts it into the horizontal layout at index 2,
-        and shows the table widget marker.
-        """
-
-        heightTop = self.settingsWindow.getSettingsVariable("printHeightWidgetTopPerc")
-        heightGraph = self.settingsWindow.getSettingsVariable("printHeightWidgetGraphPerc")
-        heightBottom = self.settingsWindow.getSettingsVariable("printHeightWidgetBottomPerc")
-        fontSize = self.settingsWindow.getSettingsVariable("printFontSize")
-
-        graphWidget.horizontalSpacer0.changeSize(10, 20)
-        graphWidget.horizontalSpacerPrint.changeSize(9, 20)
-        #graphWidget.horizontalLayout.invalidate()
-        graphWidget.widgetMenu.hide()
-        graphWidget.widgetBottom.hide()
-        graphWidget.labelData.hide()
-        graphWidget.changeWidgetsRelSpace(heightTop, heightGraph, heightBottom)
-        graphWidget.setAttribute(Qt.WA_NoSystemBackground, True)
-        graphWidget.setAttribute(Qt.WA_TranslucentBackground, True)
-        graphWidget.canvasGraph.vLine.hide()
-        graphWidget.canvasGraph.changeAxisFontsize(26)
-        for i in range(graphWidget.tableWidgetData.rowCount()):
-            for j in range(graphWidget.tableWidgetData.columnCount()):
-                item = graphWidget.tableWidgetData.item(i, j)
-                if (item):
-                    font = item.font()
-                    font.setWeight(QFont.Normal)
-                    font.setPointSize(fontSize)
-                    item.setFont(font)
-
-
-        if (not graphWidget.tableWidgetMarker.isHidden()):
-            for i in range(graphWidget.tableWidgetMarker.rowCount()):
-                for j in range(graphWidget.tableWidgetMarker.columnCount()):
-                    item = graphWidget.tableWidgetMarker.item(i, j)
-                    if (item):
-                        font = item.font()
-                        font.setPointSize(fontSize)
-                        item.setFont(font)
-
-            graphWidget.tableWidgetMarker.setParent(None)
-            graphWidget.horizontalLayout.insertWidget(3, graphWidget.tableWidgetMarker)
-            graphWidget.tableWidgetMarker.show()
-
-        graphWidget.widgetTop.adjustSize()
-
-    def printSetupEnd(self, graphWidget, originalFontDataUneven, originalFontDataEven, originalFontMarker):
-        """
-        :param graphWidget: The graph widget containing the table widgets.
-        :param originalFontDataUneven: The original font to be set for the table data items on odd columns.
-        :param originalFontDataEven: The original font to be set for the table data items on even columns.
-        :param originalFontMarker: The original font to be set for the table marker items.
-        :return: None
-
-        This method sets the original fonts for the table data items and table marker items in the given graph widget.
-        It also adjusts the size of the horizontal spacer and shows the necessary components in the graph widget.
-
-        """
-        fontSize = self.settingsWindow.getSettingsVariable("fontSize")
-
-        graphWidget.canvasGraph.changeAxisFontsize(11)
-        graphWidget.setAttribute(Qt.WA_NoSystemBackground, False)
-        graphWidget.setAttribute(Qt.WA_TranslucentBackground, False)
-        for i in range(graphWidget.tableWidgetData.rowCount()):
-            for j in range(graphWidget.tableWidgetData.columnCount()):
-                item = graphWidget.tableWidgetData.item(i, j)
-                if  (item):
-                    if(j%2 == 0):
-                        item.setFont(originalFontDataUneven)
-                    else:
-                        item.setFont(originalFontDataEven)
-
-        if (not graphWidget.tableWidgetMarker.isHidden()):
-            for i in range(graphWidget.tableWidgetMarker.rowCount()):
-                for j in range(graphWidget.tableWidgetMarker.columnCount()):
-                    item = graphWidget.tableWidgetMarker.item(i, j)
-                    if  (item):
-                        item.setFont(originalFontMarker)
-
-            graphWidget.tableWidgetMarker.setParent(None)
-            graphWidget.horizontalLayout_2.insertWidget(0, graphWidget.tableWidgetMarker)
-
-        graphWidget.tableWidgetMarker.show()
-        graphWidget.horizontalSpacer0.changeSize(70, 20)
-        graphWidget.widgetMenu.show()
-        graphWidget.widgetBottom.show()
-        graphWidget.labelData.show()
-        graphWidget.canvasGraph.vLine.show()
-        graphWidget.widgetTop.adjustSize()
 
     def settingsButtonClicked(self):
         self.markerPresetWin = MarkerPresetWindow(self, self.nameToColorDict, self.markerPresetList, calledByGraph=False)
@@ -480,7 +298,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 canvas.updateUi()
             with open("./settings/settings.json", "w") as file:
                 json.dump(self.settingsWindow.defaultSettingsDict, file, indent=2)
-        #markerPresetWin.exec()
 
     def toggleOverlayButtonClicked(self):
         # If overlay_widget visible, hide it, else show it

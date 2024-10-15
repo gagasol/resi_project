@@ -168,6 +168,7 @@ class WidgetGraph(QWidget):
     def __init__(self, MainWindow=None, pathToFile=None, loadedState=None, settingsSet=None, parent=None):
         super().__init__(parent)
 
+
         self.x = 0
         self.checkBoxShowInGraphInfo = None
         self.logger = logging.getLogger(__name__)
@@ -211,6 +212,7 @@ class WidgetGraph(QWidget):
         self.labelData = None
         self.horizontalSpacer_3 = None
         self.checkBoxHideBot = None
+        self.horizontalSpacer01 = None
         self.checkBoxHideTop = None
         self.horizontalLayout_3 = None
         self.widgetMenu = None
@@ -278,7 +280,7 @@ class WidgetGraph(QWidget):
         self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
-        self.horizontalSpacer0 = QSpacerItem(70, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        self.horizontalSpacer0 = QSpacerItem(10, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout.addItem(self.horizontalSpacer0)
 
@@ -413,6 +415,9 @@ class WidgetGraph(QWidget):
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
 
+        self.horizontalSpacer01 = QSpacerItem(8, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        self.horizontalLayout_2.addItem(self.horizontalSpacer01)
+
         self.tableWidgetMarker = AutoSizedTable(self.widgetBottom)
         self.tableWidgetMarker.setObjectName(u"tableWidgetMarker")
         self.tableWidgetMarker.setMinimumSize(QSize(0, 0))
@@ -421,6 +426,8 @@ class WidgetGraph(QWidget):
         self.tableWidgetMarker.setProperty("isWrapping", True)
         self.tableWidgetMarker.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         self.tableWidgetMarker.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.tableWidgetMarker.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.tableWidgetMarker.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         # self.tableWidgetMarker.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.tableWidgetMarker.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         self.tableWidgetMarker.setShowGrid(False)
