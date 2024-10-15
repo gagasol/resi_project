@@ -18,16 +18,16 @@ class PrintWindow:
         self.fontDataEven = graphWidget.tableWidgetData.item(0, 1).font()
 
         self.tableDataWidth = graphWidget.tableWidgetData.width()
-        self.tableMarkerHeight = graphWidget.tableWidgetData.height()
 
         try:
             self.fontMarkerTable = graphWidget.tableWidgetMarker.item(0, 0).font()
+            self.tableMarkerHeight = graphWidget.tableWidgetData.height()
         except AttributeError:
             self.fontMarkerTable = None
             graphWidget.tableWidgetMarker.hide()
 
         if '.rgp' in filename:
-            self.filename = './data/' + filename.replace('rpg', 'suffix')
+            self.filename = './data/' + filename.replace('rgp', 'suffix')
         else:
             self.filename = './data/' + filename + f'.{suffix}'
 
@@ -63,6 +63,8 @@ class PrintWindow:
         self.graphWidget.tableWidgetData.setFixedWidth(totalWidth)
 
         if not self.graphWidget.tableWidgetMarker.isHidden():
+            iconSize = self.settings.getSettingsVariable("printFontSize")
+            self.graphWidget.tableWidgetMarker.setIconSize(QSize(iconSize, iconSize))
             for i in range(self.graphWidget.tableWidgetMarker.rowCount()):
                 for j in range(self.graphWidget.tableWidgetMarker.columnCount()):
                     item = self.graphWidget.tableWidgetMarker.item(i, j)
@@ -71,12 +73,16 @@ class PrintWindow:
                         font.setPointSize(fontSize - 2)
                         item.setFont(font)
 
-
+            totalHeight = 0
+            for i in range(self.graphWidget.tableWidgetMarker.rowCount()):
+                totalHeight += self.graphWidget.tableWidgetMarker.rowHeight(i)
+            self.graphWidget.tableWidgetMarker.resizeRowsToContents()
+            #self.graphWidget.tableWidgetMarker.setFixedHeight(totalHeight)
 
         if self.graphWidget.textEditComment.toPlainText() == '':
             self.graphWidget.textEditComment.hide()
 
-        self.graphWidget.resize(resizeWidth, resizeHeight)
+        #self.graphWidget.resize(resizeWidth, resizeHeight)
 
     def resetWidgetAfterPrint(self):
         self.graphWidget.resetWidgetsRelSpace()
@@ -97,16 +103,18 @@ class PrintWindow:
         self.graphWidget.tableWidgetData.setFixedWidth(self.tableDataWidth)
 
         if not self.graphWidget.tableWidgetMarker.isHidden():
+            iconSize = self.settings.getSettingsVariable("fontSize")
+            self.graphWidget.tableWidgetMarker.setIconSize(QSize(iconSize, iconSize))
             for i in range(self.graphWidget.tableWidgetMarker.rowCount()):
                 for j in range(self.graphWidget.tableWidgetMarker.columnCount()):
                     item = self.graphWidget.tableWidgetMarker.item(i, j)
                     if item:
                         item.setFont(self.fontMarkerTable)
-            self.graphWidget.tableWidgetMarker.setFixedHeight(self.tableMarkerHeight)
+            #self.graphWidget.tableWidgetMarker.setFixedHeight(self.tableMarkerHeight)
         else:
             self.graphWidget.tableWidgetMarker.show()
 
-        self.graphWidget.resize(self.currentGraphWidth, self.currentGraphHeight)
+        #self.graphWidget.resize(self.currentGraphWidth, self.currentGraphHeight)
         QCoreApplication.processEvents()
 
     def createPixmap(self, width, height):
@@ -117,7 +125,6 @@ class PrintWindow:
 
     def toggleUI(self, attr, noBackground):
         self.graphWidget.setAttribute(Qt.WA_NoSystemBackground, noBackground)
-        #self.graphWidget.setAttribute(Qt.TranslucentBackground, noBackground)
         widgets = [self.graphWidget.widgetMenu,
                    self.graphWidget.labelData,
                    self.graphWidget.canvasGraph.vLine]
@@ -128,7 +135,8 @@ class PrintWindow:
         pass
 
     def printPng(self):
-        printImage = self.createPixmap(1920, 1080)
         QCoreApplication.processEvents()
-        self.graphWidget.render(printImage)
-        printImage.save(self.filename)
+        self.graphWidget.resize(1920, 1080)
+        screenshot = self.graphWidget.grab()
+        screenshot.save(self.filename, 'png')
+
