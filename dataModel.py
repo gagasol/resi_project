@@ -191,14 +191,14 @@ class DataModel:
         return [self._name, self._depthMsmt, self._dataDrill, self._dataFeed]
 
 
-    def getTablaTopData(self):#c44a04
+    def getTablaTopData(self):
         result_dict = self._dataNameDict
         collectedTableNames = []
         collectedTableData = []
         totalCharactersPerRow = []
         maxLen = 0
         for i, (key, value) in enumerate(result_dict.items()):
-            if (i % 6 == 0 and i > 0):
+            if i % 6 == 0 and i > 0:
                 totalCharactersPerRow.append(maxLen+2)
                 maxLen = 0
 
@@ -207,7 +207,7 @@ class DataModel:
         totalCharactersPerRow.append(maxLen + 2)
 
         for i, (key, value) in enumerate(result_dict.items()):
-            textString = value.ljust(totalCharactersPerRow[i // 6]-len(value))
+            textString = value.ljust(totalCharactersPerRow[i // 6])
             tableTextEditEntry = QTableWidgetItem(textString)
             font = QFont()
             font.setFamily("Tahoma")
@@ -218,16 +218,16 @@ class DataModel:
             tableTextEditEntry.setFlags(tableTextEditEntry.flags() & ~Qt.ItemIsEditable)
             tableTextEditEntry.setFlags(tableTextEditEntry.flags() & ~Qt.ItemIsSelectable)
             collectedTableNames.append(tableTextEditEntry)
-            if(value == ""):
+            if value == "":
                 tableItemDataEntry = QTableWidgetItem("")
             else:
                 fontDataEntry = QFont()
                 font.setFamily("Tahoma")
                 brush = QBrush(QColor("#1f1bf7"))
-                if (key == "tiltAngle"):
+                if key == "tiltAngle":
                     tableItemDataEntry = QTableWidgetItem(str(int(round(float(self._data[key]) + 0.001, 0) - 90)) + "  ")
                 else:
-                    tableItemDataEntry = QTableWidgetItem(str(self._data[key]) + "  ")
+                    tableItemDataEntry = QTableWidgetItem(": "+str(self._data[key]) + "  ")
                 tableItemDataEntry.setFont(fontDataEntry)
                 tableItemDataEntry.setForeground(brush)
             if (1 < i < 12):

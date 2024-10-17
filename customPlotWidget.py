@@ -185,6 +185,7 @@ class CustomPlotWidget(pg.PlotWidget):
         height = yAxisViewRange * self.markerHeightPerc
         y = yAxisView[0]
 
+
         for marker in self.markerList:
             marker.canvasViewChanged(y, height, xAxisView, yAxisView)
         print("rangeChanged")
@@ -293,6 +294,7 @@ class CustomPlotWidget(pg.PlotWidget):
     def updateTable(self, index: int, name: str, color: str, x: float, dx: float):
         if "borke" in name or "rinde" in name.lower() and index == 0:
             self.parentWindow.changeXAxisZero(dx)
+            #self.getAxis('bottom').updateTicks()
             self.parentWindow.dxMarkerForTable = dx
 
         self.parentWindow.updateTableMarkerEntry(index, name, color, x, dx)

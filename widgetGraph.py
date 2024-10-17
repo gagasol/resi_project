@@ -73,6 +73,9 @@ class RangeDialog(QDialog):
 class CustomAxis(pg.AxisItem):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.start = 0
+        self.end = 40
+        self.xMajorTickInterval = 5
         self.offset = 0
 
     def setOffset(self, offset):
@@ -82,8 +85,20 @@ class CustomAxis(pg.AxisItem):
         self.update()
         print("Finished updating")
 
+    def updateTicks(self):
+        ticks = np.arange(self.start, self.end, self.xMajorTickInterval)
+        majorTicks = [(v + self.offset, str(v)) for v in ticks]
+        minorTicks = []
+        for i in range(self.start, self.end):
+            minorIntervals = np.linspace(i + self.offset, i+self.xMajorTickInterval + self.offset,
+                                         self.xMajorTickInterval+1)[1:-1]
+            for val in minorIntervals:
+                minorTicks.append((val, ''))
+
+        self.setTicks([majorTicks, minorTicks])
+
     def tickStrings(self, values, scale, spacing):
-        return [str(val - self.offset) for val in values]
+        return [str(round((val - self.offset), 2)) for val in values]
 
 
 class AutoSizedTable(QTableWidget):
@@ -550,6 +565,9 @@ class WidgetGraph(QWidget):
         # todo fix size of last column, check if entry is longer and if make size relative to content again
         entry = self.tableWidgetData.item(row, column).text()
         self.dataModel.changeCustomDataEntry(row, column, entry)
+        if entry[0] != ':':
+            entry = ': ' + entry
+            self.tableWidgetData.setItem(row, column, entry)
 
     def windowClosedByUser(self):
         self.flagWindowClosedByUserSignal = True
@@ -667,9 +685,7 @@ class WidgetGraph(QWidget):
     def changeXAxisZero(self, xOffset):
         bottom_axis = self.canvasGraph.getPlotItem().getAxis("bottom")
         bottom_axis.setOffset(xOffset)
-        ticks = np.arange(0, 40, 5)
-        minTicks = np.arange(0, 10, 1)
-        bottom_axis.setTicks([[(v + xOffset, str(v)) for v in ticks]])
+        bottom_axis.updateTicks()
         self.canvasGraph.getPlotItem().setAxisItems({"bottom": bottom_axis})
         self.canvasGraph.getPlotItem().update()
 
