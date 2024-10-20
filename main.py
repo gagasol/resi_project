@@ -384,6 +384,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
     def loadPreset(self):
+        strsToShowInGraph = ["number", "0_diameter", "1_mHeight", "3_objecttype", "5_name"]
         settingsDict = {"defaultMarkerDictName": "",
                         "heightWidgetTopPerc": 15,
                         "heightWidgetGraphPerc": 75,
@@ -391,16 +392,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         "colorBackground": "#dfe5e6",
                         "colorBackgroundMarking": "#8b888f",
                         "labelFontSize": 12,
+                        "printLabelFontSize": 26,
+                        "majorTicksInterval": 5,
+                        "minorTicksInterval": 5,
                         "fontSize": 14,
                         "fontName": "Arial",
                         "colorFeedPlot": "#5c08c9",
                         "colorDrillPlot": "#eda31a",
                         "markerHeightPerc": 0.02,
-                        "printHeightWidgetTopPerc": 18,
-                        "printHeightWidgetGraphPerc": 82,
-                        "printHeightWidgetBottomPerc": 0,
+                        "printHeightWidgetTopPerc": 20,
+                        "printHeightWidgetGraphPerc": 60,
+                        "printHeightWidgetBottomPerc": 20,
                         "printFontSize": 20,
-                        "printFontName": "Arial"}
+                        "printFontName": "Arial",
+                        "strsToShowInGraph": strsToShowInGraph
+                        }
         try:
             with open("./settings/settings.json", "r") as file:
                 loadedFile = json.load(file)

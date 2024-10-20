@@ -71,11 +71,12 @@ class RangeDialog(QDialog):
 
 
 class CustomAxis(pg.AxisItem):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, start, end, xMajorTickInterval, xMinorTickInterval, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.start = 0
-        self.end = 40
-        self.xMajorTickInterval = 5
+        self.start = start
+        self.end = end
+        self.xMajorTickInterval = xMajorTickInterval
+        self.xMinorTickInterval = xMinorTickInterval
         self.offset = 0
 
     def setOffset(self, offset):
@@ -91,7 +92,7 @@ class CustomAxis(pg.AxisItem):
         minorTicks = []
         for i in range(self.start, self.end):
             minorIntervals = np.linspace(i + self.offset, i+self.xMajorTickInterval + self.offset,
-                                         self.xMajorTickInterval+1)[1:-1]
+                                         self.xMinorTickInterval+1)[1:-1]
             for val in minorIntervals:
                 minorTicks.append((val, ''))
 
@@ -206,6 +207,7 @@ class WidgetGraph(QWidget):
         self.heightWidgetGraphPerc = self.settingsWindow.getSettingsVariable("heightWidgetGraphPerc")
         self.heightWidgetBottomPerc = self.settingsWindow.getSettingsVariable("heightWidgetBottomPerc")
         self.markerHeightPerc = self.settingsWindow.getSettingsVariable("markerHeightPerc")
+        self.strsToShowInGraph = self.settingsWindow.getSettingsVariable("strsToShowInGraph")
         # endregion
 
         self.pickMarkerWin = None
@@ -258,10 +260,8 @@ class WidgetGraph(QWidget):
         self.listDataAll = []
         self.dictMeasurementData = {}
 
-        self.strsToShowInGraph = []
         self.textInGraph = None
         # todo delete later
-        self.strsToShowInGraph = ["number", "0_diameter", "1_mHeight", "3_objecttype", "5_name"]
         # arg variables
         self.mainWindow = MainWindow
         self.pathToFile = pathToFile
@@ -271,7 +271,7 @@ class WidgetGraph(QWidget):
             if "rgp" in pathToFile:
                 self.dataModel = DataModel(pathToFile, self.mainWindow.listNameKeys)
                 self.defaultMarkerDictName = self.mainWindow.defaultMarkerDictName
-            if (pathToFile == ""):
+            if pathToFile == "":
                 self.dataModel = DataModel(pathToFile, self.mainWindow.listNameKeys, loadedState)
                 self.defaultMarkerDictName = self.dataModel.fileDefaultPresetName
 
@@ -373,7 +373,12 @@ class WidgetGraph(QWidget):
         self.widgetGraph = QWidget()
         self.widgetGraph.setObjectName(u"widgetGraph")
 
-        bottom_axis = CustomAxis(orientation="bottom")
+        start = 0
+        end = 40
+        majorTicksInterval = self.mainWindow.settingsWindow.getSettingsVariable("majorTicksInterval")
+        minorTicksInterval = self.mainWindow.settingsWindow.getSettingsVariable("minorTicksInterval")
+
+        bottom_axis = CustomAxis(start, end, majorTicksInterval, minorTicksInterval, orientation="bottom")
         xLimit = self.deviceLength + 0.5
         colorBackground = self.settingsWindow.getSettingsVariable("colorBackground")
         colorBackgroundMarking = self.settingsWindow.getSettingsVariable("colorBackgroundMarking")
@@ -409,16 +414,11 @@ class WidgetGraph(QWidget):
 
         self.verticalLayout_2.addWidget(self.widgetGraph)
 
-        self.textInGraph = pg.TextItem(text="", color=("#000000"))
+        self.textInGraph = pg.TextItem(text="", color="#000000")
         self.textInGraph.setPos(0, 100)
         self.textInGraph.hide()
         self.canvasGraph.addItem(self.textInGraph)
-        textStr = ""
-        maxLen = 0
-        for key in self.strsToShowInGraph:
-            textStr += f"{self.dataModel.getNameByKey(key)}: {self.dataModel.getDataByKey(key)}\n"
-            maxLen = max(maxLen, len(f"{self.dataModel.getNameByKey(key)}: {self.dataModel.getDataByKey(key)}"))
-        self.textInGraph.setText(textStr[:-1])
+        self.setTextToShowInGraph()
 
         self.widgetBottom = QWidget()
         self.widgetBottom.setObjectName(u"widgetBottom")
@@ -546,6 +546,9 @@ class WidgetGraph(QWidget):
         self.canvasGraph.colorBackgroundHex = QColor(self.settingsWindow.getSettingsVariable("colorBackground"))
         self.canvasGraph.colorWhileMarkingHex = QColor(self.settingsWindow.getSettingsVariable("colorBackgroundMarking"))
         self.canvasGraph.changeAxisFontsize(self.settingsWindow.getSettingsVariable("labelFontSize"))
+        self.strsToShowInGraph = self.settingsWindow.getSettingsVariable("strsToShowInGraph")
+        self.resetWidgetsRelSpace()
+        self.setTextToShowInGraph()
 
     def initializeData(self):
         dataSet = self.dataModel.getTablaTopData()
@@ -583,7 +586,7 @@ class WidgetGraph(QWidget):
         x = round(x, 2)
         dx = round(dx, 2)
 
-        if (index >= 6):
+        if index >= 6:
             if index % 6 == 0:
                 n = self.tableWidgetMarker.columnCount()
                 self.tableWidgetMarker.setColumnCount(n + 2)
@@ -688,6 +691,14 @@ class WidgetGraph(QWidget):
         bottom_axis.updateTicks()
         self.canvasGraph.getPlotItem().setAxisItems({"bottom": bottom_axis})
         self.canvasGraph.getPlotItem().update()
+
+    def setTextToShowInGraph(self):
+        textStr = ""
+        maxLen = 0
+        for key in self.strsToShowInGraph:
+            textStr += f"{self.dataModel.getNameByKey(key)}: {self.dataModel.getDataByKey(key)}\n"
+            maxLen = max(maxLen, len(f"{self.dataModel.getNameByKey(key)}: {self.dataModel.getDataByKey(key)}"))
+        self.textInGraph.setText(textStr[:-1])
 
     def changeFileDefaultPresetName(self, defaultPresetName):
         self.canvasGraph.fileDefaultMarkerDictName = defaultPresetName

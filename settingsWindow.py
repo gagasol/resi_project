@@ -1,6 +1,7 @@
 import re
 
-from PySide6.QtWidgets import QDialog
+from PySide6.QtCore import QObject
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QCheckBox, QDialogButtonBox
 
 from ui_settingsWindow import Ui_Dialog
 
@@ -70,11 +71,35 @@ class SettingsWindow(QDialog):
         self.defaultSettingsDict = defaultSettingsDict
         self.blockSave = False
 
+        self._dataNameDict = {
+            "number": QObject.tr('Messung Nr.'),
+            "idNumber": QObject.tr('ID-Nummer'),
+            "depthMsmt": QObject.tr('Bohrtiefe'),
+            "date": QObject.tr('Datum'),
+            "time": QObject.tr('Uhrzeit'),
+            "speedFeed": QObject.tr('Vorschub'),
+            "speedDrill": QObject.tr('Drehzahl'),
+            "tiltAngle": QObject.tr('Neigung'),
+            "result": QObject.tr('Nadelstatus'),
+            "offset": QObject.tr('Offset'),
+            "graphAvgShow": QObject.tr('Mittelung'),
+            "empty": "",
+            "0_diameter": QObject.tr('Durchmesser'),
+            "1_mHeight": QObject.tr('Messhöhe'),
+            "2_mDirection": QObject.tr('Messrichtung'),
+            "3_objecttype": QObject.tr('Objektart'),
+            "4_location": QObject.tr('Standort'),
+            "5_name": QObject.tr('Name')
+        }
+
+        self.strsToShowInGraph = []
+
         self.ui.stackedWidget.setCurrentIndex(0)
         self.ui.buttonBox.accepted.connect(self.accept)
         self.ui.buttonBox.rejected.connect(self.reject)
         self.ui.pushButtonGraph.clicked.connect(self.graphButtonClicked)
         self.ui.pushButtonPref.clicked.connect(self.preferenceButtonClicked)
+        self.ui.pushButtonPrint.clicked.connect(self.printButtonClicked)
         self.ui.pushButtonPresets.clicked.connect(self.presetsButtonClicked)
 
         self.ui.doubleSpinBoxTopPerc.valueChanged.connect(self.syncWidgetSizeBoxes)
@@ -85,6 +110,8 @@ class SettingsWindow(QDialog):
         self.ui.lineEditDrillColor.textChanged.connect(self.validateField)
         self.ui.lineEditGraphBackgroundColor.textChanged.connect(self.validateField)
         self.ui.lineEditMarkingGraphBackgroundColor.textChanged.connect(self.validateField)
+
+        self.ui.pushButtonGraphdisplayData.clicked.connect(self.createCheckboxDialog)
 
         self.initUi()
 
@@ -107,6 +134,12 @@ class SettingsWindow(QDialog):
         self.ui.lineEditMarkingGraphBackgroundColor.setText(self.getSettingsVariable("colorBackgroundMarking"))
         self.ui.doubleSpinBoxMarkerHeight.setValue(self.getSettingsVariable("markerHeightPerc")*100)
         self.ui.spinBoxLabelSize.setValue(self.getSettingsVariable("labelFontSize"))
+        self.ui.doubleSpinBoxTopPerc_2.setValue(self.getSettingsVariable("printHeightWidgetTopPerc"))
+        self.ui.doubleSpinBoxGraphPerc_2.setValue(self.getSettingsVariable("printHeightWidgetGraphPerc"))
+        self.ui.doubleSpinBoxBotPerc_2.setValue(self.getSettingsVariable("printHeightWidgetBottomPerc"))
+        self.ui.lineEditPrintLabelSize.setText(str(self.getSettingsVariable("printLabelFontSize")))
+        self.ui.lineEditTableFontSize.setText(str(self.getSettingsVariable("printFontSize")))
+        self.strsToShowInGraph = self.getSettingsVariable("strsToShowInGraph")
 
     def accept(self):
         if self.validator.isFormValid() and not self.blockSave:
@@ -119,7 +152,13 @@ class SettingsWindow(QDialog):
                             "colorBackgroundMarking": self.ui.lineEditMarkingGraphBackgroundColor.text(),
                             "markerHeightPerc": self.ui.doubleSpinBoxMarkerHeight.value()/100,
                             "fontSize": 14,
-                            "labelFontSize": self.ui.spinBoxLabelSize.value()
+                            "labelFontSize": self.ui.spinBoxLabelSize.value(),
+                            "printHeightWidgetTopPerc": self.ui.doubleSpinBoxTopPerc_2.value(),
+                            "printHeightWidgetGraphPerc": self.ui.doubleSpinBoxGraphPerc_2.value(),
+                            "printHeightWidgetBottomPerc": self.ui.doubleSpinBoxBotPerc_2.value(),
+                            "printFontSize": self.ui.lineEditTableFontSize.text(),
+                            "printLabelFontSize": self.ui.lineEditPrintLabelSize.text(),
+                            "strsToShowInGraph": self.strsToShowInGraph
                             }
 
             for key, value in overrideDict.items():
@@ -135,8 +174,38 @@ class SettingsWindow(QDialog):
 
         super().reject()
 
+    def createCheckboxDialog(self):
+        dialog = QDialog(self)
+        layout = QVBoxLayout()
+
+        checkboxes = []
+
+        for key, value in self._dataNameDict.items():
+            if key == "empty":
+                continue
+            checkbox = QCheckBox(value, dialog)
+
+            if key in self.strsToShowInGraph:
+                checkbox.setChecked(True)
+
+            checkbox.setObjectName(key)
+            checkboxes.append(checkbox)
+            layout.addWidget(checkbox)
+
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        layout.addWidget(buttonBox)
+
+        buttonBox.accepted.connect(dialog.accept)
+        buttonBox.rejected.connect(dialog.reject)
 
 
+        dialog.setLayout(layout)
+        dialog.show()
+
+        result = dialog.exec()
+
+        if result == QDialog.Accepted:
+            self.strsToShowInGraph = [cb.objectName() for cb in checkboxes if cb.isChecked()]
 
     def graphButtonClicked(self):
         self.ui.stackedWidget.setCurrentIndex(1)
@@ -144,8 +213,11 @@ class SettingsWindow(QDialog):
     def preferenceButtonClicked(self):
         self.ui.stackedWidget.setCurrentIndex(2)
 
-    def presetsButtonClicked(self):
+    def printButtonClicked(self):
         self.ui.stackedWidget.setCurrentIndex(0)
+
+    def presetsButtonClicked(self):
+        self.ui.stackedWidget.setCurrentIndex(3)
         self.mainWindow.markerPresetWin.exec()
 
     def syncWidgetSizeBoxes(self, value):
@@ -206,6 +278,4 @@ class SettingsWindow(QDialog):
     def setSettingsVariable(self, variableName, value):
         self.defaultSettingsDict[variableName] = value
 
-def isHexColor(s):
-    return bool(re.match('^#(?:[0-9a-fA-F]{3}){1,2}$', s))
 
