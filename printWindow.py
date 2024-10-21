@@ -40,7 +40,7 @@ class PrintWindow:
         heightTop = self.settings.getSettingsVariable("printHeightWidgetTopPerc")
         heightGraph = self.settings.getSettingsVariable("printHeightWidgetGraphPerc")
         heightBottom = self.settings.getSettingsVariable("printHeightWidgetBottomPerc")
-        fontSize = self.settings.getSettingsVariable("printFontSize")
+        fontSize = int(self.settings.getSettingsVariable("printFontSize"))
 
         self.toggleUI('hide', True)
 
@@ -63,7 +63,7 @@ class PrintWindow:
         self.graphWidget.tableWidgetData.setFixedWidth(totalWidth)
 
         if not self.graphWidget.tableWidgetMarker.isHidden():
-            iconSize = self.settings.getSettingsVariable("printFontSize")
+            iconSize = int(self.settings.getSettingsVariable("printFontSize"))
             self.graphWidget.tableWidgetMarker.setIconSize(QSize(iconSize, iconSize))
             for i in range(self.graphWidget.tableWidgetMarker.rowCount()):
                 for j in range(self.graphWidget.tableWidgetMarker.columnCount()):
@@ -132,6 +132,8 @@ class PrintWindow:
         for widget in widgets:
             getattr(widget, attr)()
     def printPdf(self):
+        QCoreApplication.processEvents()
+        self.graphWidget.resize(1920, 1080)
         pass
 
     def printPng(self):

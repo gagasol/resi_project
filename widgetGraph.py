@@ -1,5 +1,6 @@
 # This Python file uses the following encoding: utf-8
 import logging
+import re
 
 import numpy as np
 import pyqtgraph as pg
@@ -566,11 +567,20 @@ class WidgetGraph(QWidget):
 
     def onCellChangeTableTop(self, row, column):
         # todo fix size of last column, check if entry is longer and if make size relative to content again
-        entry = self.tableWidgetData.item(row, column).text()
-        self.dataModel.changeCustomDataEntry(row, column, entry)
-        if entry[0] != ':':
-            entry = ': ' + entry
-            self.tableWidgetData.setItem(row, column, entry)
+        item = self.tableWidgetData.item(row, column)
+        entry = item.text()
+        if entry:
+            if column % 2 != 0:
+                if re.match(r'^\s*:', entry):
+                    entry = ''.join(entry.split(':')[1:]).lstrip()
+                else:
+                    entry = entry.lstrip()
+
+                entry = ': ' + entry
+
+                item.setText(entry)
+                self.tableWidgetData.setItem(row, column, item)
+                self.dataModel.changeCustomDataEntry(row, column, entry)
 
     def windowClosedByUser(self):
         self.flagWindowClosedByUserSignal = True
