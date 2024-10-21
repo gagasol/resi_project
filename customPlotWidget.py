@@ -1,5 +1,6 @@
 from typing import List
 
+import numpy as np
 import pyqtgraph as pg
 from PySide6 import QtCore
 from PySide6.QtCore import Qt, QObject
@@ -50,8 +51,12 @@ class CustomPlotWidget(pg.PlotWidget):
 
         self.markerHeightPerc = parentWindow.markerHeightPerc
 
+        self.gridLines = {'x': [], 'y': [], 'dx': 0}
+
         self.markingEnabled = False
         self.draggingMarker = False
+
+        self.createGridLines()
 
     def changeAxisFontsize(self, fontSize):
         self.getAxis("bottom").setLabel(QObject().tr("Tiefe"), units="cm", **{'font-size': str(fontSize)+"pt"})
@@ -75,6 +80,10 @@ class CustomPlotWidget(pg.PlotWidget):
         item2.triggered.connect(self.switchMarkingContextMenu)
         contextMenu.addAction(item2)
 
+        item3 = QAction(QObject.tr('Show grid'))
+        item3.triggered.connect(self.toggleGrid)
+        contextMenu.addAction(item3)
+
         if marker:
             itemDelMarker = QAction(QObject.tr("Delete marker"), self)
             itemDelMarker.triggered.connect(marker.deleteSelf)
@@ -95,6 +104,50 @@ class CustomPlotWidget(pg.PlotWidget):
             self.lastClicks.append(x)
             self.markingRegion.setRegion([x, x])
             self.markingRegion.show()
+
+    def createGridLines(self):
+        bottomAxis = self.getAxis("bottom")
+        axisData = bottomAxis.getAxisData()
+        self.gridLines['dx'] = axisData[0]
+
+        ticks = np.arange(0, self.xLimit, axisData[1])
+        xMajorTicks = [x + axisData[0] for x in ticks]
+
+        y = np.arange(0, 100, 5)
+
+        for val in xMajorTicks:
+            color = (0, 0, 0, 120)
+            pen = pg.mkPen(color=color, width=0.5)
+            gridLine = self.plot([val, val], [0, 100], pen=pen)
+            gridLine.setZValue(10)
+            gridLine.hide()
+            self.gridLines['x'].append(gridLine)
+
+        for val in y:
+            color = (0, 0, 0, 120)
+            pen = pg.mkPen(color=color, width=0.5)
+            gridLine = self.plot([0, self.xLimit], [val, val], pen=pen)
+            gridLine.setZValue(10)
+            gridLine.hide()
+            self.gridLines['y'].append(gridLine)
+
+    def toggleGrid(self):
+        for line in self.gridLines['x']:
+            line.setVisible(not line.isVisible())
+        for line in self.gridLines['y']:
+            line.setVisible(not line.isVisible())
+
+    def updateXGrid(self):
+        bottomAxis = self.getAxis("bottom")
+        axisData = bottomAxis.getAxisData()
+        offset = axisData[0] - self.gridLines['dx']
+        self.gridLines['dx'] = axisData[0]
+        for line in self.gridLines['x']:
+            x, y = line.getData()
+            x = x + offset
+            print(f'x: {x[0]}')
+            line.setData(x=x, y=y)
+
 
 
     def enterEvent(self, event):
@@ -296,6 +349,7 @@ class CustomPlotWidget(pg.PlotWidget):
             self.parentWindow.changeXAxisZero(dx)
             #self.getAxis('bottom').updateTicks()
             self.parentWindow.dxMarkerForTable = dx
+            self.updateXGrid()
 
         self.parentWindow.updateTableMarkerEntry(index, name, color, x, dx)
 

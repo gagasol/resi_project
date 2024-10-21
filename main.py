@@ -282,7 +282,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
     def pdfButtonClicked(self):
-        pass
+        graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
+        filename = self.ui.tabWidget.tabText(self.ui.tabWidget.currentIndex())
+        PrintWindow(graphWidget, self.settingsWindow, 'pdf', filename)
 
 
     def pngButtonClicked(self):

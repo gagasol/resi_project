@@ -102,6 +102,9 @@ class CustomAxis(pg.AxisItem):
     def tickStrings(self, values, scale, spacing):
         return [str(round((val - self.offset), 2)) for val in values]
 
+    def getAxisData(self):
+        returnData = [self.offset, self.xMajorTickInterval, self.xMinorTickInterval]
+        return returnData
 
 class AutoSizedTable(QTableWidget):
     def __init__(self, *args):
@@ -132,10 +135,10 @@ class AutoSizedTable(QTableWidget):
                     break
 
         else:
-            if (self.currentRow() - 1 >= 0):
+            if self.currentRow() - 1 >= 0:
                 self.setCurrentCell(self.currentRow() - 1, self.currentColumn())
             else:
-                if (self.currentColumn() - 1 >= 0):
+                if self.currentColumn() - 1 >= 0:
                     self.setCurrentCell(self.rowCount() - 1, self.currentColumn() - 1)
 
         return True
@@ -376,8 +379,8 @@ class WidgetGraph(QWidget):
 
         start = 0
         end = 40
-        majorTicksInterval = self.mainWindow.settingsWindow.getSettingsVariable("majorTicksInterval")
-        minorTicksInterval = self.mainWindow.settingsWindow.getSettingsVariable("minorTicksInterval")
+        majorTicksInterval = self.settingsWindow.getSettingsVariable("majorTicksInterval")
+        minorTicksInterval = self.settingsWindow.getSettingsVariable("minorTicksInterval")
 
         bottom_axis = CustomAxis(start, end, majorTicksInterval, minorTicksInterval, orientation="bottom")
         xLimit = self.deviceLength + 0.5

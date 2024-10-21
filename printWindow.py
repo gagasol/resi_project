@@ -1,5 +1,6 @@
-from PySide6.QtCore import QSize, Qt, QCoreApplication
-from PySide6.QtGui import QFont, QPixmap
+from PySide6.QtCore import QSize, Qt, QCoreApplication, QMarginsF
+from PySide6.QtGui import QFont, QPixmap, QPainter, QPageSize
+from PySide6.QtPrintSupport import QPrinter
 
 import settingsWindow
 import widgetGraph
@@ -27,14 +28,21 @@ class PrintWindow:
             graphWidget.tableWidgetMarker.hide()
 
         if '.rgp' in filename:
-            self.filename = './data/' + filename.replace('rgp', 'suffix')
+            self.filename = './data/' + filename.replace('rgp', suffix)
         else:
             self.filename = './data/' + filename + f'.{suffix}'
 
-        self.prepareWidgetForPrint(1920, 1080)
-        self.printPng()
-        self.resetWidgetAfterPrint()
-        print(f'filename: {self.filename}')
+        if 'png' in suffix:
+            self.prepareWidgetForPrint(1920, 1080)
+            self.printPng()
+            self.resetWidgetAfterPrint()
+            print(f'png filename: {self.filename}')
+        elif 'pdf' in suffix:
+            self.prepareWidgetForPrint(1920, 1080)
+            self.printPdf()
+            self.resetWidgetAfterPrint()
+            print(f'pdf filename: {self.filename}')
+
 
     def prepareWidgetForPrint(self, resizeWidth, resizeHeight):
         heightTop = self.settings.getSettingsVariable("printHeightWidgetTopPerc")
@@ -61,6 +69,7 @@ class PrintWindow:
             totalWidth += self.graphWidget.tableWidgetData.columnWidth(i)
 
         self.graphWidget.tableWidgetData.setFixedWidth(totalWidth)
+        self.graphWidget.tableWidgetData.clearSelection()
 
         if not self.graphWidget.tableWidgetMarker.isHidden():
             iconSize = int(self.settings.getSettingsVariable("printFontSize"))
@@ -78,6 +87,7 @@ class PrintWindow:
                 totalHeight += self.graphWidget.tableWidgetMarker.rowHeight(i)
             self.graphWidget.tableWidgetMarker.resizeRowsToContents()
             #self.graphWidget.tableWidgetMarker.setFixedHeight(totalHeight)
+            self.graphWidget.tableWidgetMarker.clearSelection()
 
         if self.graphWidget.textEditComment.toPlainText() == '':
             self.graphWidget.textEditComment.hide()
@@ -132,9 +142,18 @@ class PrintWindow:
         for widget in widgets:
             getattr(widget, attr)()
     def printPdf(self):
+        printer = QPrinter()
+        printer.setPageSize(QPageSize.A4)
+        printer.PrinterMode.HighResolution
+        printer.setOutputFormat(QPrinter.PdfFormat)
+        printer.setPageMargins(QMarginsF(0, 0, 0, 0))
+        printRect = printer.pageLayout().paintRectPixels(printer.resolution())
+        print(printRect)
+
+        printer.setOutputFileName(self.filename)
         QCoreApplication.processEvents()
-        self.graphWidget.resize(1920, 1080)
-        pass
+        self.graphWidget.resize(printRect.width(), printRect.height())
+        self.graphWidget.render(printer)
 
     def printPng(self):
         QCoreApplication.processEvents()
