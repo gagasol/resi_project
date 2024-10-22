@@ -18,7 +18,6 @@ class CustomPlotWidget(pg.PlotWidget):
         self.colorBackgroundHex = QColor(colorBackgroundHex)
         self.colorWhileMarkingHex = QColor(colorWhileMarkingHex)
         self.setBackground(colorBackgroundHex)
-        self.showGrid(x=True, y=True)
         self.setLimits(xMin=0, xMax=xLimit, yMin=-2.2, yMax=102)
         self.setRange(xRange=(0, xLimit), yRange=(-3, 105))
 
@@ -41,6 +40,7 @@ class CustomPlotWidget(pg.PlotWidget):
 
         # variables
         self.parentWindow = parentWindow
+        self.settings = parentWindow.mainWindow.settingsWindow
         self.pickMarkerWin = None
         self.fileDefaultMarkerDictName = self.parentWindow.defaultMarkerDictName
         self.markerPresetNames = markerPresetsList
@@ -110,22 +110,26 @@ class CustomPlotWidget(pg.PlotWidget):
         axisData = bottomAxis.getAxisData()
         self.gridLines['dx'] = axisData[0]
 
-        ticks = np.arange(0, self.xLimit, axisData[1])
+        xGridInterval = self.settings.getSettingsVariable('defaultGridIntervalX')
+        yGridInterval = self.settings.getSettingsVariable('defaultGridIntervalY')
+        hexColor = self.settings.getSettingsVariable('gridColor').lstrip('#')
+        opacity = self.settings.getSettingsVariable('gridOpacity')
+        rgbColor = tuple(int(hexColor[i:i + 2], 16) for i in (0, 2, 4)) + (opacity,)
+
+        ticks = np.arange(0, self.xLimit, xGridInterval)
         xMajorTicks = [x + axisData[0] for x in ticks]
 
-        y = np.arange(0, 100, 5)
+        y = np.arange(0, 100, yGridInterval)
 
         for val in xMajorTicks:
-            color = (0, 0, 0, 120)
-            pen = pg.mkPen(color=color, width=0.5)
+            pen = pg.mkPen(color=rgbColor, width=0.5)
             gridLine = self.plot([val, val], [0, 100], pen=pen)
             gridLine.setZValue(10)
             gridLine.hide()
             self.gridLines['x'].append(gridLine)
 
         for val in y:
-            color = (0, 0, 0, 120)
-            pen = pg.mkPen(color=color, width=0.5)
+            pen = pg.mkPen(color=rgbColor, width=0.5)
             gridLine = self.plot([0, self.xLimit], [val, val], pen=pen)
             gridLine.setZValue(10)
             gridLine.hide()
@@ -181,6 +185,7 @@ class CustomPlotWidget(pg.PlotWidget):
                         if "Borke" in name or "Rinde" in name:
                             self.parentWindow.changeXAxisZero(self.lastClicks[1])
                             self.parentWindow.dxMarkerForTable = self.lastClicks[1]
+                            x = 0
 
                     tmpMarkerState = {"index": len(self.markerList),
                                       "name": name,
@@ -350,6 +355,7 @@ class CustomPlotWidget(pg.PlotWidget):
             #self.getAxis('bottom').updateTicks()
             self.parentWindow.dxMarkerForTable = dx
             self.updateXGrid()
+            x = 0
 
         self.parentWindow.updateTableMarkerEntry(index, name, color, x, dx)
 

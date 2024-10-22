@@ -1,13 +1,11 @@
 # This Python file uses the following encoding: utf-8
-import sys
 
-from PySide6.QtWidgets import QApplication, QWidget, QDialog, QMainWindow, QPushButton, QVBoxLayout, QLineEdit, \
-    QInputDialog, QLabel, QMessageBox, QScrollArea
-from PySide6.QtGui import QColor, QPixmap, QIcon, QDrag, QCursor
-from PySide6.QtCore import Qt, QSize, QMimeData
 from PySide6 import QtWidgets
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QColor, QPixmap, QIcon, QCursor
+from PySide6.QtWidgets import QDialog, QPushButton, QVBoxLayout, QLineEdit, \
+    QLabel, QMessageBox
 
-import pickMarkerWindow
 # Important:
 # You need to run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py, or

@@ -6,7 +6,7 @@ import numpy as np
 import pyqtgraph as pg
 from PySide6.QtCore import (QSize, Qt, QObject, )
 from PySide6.QtGui import (QColor, QIcon,
-                           QPixmap, QKeyEvent, QFont)
+                           QPixmap, QKeyEvent, QFont, QFontMetrics)
 from PySide6.QtWidgets import QCheckBox, QTableWidget, \
     QHeaderView, QAbstractScrollArea, QLabel, QTableWidgetItem, QStyledItemDelegate, QLineEdit, QAbstractItemView, \
     QDialog, QPushButton
@@ -142,6 +142,22 @@ class AutoSizedTable(QTableWidget):
                     self.setCurrentCell(self.rowCount() - 1, self.currentColumn() - 1)
 
         return True
+
+    @staticmethod
+    def adjustFontsizeToHeight(widgetItem, maxFontsize, minFontsize, maxHeight=None):
+        itemHeight = maxHeight if maxHeight else widgetItem.sizeHint().height()
+        font = widgetItem.font()
+        font.setPointSize(minFontsize)
+
+        for fontsize in range(maxFontsize, minFontsize - 1, -1):
+            fontMetric = QFontMetrics(QFont('', fontsize))
+            print(f'fontMetric.height: {fontMetric.height()}; itemHeight: {itemHeight}')
+            if fontMetric.height() <= itemHeight:
+                font.setWeight(QFont.Normal)
+                font.setPointSize(fontsize)
+                break
+
+        widgetItem.setFont(font)
 
 
 class MyDelegate(QStyledItemDelegate):
@@ -777,5 +793,8 @@ class WidgetGraph(QWidget):
 
     def openPickMarkerFromGraph(self, defaultPresetName):
         return self.mainWindow.openPickMarker(defaultPresetName)
+
+    def copy(self):
+        return WidgetGraph(self.mainWindow, "", self.getCurrentState())
 
 # @todo put the create marker function in here for loading and saving reasons

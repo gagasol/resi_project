@@ -3,25 +3,18 @@ import json
 import logging
 import sys
 
-from PySide6.QtCore import Qt, QEventLoop, QPoint, QRect, QSize, QSizeF, QMarginsF, QObject, QRectF
-from PySide6.QtGui import QIcon, QPdfWriter, QPageSize, QPainter, QPixmap, QGuiApplication, QCursor, QFont
-from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, QWidget, QFileDialog, QMdiArea, QMdiSubWindow, \
-    QMessageBox
 from PySide6 import QtWidgets
+from PySide6.QtCore import QPoint, QRect, QSize, QObject
+from PySide6.QtGui import QIcon, QCursor
+from PySide6.QtWidgets import QApplication, QFileDialog, QMdiArea, QMdiSubWindow, \
+    QMessageBox
 
-import numpy as np
-import matplotlib
-from matplotlib.patches import Rectangle
-from matplotlib.backend_bases import MouseButton
-
-import markerpresetwindow
-from widgetGraph import WidgetGraph
-from ui_files.ui_mainwindow import Ui_MainWindow
 from markerpresetwindow import MarkerPresetWindow
-from editMarkerPreset import EditMarkerPresetWindow
 from pickMarkerWindow import PickMarker
-from settingsWindow import SettingsWindow
 from printWindow import PrintWindow
+from settingsWindow import SettingsWindow
+from ui_files.ui_mainwindow import Ui_MainWindow
+from widgetGraph import WidgetGraph
 
 
 class CustomQMdiArea(QMdiArea):
@@ -219,8 +212,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
     def saveGraphState(self, graphWidget, path=""):
-        if (graphWidget):
-            if (path == ""):
+        if graphWidget:
+            if path == "":
                 with open("./data/" + graphWidget.name + ".resi", "w") as file:
                     json.dump(graphWidget.getCurrentState(), file)
             else:
@@ -407,7 +400,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         "printHeightWidgetBottomPerc": 20,
                         "printFontSize": 20,
                         "printFontName": "Arial",
-                        "strsToShowInGraph": strsToShowInGraph
+                        "strsToShowInGraph": strsToShowInGraph,
+                        "gridColor": '#000000',
+                        'gridOpacity': 100,
+                        'defaultGridIntervalX': 5,
+                        'defaultGridIntervalY': 5
                         }
         try:
             with open("./settings/settings.json", "r") as file:
