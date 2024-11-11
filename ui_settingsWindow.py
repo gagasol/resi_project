@@ -495,6 +495,90 @@ class Ui_Dialog(object):
 
         self.verticalLayout_6.addWidget(self.widget_6)
 
+        self.widget_17 = QWidget(self.scrollAreaWidgetContents_2)
+        self.widget_17.setObjectName(u"widget_17")
+        self.horizontalLayout_14 = QHBoxLayout(self.widget_17)
+        self.horizontalLayout_14.setObjectName(u"horizontalLayout_14")
+        self.label_5 = QLabel(self.widget_17)
+        self.label_5.setObjectName(u"label_5")
+
+        self.horizontalLayout_14.addWidget(self.label_5)
+
+        self.lineEditDefaultDir = QLineEdit(self.widget_17)
+        self.lineEditDefaultDir.setObjectName(u"lineEditDefaultDir")
+
+        self.horizontalLayout_14.addWidget(self.lineEditDefaultDir)
+
+        self.pushButtonDefaultDir = QPushButton(self.widget_17)
+        self.pushButtonDefaultDir.setObjectName(u"pushButtonDefaultDir")
+        self.pushButtonDefaultDir.setMinimumSize(QSize(25, 25))
+        self.pushButtonDefaultDir.setMaximumSize(QSize(25, 25))
+
+        self.horizontalLayout_14.addWidget(self.pushButtonDefaultDir)
+
+        self.horizontalSpacer_15 = QSpacerItem(199, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout_14.addItem(self.horizontalSpacer_15)
+
+        self.verticalLayout_6.addWidget(self.widget_17)
+
+        self.widget_14 = QWidget(self.scrollAreaWidgetContents_2)
+        self.widget_14.setObjectName(u"widget_14")
+        self.horizontalLayout_15 = QHBoxLayout(self.widget_14)
+        self.horizontalLayout_15.setObjectName(u"horizontalLayout_15")
+        self.label_4 = QLabel(self.widget_14)
+        self.label_4.setObjectName(u"label_4")
+
+        self.horizontalLayout_15.addWidget(self.label_4)
+
+        self.spinBoxRecentFiles = QSpinBox(self.widget_14)
+        self.spinBoxRecentFiles.setObjectName(u"spinBoxRecentFiles")
+
+        self.horizontalLayout_15.addWidget(self.spinBoxRecentFiles)
+
+        self.horizontalSpacer_12 = QSpacerItem(275, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout_15.addItem(self.horizontalSpacer_12)
+
+        self.verticalLayout_6.addWidget(self.widget_14)
+
+        self.widget_15 = QWidget(self.scrollAreaWidgetContents_2)
+        self.widget_15.setObjectName(u"widget_15")
+        self.horizontalLayout_16 = QHBoxLayout(self.widget_15)
+        self.horizontalLayout_16.setObjectName(u"horizontalLayout_16")
+        self.label_3 = QLabel(self.widget_15)
+        self.label_3.setObjectName(u"label_3")
+
+        self.horizontalLayout_16.addWidget(self.label_3)
+
+        self.spinBoxRecentFolders = QSpinBox(self.widget_15)
+        self.spinBoxRecentFolders.setObjectName(u"spinBoxRecentFolders")
+
+        self.horizontalLayout_16.addWidget(self.spinBoxRecentFolders)
+
+        self.horizontalSpacer_13 = QSpacerItem(260, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout_16.addItem(self.horizontalSpacer_13)
+
+        self.verticalLayout_6.addWidget(self.widget_15)
+
+        self.widget_16 = QWidget(self.scrollAreaWidgetContents_2)
+        self.widget_16.setObjectName(u"widget_16")
+        self.horizontalLayout_13 = QHBoxLayout(self.widget_16)
+        self.horizontalLayout_13.setObjectName(u"horizontalLayout_13")
+        self.pushButton = QPushButton(self.widget_16)
+        self.pushButton.setObjectName(u"pushButton")
+        self.pushButton.setMaximumSize(QSize(100, 16777215))
+
+        self.horizontalLayout_13.addWidget(self.pushButton)
+
+        self.horizontalSpacer_14 = QSpacerItem(437, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout_13.addItem(self.horizontalSpacer_14)
+
+        self.verticalLayout_6.addWidget(self.widget_16)
+
+
         self.verticalSpacer_3 = QSpacerItem(20, 397, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.verticalLayout_6.addItem(self.verticalSpacer_3)
@@ -559,6 +643,11 @@ class Ui_Dialog(object):
             self.labelTopPerc.setText(QCoreApplication.translate("Dialog", u"Size of top Table", None))
             self.labelGraphPerc.setText(QCoreApplication.translate("Dialog", u"Size of Graph", None))
             self.labelBotPerc.setText(QCoreApplication.translate("Dialog", u"Size of bot Table", None))
+            self.label_5.setText(QCoreApplication.translate("Dialog", u"Default Directory", None))
+            self.pushButtonDefaultDir.setText(QCoreApplication.translate("Dialog", u"+", None))
+            self.label_4.setText(QCoreApplication.translate("Dialog", u"Amount of recently opened files shown", None))
+            self.label_3.setText(QCoreApplication.translate("Dialog", u"Amount of recently opened folders shown", None))
+            self.pushButton.setText(QCoreApplication.translate("Dialog", u"Reset recent data", None))
     # retranslateUi
     # retranslateUi
 

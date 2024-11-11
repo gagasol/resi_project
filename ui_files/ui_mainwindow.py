@@ -105,7 +105,30 @@ class Ui_MainWindow(object):
 
         self.horizontalSpacer_2 = QSpacerItem(6, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
 
-        self.horizontalLayout.addItem(self.horizontalSpacer_2)
+        #self.horizontalLayout.addItem(self.horizontalSpacer_2)
+
+        self.pushButton1 = QPushButton(self.frameTop)
+        self.pushButton1.setObjectName(u"pushButton")
+        self.pushButton1.setMinimumSize(QSize(20, 25))
+        self.pushButton1.setMaximumSize(QSize(20, 25))
+        self.pushButton1.setStyleSheet(u"QPushButton::menu-indicator{ image: none; }")
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/icons/keyboard_double_arrow_down_40dp_FILL0_wght400_GRAD0_opsz24.svg", QSize(),
+                      QIcon.Normal, QIcon.Off)
+        self.pushButton1.setIcon(icon2)
+        self.pushButton1.setIconSize(QSize(16, 25))
+
+        self.menuOpenButton = QMenu(self.pushButton1)
+
+        self.menuOpenButton.addSeparator()
+        self.actionOpenDefaultFolder = self.menuOpenButton.addAction(QObject.tr('Default Folder'))
+        self.actionOpenAllInFolder = self.menuOpenButton.addAction(QObject.tr('Open all in Folder'))
+        print(f'Len openMenu in settingsUi : {len(self.menuOpenButton.actions())}')
+        self.pushButton1.setMenu(self.menuOpenButton)
+
+        self.horizontalLayout.addWidget(self.pushButton1)
+
+        self.horizontalSpacer_3 = QSpacerItem(6, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
 
         self.pushButtonSave = QPushButton(self.frameTop)
         self.pushButtonSave.setObjectName(u"pushButtonSave")
@@ -134,7 +157,7 @@ class Ui_MainWindow(object):
         icon2.addFile(u":/icons/icons/keyboard_double_arrow_down_40dp_FILL0_wght400_GRAD0_opsz24.svg", QSize(),
                       QIcon.Normal, QIcon.Off)
         self.pushButton.setIcon(icon2)
-        self.pushButton.setIconSize(QSize(15, 25))
+        self.pushButton.setIconSize(QSize(16, 25))
 
         self.menu = QMenu(self.pushButton)
 

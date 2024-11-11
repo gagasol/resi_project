@@ -1,7 +1,7 @@
 import re
 
 from PySide6.QtCore import QObject
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QCheckBox, QDialogButtonBox
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QCheckBox, QDialogButtonBox, QFileDialog
 
 from ui_settingsWindow import Ui_Dialog
 
@@ -93,6 +93,9 @@ class SettingsWindow(QDialog):
         }
 
         self.strsToShowInGraph = []
+        self.defaultFolderPath = ''
+        self.recentOpenFiles = []
+        self.recentOpenFolders = []
 
         self.ui.stackedWidget.setCurrentIndex(0)
         self.ui.buttonBox.accepted.connect(self.accept)
@@ -101,6 +104,7 @@ class SettingsWindow(QDialog):
         self.ui.pushButtonPref.clicked.connect(self.preferenceButtonClicked)
         self.ui.pushButtonPrint.clicked.connect(self.printButtonClicked)
         self.ui.pushButtonPresets.clicked.connect(self.presetsButtonClicked)
+        self.ui.pushButtonDefaultDir.clicked.connect(self.openDirDialog)
 
         self.ui.doubleSpinBoxTopPerc.valueChanged.connect(self.syncWidgetSizeBoxes)
         self.ui.doubleSpinBoxGraphPerc.valueChanged.connect(self.syncWidgetSizeBoxes)
@@ -140,6 +144,12 @@ class SettingsWindow(QDialog):
         self.ui.lineEditPrintLabelSize.setText(str(self.getSettingsVariable("printLabelFontSize")))
         self.ui.lineEditTableFontSize.setText(str(self.getSettingsVariable("printFontSize")))
         self.strsToShowInGraph = self.getSettingsVariable("strsToShowInGraph")
+        self.recentOpenFiles = self.getSettingsVariable("recentFiles")
+        self.recentOpenFolders = self.getSettingsVariable("recentFolders")
+        self.ui.lineEditDefaultDir.setText(str(self.getSettingsVariable('defaultFolderPath')))
+        self.ui.spinBoxRecentFiles.setValue(int(self.getSettingsVariable('recentFilesAmount')))
+        self.ui.spinBoxRecentFolders.setValue(int(self.getSettingsVariable('recentFoldersAmount')))
+
 
     def accept(self):
         if self.validator.isFormValid() and not self.blockSave:
@@ -158,7 +168,10 @@ class SettingsWindow(QDialog):
                             "printHeightWidgetBottomPerc": self.ui.doubleSpinBoxBotPerc_2.value(),
                             "printFontSize": self.ui.lineEditTableFontSize.text(),
                             "printLabelFontSize": self.ui.lineEditPrintLabelSize.text(),
-                            "strsToShowInGraph": self.strsToShowInGraph
+                            "strsToShowInGraph": self.strsToShowInGraph,
+                            'defaultFolderPath': self.getSettingsVariable('defaultFolderPath'),
+                            'recentFilesAmount': self.ui.spinBoxRecentFiles.value(),
+                            'recentFoldersAmount': self.ui.spinBoxRecentFolders.value()
                             }
 
             for key, value in overrideDict.items():
@@ -220,6 +233,12 @@ class SettingsWindow(QDialog):
         self.ui.stackedWidget.setCurrentIndex(3)
         self.mainWindow.markerPresetWin.exec()
 
+    def openDirDialog(self):
+        directoryPath = QFileDialog.getExistingDirectory(None, 'Select Folder')
+        if directoryPath:
+            self.setSettingsVariable('defaultFolderPath', directoryPath)
+            self.ui.lineEditDefaultDir.setText(directoryPath)
+
     def syncWidgetSizeBoxes(self, value):
         sender = self.sender()
         total = (self.ui.doubleSpinBoxTopPerc.value() + self.ui.doubleSpinBoxGraphPerc.value()
@@ -271,6 +290,28 @@ class SettingsWindow(QDialog):
             self.blockSave = True
         else:
             self.blockSave = False
+
+    def addRecentFile(self, filePath):
+        self.recentOpenFiles.append(filePath)
+        recentOpenFilesAmount = int(self.getSettingsVariable('recentFilesAmount'))
+        if len(self.recentOpenFiles) > recentOpenFilesAmount:
+            self.recentOpenFiles.pop(0)
+            self.setSettingsVariable('recentFiles', self.recentOpenFiles)
+            return True
+
+        self.setSettingsVariable('recentFiles', self.recentOpenFiles)
+        return False
+
+    def addRecentFolder(self, folderPath):
+        self.recentOpenFolders.append(folderPath)
+        recentOpenFoldersAmount = int(self.getSettingsVariable('recentFoldersAmount'))
+        if len(self.recentOpenFolders) > recentOpenFoldersAmount:
+            self.recentOpenFolders.pop(0)
+            self.setSettingsVariable('recentFolders', self.recentOpenFolders)
+            return True
+
+        self.setSettingsVariable('recentFolders', self.recentOpenFolders)
+        return False
 
     def getSettingsVariable(self, variableName):
         return self.defaultSettingsDict[variableName]

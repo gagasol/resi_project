@@ -5,7 +5,7 @@ import sys
 
 from PySide6 import QtWidgets
 from PySide6.QtCore import QPoint, QRect, QSize, QObject
-from PySide6.QtGui import QIcon, QCursor
+from PySide6.QtGui import QIcon, QCursor, QAction
 from PySide6.QtWidgets import QApplication, QFileDialog, QMdiArea, QMdiSubWindow, \
     QMessageBox
 
@@ -90,6 +90,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.nameToColorDict = {}
         self.listNameKeys = []
         self.markerPresetList = []
+        self.nameOfFile = ''
 
         self.defaultMarkerDictName = ""
 
@@ -113,6 +114,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.loadPreset()
         self.defaultMarkerDictName = self.settingsWindow.getSettingsVariable("defaultMarkerDictName")
 
+        self.loadOpenMenu()
+
 
         self.listNameKeys = ["idNumber", "date"]
 
@@ -131,6 +134,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ui.pushButtonToggleOverlay.clicked.connect(self.toggleOverlayButtonClicked)
         self.ui.pushButtonPng.clicked.connect(self.pngButtonClicked)
         self.ui.pushButtonSettings.clicked.connect(self.settingsButtonClicked)
+        self.ui.actionOpenDefaultFolder.triggered.connect(self.openDefaultFolderDialog)
 
     #TDL!!!!
 
@@ -144,14 +148,29 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     # @todo get rid of the fileName argument befeore release
     def openButtonClicked(self, fileName=None):
         self.logger.info("~~~~~~~~~~~~ openButtonClicked ~~~~~~~~~~~~")
-        fileName, _ = QFileDialog.getOpenFileName(None, "Select File", "", "*.rgp *.resi;;*.rgp;;*.resi")
+        if not fileName:
+            defaultPath = self.settingsWindow.getSettingsVariable('defaultFolderPath')
+            fileName, _ = QFileDialog.getOpenFileName(None, "Select File", defaultPath,
+                                                      "*.rgp *.resi;;*.rgp;;*.resi")
         self.logger.info("filename :{0}".format(fileName))
-        if (fileName == ""):
+        if fileName == "":
             return
         self.nameOfFile = fileName.split(".")[0].split("/")[-1]
-        if (".resi" in fileName):
+        if ".resi" in fileName:
+            if fileName not in self.settingsWindow.getSettingsVariable('recentFiles'):
+                self.settingsWindow.addRecentFile(fileName)
+
+            pathName = '/'.join(fileName[0:-1].split('/')[0:-1])
+            print(pathName)
+            if pathName not in self.settingsWindow.getSettingsVariable('recentFolders'):
+                print("THIS IS NEW LOL")
+                self.settingsWindow.addRecentFolder(pathName)
+
+            self.loadOpenMenu()
+
             with open(fileName, "r") as file:
                 loadedState = json.load(file)
+
 
             print("loadedState len = 1")
             logging.info(" canvas :{0}".format(loadedState))
@@ -160,7 +179,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.ui.tabWidget.addTab(widget, self.nameOfFile)
             self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() - 1)
 
-        elif(".project" in fileName):
+        elif ".project" in fileName:
             with open(fileName, "r") as file:
                 loadedState = json.load(file)
 
@@ -181,6 +200,69 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() - 1)
 
         #self.ui.tabWidget.addTab(widget, widget.name)
+
+    def openActionClicked(self):
+        action = self.sender()
+        filePath = action.data()
+        if '.resi' in filePath:
+            print('Resi detected opening file')
+            self.openButtonClicked(filePath)
+        else:
+            print('Opening Folder now..')
+            fileName, _ = QFileDialog.getOpenFileName(None, "Select File", filePath,
+                                                      "*.rgp *.resi;;*.rgp;;*.resi")
+            if fileName:
+                self.openButtonClicked(fileName)
+
+    def openDefaultFolderDialog(self):
+        folderPath = self.settingsWindow.getSettingsVariable('defaultFolderPath')
+        fileName, _ = QFileDialog.getOpenFileName(None, "Select File", folderPath,
+                                                  "*.rgp *.resi;;*.rgp;;*.resi")
+
+        if fileName:
+            self.openButtonClicked(fileName)
+
+    def addEntriesToOpenMenu(self, names: list[str], paths: list[str]):
+        openMenu = self.ui.menuOpenButton
+        openMenu.insertSeparator(openMenu.actions()[0])
+
+        for i in range(len(names)):
+            name = names[i]
+            path = paths[i]
+            tooltip = paths[i]
+            actionOpenRecentFile = QAction(name)
+            actionOpenRecentFile.setData(path)
+            actionOpenRecentFile.triggered.connect(self.openActionClicked)
+            actionOpenRecentFile.setToolTip(tooltip)
+
+            actionAtIndexZero = openMenu.actions()[0]
+            openMenu.insertAction(actionAtIndexZero, actionOpenRecentFile)
+
+    def loadOpenMenu(self):
+        openMenu = self.ui.menuOpenButton
+        staticMenuActions = 2
+        seperatorCount = 2
+
+        filepaths = self.settingsWindow.getSettingsVariable('recentFiles')
+        filenames = [path.split('/')[-1] for path in filepaths]
+
+        folderPaths = self.settingsWindow.getSettingsVariable('recentFolders')
+        folderNames = []
+        for folderPath in folderPaths:
+            pathArr = folderPath.split('/')
+            lenFolderName = 4 if len(folderPath) > 4 else len(pathArr)
+            folderName = '...' + '/'.join(pathArr[-lenFolderName:])
+            folderNames.append(folderName)
+
+        for i in range(len(openMenu.actions())-3, -1, -1):
+            action = openMenu.actions()[i]
+            openMenu.removeAction(action)
+
+
+
+        self.addEntriesToOpenMenu(folderNames, folderPaths)
+        self.addEntriesToOpenMenu(filenames, filepaths)
+
 
     # functionality for the pushButtonSave QPushButton
     def saveButtonClicked(self):
@@ -404,7 +486,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         "gridColor": '#000000',
                         'gridOpacity': 100,
                         'defaultGridIntervalX': 5,
-                        'defaultGridIntervalY': 5
+                        'defaultGridIntervalY': 5,
+                        'defaultFolderPath': './data/',
+                        'recentFiles': [],
+                        'recentFilesAmount': 2,
+                        'recentFolders': [],
+                        'recentFoldersAmount': 2
                         }
         try:
             with open("./settings/settings.json", "r") as file:
