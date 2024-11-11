@@ -91,6 +91,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.listNameKeys = []
         self.markerPresetList = []
         self.nameOfFile = ''
+        self.lastDirectory = ''
 
         self.defaultMarkerDictName = ""
 
@@ -149,9 +150,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def openButtonClicked(self, fileName=None):
         self.logger.info("~~~~~~~~~~~~ openButtonClicked ~~~~~~~~~~~~")
         if not fileName:
-            defaultPath = self.settingsWindow.getSettingsVariable('defaultFolderPath')
-            fileName, _ = QFileDialog.getOpenFileName(None, "Select File", defaultPath,
+            fileName, _ = QFileDialog.getOpenFileName(None, "Select File", self.lastDirectory,
                                                       "*.rgp *.resi;;*.rgp;;*.resi")
+            if fileName:
+                self.lastDirectory = '/'.join(fileName.split('/')[:-1])
+                print(self.lastDirectory)
+
         self.logger.info("filename :{0}".format(fileName))
         if fileName == "":
             return
@@ -159,14 +163,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if ".resi" in fileName:
             if fileName not in self.settingsWindow.getSettingsVariable('recentFiles'):
                 self.settingsWindow.addRecentFile(fileName)
-
-            pathName = '/'.join(fileName[0:-1].split('/')[0:-1])
-            print(pathName)
-            if pathName not in self.settingsWindow.getSettingsVariable('recentFolders'):
-                print("THIS IS NEW LOL")
-                self.settingsWindow.addRecentFolder(pathName)
-
-            self.loadOpenMenu()
 
             with open(fileName, "r") as file:
                 loadedState = json.load(file)
@@ -198,6 +194,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
             self.ui.tabWidget.setCurrentIndex(len(self.listGraphWidgets) - 1)
             self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() - 1)
+
+        pathName = '/'.join(fileName[0:-1].split('/')[0:-1])
+        if pathName not in self.settingsWindow.getSettingsVariable('recentFolders'):
+            self.settingsWindow.addRecentFolder(pathName)
+
+        self.loadOpenMenu()
 
         #self.ui.tabWidget.addTab(widget, widget.name)
 
