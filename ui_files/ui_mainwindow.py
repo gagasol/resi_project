@@ -266,6 +266,8 @@ class Ui_MainWindow(object):
         self.horizontalLayout_4.setSpacing(0)
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
         self.horizontalLayout_4.setContentsMargins(3, 3, 3, 3)
+
+
         # end
         self.frameBottom = QFrame(self.frame)
         self.frameBottom.setObjectName(u"frameBottom")
@@ -317,6 +319,17 @@ class Ui_MainWindow(object):
         self.widgetOverlay.hide()
         self.widgetOverlay.raise_()
 
+        self.verticalLayout_2 = QVBoxLayout(self.widgetOverlay)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.pushButtonApplyDataTable = QPushButton(self.widgetOverlay)
+        self.pushButtonApplyDataTable.setObjectName(u"pushButtonApplyDataTable")
+
+        self.verticalLayout_2.addWidget(self.pushButtonApplyDataTable)
+
+        self.verticalSpacer = QSpacerItem(20, 534, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+
+        self.verticalLayout_2.addItem(self.verticalSpacer)
+
         self.verticalLayout.addWidget(self.frame)
 
         MainWindow.setCentralWidget(self.centralwidget)
@@ -349,5 +362,6 @@ class Ui_MainWindow(object):
         self.pushButtonSave.setToolTip(QCoreApplication.translate("MainWindow", u"save file", None))
         self.pushButtonSettings.setToolTip(QCoreApplication.translate("MainWindow", u"settings", None))
         self.pushButtonToggleOverlay.setToolTip(QCoreApplication.translate("MainWindow", u"Show/Hide Quick Access", None))
+        self.pushButtonApplyDataTable.setText(QCoreApplication.translate("MainWindow", u"Copy Data", None))
     # retranslateUi
 

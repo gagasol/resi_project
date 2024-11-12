@@ -4,10 +4,81 @@ import numpy as np
 import pyqtgraph as pg
 from PySide6 import QtCore
 from PySide6.QtCore import Qt, QObject
-from PySide6.QtGui import QColor, QAction
-from PySide6.QtWidgets import QMessageBox, QMenu
+from PySide6.QtGui import QColor, QAction, QPen, QPainter
+from PySide6.QtWidgets import QMessageBox, QMenu, QGraphicsItem
+from pyqtgraph import ArrowItem
 
 from markerRectItem import MarkerRectItem
+
+
+class CustomCircle(pg.EllipseROI):
+    def __init__(self, pos, size, angle=0):
+        super().__init__(pos, size, angle=angle, movable=True, scaleSnap=True, translateSnap=True)
+        self.removeHandle(0)
+        self.addRotateHandle([1, 0], [0.5, 0.5])
+
+        arrow_length = min(size) / 2
+        self.arrow = pg.ArrowItem(pos=(0.5, 0.5), angle=angle, headLen=arrow_length, tailLen=arrow_length, parent=self)
+
+    def hoverEvent(self, event):
+        if event.isExit():
+            print("Hover exited")
+        elif event.isEnter():
+            print("Hover entered")
+
+    def getArrayRegion(self, *args, **kwargs):
+        return None
+
+    def scale(self, *args, **kwargs):
+        pass
+
+    def rotate(self, *args, **kwargs):
+        super().rotate(*args, **kwargs)
+        self.arrow.setRotation(self.angle())
+
+
+class CustomInfiniteLine(pg.InfiniteLine):
+    def __init__(self, canvas, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._canvas = canvas
+        self.color = self.pen.color()
+        self.hoverColor = 'red'
+    def updateColor(self, color):
+        pen = self.pen
+        pen.setColor(color)
+        self.setPen(pen)
+
+    def setPenColor(self, color):
+        self.color = color
+    def setHoverColor(self, color):
+        self.hoverColor = color
+
+    def updateWidth(self, width):
+        pen = self.pen
+        pen.setWidth(width)
+        self.setPen(pen)
+
+    def paint(self, painter, *args):
+        painter.setRenderHint(QPainter.Antialiasing)
+        if self.mouseHovering:
+            self.updateColor(self.hoverColor)
+        else:
+            self.updateColor(self.color)
+        super().paint(painter, *args)
+
+    def hoverEvent(self, event):
+        if event.isExit():
+            self.mouseHovering = False
+            self._canvas.removeFocus()
+        else:
+            self._canvas.focusFigure(self)
+            self.mouseHovering = True
+        self.update()
+
+    def deleteSelf(self):
+        self._canvas.removeFocus()
+        self._canvas.deleteFigure(self)
 
 
 class CustomPlotWidget(pg.PlotWidget):
@@ -18,7 +89,7 @@ class CustomPlotWidget(pg.PlotWidget):
         self.colorBackgroundHex = QColor(colorBackgroundHex)
         self.colorWhileMarkingHex = QColor(colorWhileMarkingHex)
         self.setBackground(colorBackgroundHex)
-        self.setLimits(xMin=0, xMax=xLimit, yMin=-2.2, yMax=102)
+        self.setLimits(xMin=0, xMax=xLimit, yMin=-110*markerHeightPerc, yMax=102)
         self.setRange(xRange=(0, xLimit), yRange=(-3, 105))
 
         self.getAxis("bottom").setLabel(QObject().tr("Tiefe"), units="cm")
@@ -48,6 +119,8 @@ class CustomPlotWidget(pg.PlotWidget):
 
         self.lastClicks: List[float] = []
         self.markerList: List[MarkerRectItem] = []
+        self.figureList = []
+        self.figureInFocus = None
 
         self.markerHeightPerc = parentWindow.markerHeightPerc
 
@@ -84,10 +157,29 @@ class CustomPlotWidget(pg.PlotWidget):
         item3.triggered.connect(self.toggleGrid)
         contextMenu.addAction(item3)
 
+        addFigurMenu = QMenu(QObject.tr('Add figure'))
+
+        subActionAddArrow = QAction(QObject.tr('Add arrow'))
+        subActionAddArrow.triggered.connect(lambda: self.addFigureToPlot('arrow', mousePoint))
+        # addFigurMenu.addAction(subActionAddArrow)
+
+        subActionAddLine = QAction(QObject.tr('Add line'))
+        subActionAddLine.triggered.connect(lambda: self.addFigureToPlot('hLine', mousePoint))
+        addFigurMenu.addAction(subActionAddLine)
+
+        contextMenu.addMenu(addFigurMenu)
+
+
+
         if marker:
             itemDelMarker = QAction(QObject.tr("Delete marker"), self)
             itemDelMarker.triggered.connect(marker.deleteSelf)
             contextMenu.addAction(itemDelMarker)
+        elif self.figureInFocus:
+            itemDelFigure = QAction(QObject.tr("Delete line"), self)
+            itemDelFigure.triggered.connect(self.figureInFocus.deleteSelf)
+            contextMenu.addAction(itemDelFigure)
+
 
         contextMenu.exec_(event.globalPos())
 
@@ -152,7 +244,23 @@ class CustomPlotWidget(pg.PlotWidget):
             print(f'x: {x[0]}')
             line.setData(x=x, y=y)
 
-
+    def addFigureToPlot(self, figureName: str, pos):
+        if figureName == 'arrow':
+            circle = CustomCircle(pos, (2, 5))
+            self.figureList.append(circle)
+            self.addItem(circle)
+            '''
+            print(f'xPos: {pos.x()}, yPos: {pos.y()}')
+            arrow = CustomArrow(pos=(pos.x(), pos.y()))
+            self.figureList.append(arrow)
+            self.addItem(arrow)
+            arrow.show()
+            '''
+        elif figureName == 'hLine':
+            hLine = CustomInfiniteLine(self, pen='#000000', angle=0, movable=True)
+            hLine.setPos(pos.y())
+            self.figureList.append(hLine)
+            self.addItem(hLine)
 
     def enterEvent(self, event):
         self.setFocus()
@@ -286,6 +394,12 @@ class CustomPlotWidget(pg.PlotWidget):
 
         return None
 
+    def focusFigure(self, figure):
+        self.figureInFocus = figure
+
+    def removeFocus(self):
+        self.figureInFocus = None
+
     def changeMarker(self, index, **kwargs):
         marker = self.markerList[index]
         marker.changeVariables(**kwargs)
@@ -315,6 +429,11 @@ class CustomPlotWidget(pg.PlotWidget):
             self.switchMarking()
         self.markingRegion.hide()
         self.setFocus()
+
+    def deleteFigure(self, figure):
+        self.figureList.remove(figure)
+        self.removeItem(figure)
+        figure.deleteLater()
 
     def checkAndHandleCollision(self, marker: MarkerRectItem):
         markerNeighbors = [marker.getPreviousMarker(), marker.getNextMarker()]

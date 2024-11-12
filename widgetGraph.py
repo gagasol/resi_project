@@ -588,18 +588,25 @@ class WidgetGraph(QWidget):
         # todo fix size of last column, check if entry is longer and if make size relative to content again
         item = self.tableWidgetData.item(row, column)
         entry = item.text()
+        print(f'entry on cellchanged {entry}')
         if entry:
             if column % 2 != 0:
-                if re.match(r'^\s*:', entry):
+                while re.match(r'^\s*:', entry):
                     entry = ''.join(entry.split(':')[1:]).lstrip()
-                else:
-                    entry = entry.lstrip()
 
-                entry = ': ' + entry
+                tableEntry = ': ' + entry.lstrip()
 
-                item.setText(entry)
+                item.setText(tableEntry)
                 self.tableWidgetData.setItem(row, column, item)
                 self.dataModel.changeCustomDataEntry(row, column, entry)
+
+    def changeTableTopEntry(self, row, column, entry):
+        item = self.tableWidgetData.item(row, column)
+        print(f'MY TEXT IS: {item.text()}')
+        item.setText(entry)
+        self.tableWidgetData.setItem(row, column, item)
+        self.dataModel.changeCustomDataEntry(row, column, entry)
+        print(f'THIS IS {self.name}')
 
     def windowClosedByUser(self):
         self.flagWindowClosedByUserSignal = True

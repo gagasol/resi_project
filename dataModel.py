@@ -225,7 +225,8 @@ class DataModel:
                 font.setFamily("Tahoma")
                 brush = QBrush(QColor("#1f1bf7"))
                 if key == "tiltAngle":
-                    tableItemDataEntry = QTableWidgetItem(str(int(round(float(self._data[key]) + 0.001, 0) - 90)) + "  ")
+                    tableItemDataEntry = QTableWidgetItem(': ' +
+                                                          str(int(round(float(self._data[key]) + 0.001, 0) - 90))+"  ")
                 else:
                     tableItemDataEntry = QTableWidgetItem(": "+str(self._data[key]) + "  ")
                 tableItemDataEntry.setFont(fontDataEntry)
@@ -254,7 +255,7 @@ class DataModel:
         else:
             index = row + column - 5
             for key, value in self._data.items():
-                if (str(index)+"_" in key):
+                if str(index)+ "_" in key:
                     self._data[key] = entry
                     break
 

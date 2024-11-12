@@ -7,7 +7,7 @@ from PySide6 import QtWidgets
 from PySide6.QtCore import QPoint, QRect, QSize, QObject
 from PySide6.QtGui import QIcon, QCursor, QAction
 from PySide6.QtWidgets import QApplication, QFileDialog, QMdiArea, QMdiSubWindow, \
-    QMessageBox
+    QMessageBox, QDialog, QHBoxLayout, QVBoxLayout, QCheckBox, QGroupBox, QDialogButtonBox, QWidget
 
 from markerpresetwindow import MarkerPresetWindow
 from pickMarkerWindow import PickMarker
@@ -136,6 +136,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ui.pushButtonPng.clicked.connect(self.pngButtonClicked)
         self.ui.pushButtonSettings.clicked.connect(self.settingsButtonClicked)
         self.ui.actionOpenDefaultFolder.triggered.connect(self.openDefaultFolderDialog)
+        self.ui.pushButtonApplyDataTable.clicked.connect(self.applyDataToMultiple)
 
     #TDL!!!!
 
@@ -151,7 +152,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logger.info("~~~~~~~~~~~~ openButtonClicked ~~~~~~~~~~~~")
         if not fileName:
             fileName, _ = QFileDialog.getOpenFileName(None, "Select File", self.lastDirectory,
-                                                      "*.rgp *.resi;;*.rgp;;*.resi")
+                                                      "*.rgp *.rif;;*.rgp;;*.rif")
             if fileName:
                 self.lastDirectory = '/'.join(fileName.split('/')[:-1])
                 print(self.lastDirectory)
@@ -160,7 +161,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if fileName == "":
             return
         self.nameOfFile = fileName.split(".")[0].split("/")[-1]
-        if ".resi" in fileName:
+        if ".rif" in fileName:
             if fileName not in self.settingsWindow.getSettingsVariable('recentFiles'):
                 self.settingsWindow.addRecentFile(fileName)
 
@@ -206,20 +207,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def openActionClicked(self):
         action = self.sender()
         filePath = action.data()
-        if '.resi' in filePath:
-            print('Resi detected opening file')
+        if '.rif' in filePath:
+            print('Rif detected opening file')
             self.openButtonClicked(filePath)
         else:
             print('Opening Folder now..')
             fileName, _ = QFileDialog.getOpenFileName(None, "Select File", filePath,
-                                                      "*.rgp *.resi;;*.rgp;;*.resi")
+                                                      "*.rgp *.rif;;*.rgp;;*.rif")
             if fileName:
                 self.openButtonClicked(fileName)
 
     def openDefaultFolderDialog(self):
         folderPath = self.settingsWindow.getSettingsVariable('defaultFolderPath')
         fileName, _ = QFileDialog.getOpenFileName(None, "Select File", folderPath,
-                                                  "*.rgp *.resi;;*.rgp;;*.resi")
+                                                  "*.rgp *.rif;;*.rgp;;*.rif")
 
         if fileName:
             self.openButtonClicked(fileName)
@@ -282,14 +283,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def showSaveFileDialog(self):
         graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
-        defaultName = graphWidget.name + ".resi"
+        defaultName = graphWidget.name + ".rif"
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
 
         fileName, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()",
                                                   defaultName, "All Files (*);;Text Files (*.txt)", options=options)
 
-        fileName = fileName if ".resi" in fileName else fileName + ".resi"
+        fileName = fileName if ".rif" in fileName else fileName + ".rif"
 
         if fileName:
             self.saveGraphState(graphWidget, fileName)
@@ -298,14 +299,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def saveGraphState(self, graphWidget, path=""):
         if graphWidget:
             if path == "":
-                with open("./data/" + graphWidget.name + ".resi", "w") as file:
+                with open("./data/" + graphWidget.name + ".rif", "w") as file:
                     json.dump(graphWidget.getCurrentState(), file)
             else:
                 with open(path, "w") as file:
                     json.dump(graphWidget.getCurrentState(), file)
         else:
             for widget in self.listGraphWidgets:
-                with open("./data/" + widget.name + ".resi", "w") as file:
+                with open("./data/" + widget.name + ".rif", "w") as file:
                     json.dump(widget.getCurrentState(), file)
 
 
@@ -326,15 +327,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                                      QMessageBox.Save | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
         if (reply == QMessageBox.Save):
             if tabWidget is not None:
-                with open(tabWidget.name + ".resi", "w") as file:
+                with open(tabWidget.name + ".rif", "w") as file:
                     json.dump(tabWidget.getCurrentState(), file)
                 tabWidget.deleteLater()
-
+                self.listGraphWidgets.remove(tabWidget)
             self.ui.tabWidget.removeTab(index)
 
         elif (reply == QMessageBox.No):
             if tabWidget is not None:
                 tabWidget.deleteLater()
+                self.listGraphWidgets.remove(tabWidget)
             self.ui.tabWidget.removeTab(index)
 
 
@@ -395,6 +397,74 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             icon_in.addFile(u":/icons/icons/text-indent.svg", QSize(), QIcon.Normal, QIcon.On)
             self.ui.pushButtonToggleOverlay.setIcon(icon_in)
             self.ui.pushButtonToggleOverlay.setIconSize(QSize(25, 25))
+
+    def applyDataToMultiple(self):
+        currentWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
+
+        fileNames = {widget.name: widget for widget in self.listGraphWidgets if widget is not currentWidget}
+        customData = {
+            "0_diameter": QObject.tr('Durchmesser'),
+            "1_mHeight": QObject.tr('Messhöhe'),
+            "2_mDirection": QObject.tr('Messrichtung'),
+            "3_objecttype": QObject.tr('Objektart'),
+            "4_location": QObject.tr('Standort'),
+            "5_name": QObject.tr('Name')
+        }
+
+        dialog = QDialog(self)
+
+        boxWidget = QWidget(dialog)
+        boxLayout = QHBoxLayout(boxWidget)
+
+        nameGroupBoxes = QGroupBox('Open files')
+        dataGroupBoxes = QGroupBox('Data')
+
+        vLayout = QVBoxLayout(dialog)
+        vLayoutNames = QVBoxLayout(nameGroupBoxes)
+        vLayoutData = QVBoxLayout(dataGroupBoxes)
+
+        checkboxesNames = []
+        checkboxesData = []
+
+        for name, widget in fileNames.items():
+            checkboxName = QCheckBox(name, boxWidget)
+            checkboxesNames.append(checkboxName)
+            vLayoutNames.addWidget(checkboxName)
+        nameGroupBoxes.setLayout(vLayoutNames)
+
+        for var, data in customData.items():
+            checkboxData = QCheckBox(data, boxWidget)
+            checkboxData.setObjectName(var)
+            checkboxesData.append(checkboxData)
+            vLayoutData.addWidget(checkboxData)
+        dataGroupBoxes.setLayout(vLayoutData)
+
+        boxLayout.addWidget(dataGroupBoxes)
+        boxLayout.addWidget(nameGroupBoxes)
+        boxWidget.setLayout(boxLayout)
+
+        vLayout.addWidget(boxWidget)
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        vLayout.addWidget(buttonBox)
+
+        buttonBox.accepted.connect(dialog.accept)
+        buttonBox.rejected.connect(dialog.reject)
+        dialog.setLayout(vLayout)
+        dialog.show()
+
+        result = dialog.exec()
+
+        if result == QDialog.Accepted:
+            selectedNames = [cb.text() for cb in checkboxesNames if cb.isChecked()]
+            selectedData = [cb.objectName() for cb in checkboxesData if cb.isChecked()]
+
+            for name in selectedNames:
+                for data in selectedData:
+                    entry = currentWidget.dataModel.getDataByKey(data)
+                    row = int(data.split("_")[0])
+                    print(f'entry: {entry}; row: {row}')
+                    fileNames[name].changeTableTopEntry(row, 5, entry)
+
 
     def openPickMarker(self, defaultPresetName):
         if not self.markerPresetList:

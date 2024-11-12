@@ -97,6 +97,12 @@ class PrintWindow:
 
         if self.graphWidget.textEditComment.toPlainText() == '':
             self.graphWidget.textEditComment.hide()
+        else:
+            comment = self.graphWidget.textEditComment
+            font = comment.font()
+            font.setPointSize(fontSize - fontSize*0.05)
+            comment.setFont(font)
+            comment.setFixedWidth(600)
 
         #self.graphWidget.resize(resizeWidth, resizeHeight)
 
