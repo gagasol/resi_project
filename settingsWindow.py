@@ -136,6 +136,7 @@ class SettingsWindow(QDialog):
         self.ui.lineEditDrillColor.setText(self.getSettingsVariable("colorDrillPlot"))
         self.ui.lineEditGraphBackgroundColor.setText(self.getSettingsVariable("colorBackground"))
         self.ui.lineEditMarkingGraphBackgroundColor.setText(self.getSettingsVariable("colorBackgroundMarking"))
+        self.ui.lineEditLabelColor.setText(self.getSettingsVariable('colorLabel'))
         self.ui.doubleSpinBoxMarkerHeight.setValue(self.getSettingsVariable("markerHeightPerc")*100)
         self.ui.spinBoxLabelSize.setValue(self.getSettingsVariable("labelFontSize"))
         self.ui.doubleSpinBoxTopPerc_2.setValue(self.getSettingsVariable("printHeightWidgetTopPerc"))
@@ -149,6 +150,11 @@ class SettingsWindow(QDialog):
         self.ui.lineEditDefaultDir.setText(str(self.getSettingsVariable('defaultFolderPath')))
         self.ui.spinBoxRecentFiles.setValue(int(self.getSettingsVariable('recentFilesAmount')))
         self.ui.spinBoxRecentFolders.setValue(int(self.getSettingsVariable('recentFoldersAmount')))
+        self.ui.spinBoxXMajorTicks.setValue(self.getSettingsVariable('defaultGridIntervalX'))
+        self.ui.spinBoxXMinorTicks.setValue(self.getSettingsVariable('minorTicksInterval'))
+        self.ui.spinBoxYMajorTicks.setValue(self.getSettingsVariable('defaultGridIntervalY'))
+        self.ui.lineEditGridColor.setText(self.getSettingsVariable('gridColor'))
+        self.ui.spinBoxGridOp.setValue(self.getSettingsVariable('gridOpacity'))
 
 
     def accept(self):
@@ -160,6 +166,7 @@ class SettingsWindow(QDialog):
                             "colorDrillPlot": self.ui.lineEditDrillColor.text(),
                             "colorBackground": self.ui.lineEditGraphBackgroundColor.text(),
                             "colorBackgroundMarking": self.ui.lineEditMarkingGraphBackgroundColor.text(),
+                            'colorLabel': self.ui.lineEditLabelColor.text(),
                             "markerHeightPerc": self.ui.doubleSpinBoxMarkerHeight.value()/100,
                             "fontSize": 14,
                             "labelFontSize": self.ui.spinBoxLabelSize.value(),
@@ -171,7 +178,12 @@ class SettingsWindow(QDialog):
                             "strsToShowInGraph": self.strsToShowInGraph,
                             'defaultFolderPath': self.getSettingsVariable('defaultFolderPath'),
                             'recentFilesAmount': self.ui.spinBoxRecentFiles.value(),
-                            'recentFoldersAmount': self.ui.spinBoxRecentFolders.value()
+                            'recentFoldersAmount': self.ui.spinBoxRecentFolders.value(),
+                            'defaultGridIntervalX': self.ui.spinBoxXMajorTicks.value(),
+                            'minorTicksInterval': self.ui.spinBoxXMinorTicks.value(),
+                            'defaultGridIntervalY': self.ui.spinBoxYMajorTicks.value(),
+                            'gridOpacity': self.ui.spinBoxGridOp.value(),
+                            'gridColor': self.ui.lineEditGridColor.text()
                             }
 
             for key, value in overrideDict.items():

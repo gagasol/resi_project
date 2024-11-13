@@ -87,6 +87,13 @@ class CustomAxis(pg.AxisItem):
         self.update()
         print("Finished updating")
 
+    def setXMajorTickInterval(self, xMajorTickInterval):
+        self.xMajorTickInterval = xMajorTickInterval
+        self.updateTicks()
+    def setXMinorTickInterval(self, xMinorTickInterval):
+        self.xMinorTickInterval = xMinorTickInterval
+        self.updateTicks()
+
     def updateTicks(self):
         ticks = np.arange(self.start, self.end, self.xMajorTickInterval)
         majorTicks = [(v + self.offset, str(v)) for v in ticks]
@@ -395,10 +402,11 @@ class WidgetGraph(QWidget):
 
         start = 0
         end = 40
-        majorTicksInterval = self.settingsWindow.getSettingsVariable("majorTicksInterval")
+
+        bottomMajorTickStringInterval = self.settingsWindow.getSettingsVariable('defaultGridIntervalX')
         minorTicksInterval = self.settingsWindow.getSettingsVariable("minorTicksInterval")
 
-        bottom_axis = CustomAxis(start, end, majorTicksInterval, minorTicksInterval, orientation="bottom")
+        bottom_axis = CustomAxis(start, end, bottomMajorTickStringInterval, minorTicksInterval, orientation="bottom")
         xLimit = self.deviceLength + 0.5
         colorBackground = self.settingsWindow.getSettingsVariable("colorBackground")
         colorBackgroundMarking = self.settingsWindow.getSettingsVariable("colorBackgroundMarking")
@@ -419,9 +427,12 @@ class WidgetGraph(QWidget):
         self.canvasGraph.plot(self.x, dataDrill, pen=penFeed)
         self.canvasGraph.plot(self.x, dataFeed, pen=penDrill)
 
-        self.canvasGraph.changeAxisFontsize(self.labelFontSize)
+        # self.canvasGraph.changeAxisFontsize(self.labelFontSize)
+        self.canvasGraph.initAxisLabels()
 
         self.canvasGraph.setContentsMargins(0, 0, 0, 0)
+
+        bottom_axis.updateTicks()
 
         self.verticalLayout_3 = QVBoxLayout(self.widgetGraph)
         self.verticalLayout_3.addWidget(self.canvasGraph)
@@ -592,7 +603,7 @@ class WidgetGraph(QWidget):
         if entry:
             if column % 2 != 0:
                 while re.match(r'^\s*:', entry):
-                    entry = ''.join(entry.split(':')[1:]).lstrip()
+                    entry = ':'.join(entry.split(':')[1:]).lstrip()
 
                 tableEntry = ': ' + entry.lstrip()
 

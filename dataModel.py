@@ -279,6 +279,8 @@ class DataModel:
                               "dataDrill": self._dataDrill,
                               "dataFeed": self._dataFeed}
 
+        print(f'time in dataModel.getSaveState: {keyValuePairs["time"]}')
+
         commentDic = {"commentRight": self.commentRight}
         defaultMarkerNameDic = {"fileDefaultPresetName": self.fileDefaultPresetName}
         keyValuePairs.update(commentDic)

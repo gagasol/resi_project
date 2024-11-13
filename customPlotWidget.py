@@ -135,6 +135,17 @@ class CustomPlotWidget(pg.PlotWidget):
         self.getAxis("bottom").setLabel(QObject().tr("Tiefe"), units="cm", **{'font-size': str(fontSize)+"pt"})
         self.getAxis("left").setLabel(QObject().tr("Widerstand"), units="%", **{'font-size': str(fontSize)+"pt"})
 
+    def initAxisLabels(self):
+        fontSize = self.settings.getSettingsVariable('labelFontSize')
+        color = self.settings.getSettingsVariable('colorLabel')
+
+        self.getAxis("bottom").setLabel(QObject().tr("Tiefe"), units="cm", color=color,
+                                        **{'font-size': str(fontSize) + "pt"})
+        self.getAxis("left").setLabel(QObject().tr("Widerstand"), units="%", color=color,
+                                      **{'font-size': str(fontSize) + "pt"})
+    def changeAxisLabelColor(self, color):
+        pass
+
     def contextMenuEvent(self, event):
         contextMenu = QMenu()
 
@@ -243,6 +254,20 @@ class CustomPlotWidget(pg.PlotWidget):
             x = x + offset
             print(f'x: {x[0]}')
             line.setData(x=x, y=y)
+
+    def repaintGrid(self):
+        self.deleteGrid()
+        self.createGridLines()
+
+    def deleteGrid(self):
+        for line in self.gridLines['x']:
+            self.removeItem(line)
+        for line in self.gridLines['y']:
+            self.removeItem(line)
+
+        self.gridLines['x'] = []
+        self.gridLines['y'] = []
+
 
     def addFigureToPlot(self, figureName: str, pos):
         if figureName == 'arrow':

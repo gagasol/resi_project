@@ -465,6 +465,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     print(f'entry: {entry}; row: {row}')
                     fileNames[name].changeTableTopEntry(row, 5, entry)
 
+    def updateGraphWidgets(self):
+        for graph in self.listGraphWidgets:
+            graph.canvasGraph.repaintGrid()
 
     def openPickMarker(self, defaultPresetName):
         if not self.markerPresetList:
@@ -542,7 +545,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         "colorBackgroundMarking": "#8b888f",
                         "labelFontSize": 12,
                         "printLabelFontSize": 26,
-                        "majorTicksInterval": 5,
+                        'colorLabel': '#000000',
                         "minorTicksInterval": 5,
                         "fontSize": 14,
                         "fontName": "Arial",
