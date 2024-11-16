@@ -112,7 +112,72 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             "Chocolate": "#D2691E",
             "Crimson": "#DC143C"
         }
-        self.loadPreset()
+        print('115 executed in main.py')
+        # self.loadPreset()
+        # TEMPORARY FIX
+
+        strsToShowInGraph = ["number", "0_diameter", "1_mHeight", "3_objecttype", "5_name"]
+        settingsDict = {"defaultMarkerDictName": "",
+                        "heightWidgetTopPerc": 15,
+                        "heightWidgetGraphPerc": 75,
+                        "heightWidgetBottomPerc": 10,
+                        "colorBackground": "#dfe5e6",
+                        "colorBackgroundMarking": "#8b888f",
+                        "labelFontSize": 12,
+                        "printLabelFontSize": 26,
+                        'colorLabel': '#000000',
+                        "minorTicksInterval": 5,
+                        "fontSize": 14,
+                        "fontName": "Arial",
+                        "colorFeedPlot": "#5c08c9",
+                        "colorDrillPlot": "#eda31a",
+                        "markerHeightPerc": 0.02,
+                        "printHeightWidgetTopPerc": 20,
+                        "printHeightWidgetGraphPerc": 60,
+                        "printHeightWidgetBottomPerc": 20,
+                        "printFontSize": 20,
+                        "printFontName": "Arial",
+                        "strsToShowInGraph": strsToShowInGraph,
+                        "gridColor": '#000000',
+                        'gridOpacity': 100,
+                        'defaultGridIntervalX': 5,
+                        'defaultGridIntervalY': 5,
+                        'defaultFolderPath': './data/',
+                        'recentFiles': [],
+                        'recentFilesAmount': 2,
+                        'recentFolders': [],
+                        'recentFoldersAmount': 2
+                        }
+        try:
+            with open("./settings/settings.json", "r") as file:
+                loadedFile = json.load(file)
+                keysDefault = set(settingsDict)
+                keysLoaded = set(loadedFile[0])
+                for key in keysDefault - keysLoaded:
+                    loadedFile[0][key] = settingsDict[key]
+                self.settingsWindow = SettingsWindow(loadedFile[0], mainWindow=self)
+                self.defaultMarkerDictName = self.settingsWindow.getSettingsVariable("defaultMarkerDictName")
+                self.nameToColorDict = loadedFile[1]
+                self.markerPresetList = loadedFile[2]
+                print('581 executed in main.py.loadPreset()')
+        except FileNotFoundError:
+
+            self.settingsWindow = SettingsWindow(settingsDict, mainWindow=self)
+            self.defaultMarkerDictName = self.settingsWindow.getSettingsVariable("defaultMarkerDictName")
+            print("First startup detected")
+
+        except KeyError as ke:
+            if str(ke) in settingsDict:
+                response = QMessageBox.question(self, 'Reset Settings', f'{str(ke)} was not found in settings.json,'
+                                                                        f'do you want to reset the file?',
+                                                QMessageBox.Yes | QMessageBox.No)
+                if response == QMessageBox.Yes:
+                    print('yes')
+                    self.settingsWindow = SettingsWindow(settingsDict, mainWindow=self)
+                elif response == QMessageBox.No:
+                    print('no')
+
+        # END TEMPORARY FIX
 
         self.loadOpenMenu()
         print('118 executed in main.py')
