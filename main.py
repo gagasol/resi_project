@@ -581,6 +581,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         except FileNotFoundError:
 
             self.settingsWindow = SettingsWindow(settingsDict, mainWindow=self)
+            self.defaultMarkerDictName = self.settingsWindow.getSettingsVariable("defaultMarkerDictName")
             print("First startup detected")
 
         except KeyError as ke:
