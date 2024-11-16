@@ -581,7 +581,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.settingsWindow = SettingsWindow(loadedFile[0], mainWindow=self)
                 self.defaultMarkerDictName = self.settingsWindow.getSettingsVariable("defaultMarkerDictName")
                 self.nameToColorDict = loadedFile[1]
-                self.markerPresetList = loadedFile[2]
+                # self.markerPresetList = loadedFile[2]
                 print('581 executed in main.py.loadPreset()')
         except FileNotFoundError:
 
@@ -600,14 +600,23 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 elif response == QMessageBox.No:
                     print('no')
 
+        try:
+            with open('./settings/markerPresets.json', 'r') as file:
+                self.markerPresetList = json.load(file)
+
+        except FileNotFoundError:
+            print('No presets file found')
 
 
+    def savePreset(self):
+        with open('./settings/markerPresets.json', 'w') as file:
+            json.dump(self.markerPresetList, file)
 
     def closeEvent(self, event):
         if self.defaultMarkerDictName is not None:
-            saveData = [self.settingsWindow.defaultSettingsDict, self.nameToColorDict, self.markerPresetList]
+            saveData = [self.settingsWindow.defaultSettingsDict, self.nameToColorDict]
         else:
-            saveData = [self.settingsWindow.defaultSettingsDict, self.nameToColorDict, self.markerPresetList]
+            saveData = [self.settingsWindow.defaultSettingsDict, self.nameToColorDict]
         with open("./settings/settings.json", "w") as f:
             json.dump(saveData, f, indent=2)
 

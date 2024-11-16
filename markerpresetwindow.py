@@ -70,6 +70,7 @@ class MarkerPresetWindow(QDialog):
 
     def okButtonClicked(self):
         self.checkSelection()
+        self.mainWindow.savePreset()
         self.accept()
 
     def cancelMarker(self):
@@ -131,6 +132,7 @@ class MarkerPresetWindow(QDialog):
             dictMarker = {"_NameForPreset": text}
             selectMarkerWindow = EditMarkerPresetWindow(self, argDictMarker=dictMarker)
             selectMarkerWindow.exec()
+
 
     def deletePreset(self):
         presetName = self.sender().objectName()
