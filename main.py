@@ -113,9 +113,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             "Crimson": "#DC143C"
         }
         print('115 executed in main.py')
-        # self.loadPreset()
+        self.loadPreset()
         # TEMPORARY FIX
-
+        '''
         strsToShowInGraph = ["number", "0_diameter", "1_mHeight", "3_objecttype", "5_name"]
         settingsDict = {"defaultMarkerDictName": "",
                         "heightWidgetTopPerc": 15,
@@ -160,7 +160,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.nameToColorDict = loadedFile[1]
             self.markerPresetList = loadedFile[2]
             print('581 executed in main.py.loadPreset()')
-            '''
+            
         try:
             with open("./settings/settings.json", "r") as file:
                 loadedFile = json.load(file)
