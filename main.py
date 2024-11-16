@@ -115,7 +115,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.loadPreset()
 
         self.loadOpenMenu()
-
+        print('118 executed in main.py')
 
         self.listNameKeys = ["idNumber", "date"]
 
@@ -578,6 +578,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.defaultMarkerDictName = self.settingsWindow.getSettingsVariable("defaultMarkerDictName")
                 self.nameToColorDict = loadedFile[1]
                 self.markerPresetList = loadedFile[2]
+                print('581 executed in main.py.loadPreset()')
         except FileNotFoundError:
 
             self.settingsWindow = SettingsWindow(settingsDict, mainWindow=self)
