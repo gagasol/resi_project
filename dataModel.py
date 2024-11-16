@@ -25,6 +25,7 @@ class DataModel:
         self.commentRight = ""
         self._dataNameDict = {}
         self.fileDefaultPresetName = ""
+        self.fileDefaultSavePath = ''
         # todo add this to settings so that the user can choose which data to display
         # TODO need to change the behaviour on which cells are eidtable from constant to variable!!!
         self._dataNameDict = {
@@ -48,12 +49,16 @@ class DataModel:
             "5_name": QObject.tr('Name')
         }
 
-        if ("rgp" in datasource.lower()):
+
+
+        if "rgp" in datasource.lower():
             self._data = self._readDataFromRGP(datasource)
+            self.fileDefaultSavePath = '/'.join(datasource.split('/')[:-1])
 
             self._name = datasource.split(".")[0].split("/")[-1]
             self._depthMsmt = self._data["depthMsmt"]
-        elif (datasource == ""):
+        elif 'rif' in datasource.lower() or datasource == "":
+            self.fileDefaultSavePath = '/'.join(datasource.split('/')[:-1])
             self._readDataFromCustom(datasource)
 
         else:
@@ -159,17 +164,20 @@ class DataModel:
     # if it doesnt dont change the color but create a seperate dict with that
     def _readDataFromCustom(self, file):
         loadedState = self.jsonData
+        try:
+            self._data = loadedState["data"]
+            self._name = self._data["selfName"]
+            self.commentRight = self._data["commentRight"]
+            self.dx_xlim = loadedState["dx_xlim"]
+            self.fileDefaultPresetName = self._data["fileDefaultPresetName"]
+            self._depthMsmt = self._data["depthMsmt"]
+            self._dataDrill = self._data["dataDrill"]
+            self._dataFeed = self._data["dataFeed"]
+            for markerState in loadedState["markerState"]:
+                self.markerStateList.append(markerState)
+        except KeyError as ke:
+            print(f'KeyError: {ke}')
 
-        self._data = loadedState["data"]
-        self._name = self._data["selfName"]
-        self.commentRight = self._data["commentRight"]
-        self.dx_xlim = loadedState["dx_xlim"]
-        self.fileDefaultPresetName = self._data["fileDefaultPresetName"]
-        self._depthMsmt = self._data["depthMsmt"]
-        self._dataDrill = self._data["dataDrill"]
-        self._dataFeed = self._data["dataFeed"]
-        for markerState in loadedState["markerState"]:
-            self.markerStateList.append(markerState)
 
 
     def _formatListToDict(self, tmpData):
@@ -255,7 +263,7 @@ class DataModel:
         else:
             index = row + column - 5
             for key, value in self._data.items():
-                if str(index)+ "_" in key:
+                if str(index) + "_" in key:
                     self._data[key] = entry
                     break
 

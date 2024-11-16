@@ -298,7 +298,7 @@ class WidgetGraph(QWidget):
             if "rgp" in pathToFile:
                 self.dataModel = DataModel(pathToFile, self.mainWindow.listNameKeys)
                 self.defaultMarkerDictName = self.mainWindow.defaultMarkerDictName
-            if pathToFile == "":
+            if 'rif' in pathToFile or pathToFile == "":
                 self.dataModel = DataModel(pathToFile, self.mainWindow.listNameKeys, loadedState)
                 self.defaultMarkerDictName = self.dataModel.fileDefaultPresetName
 

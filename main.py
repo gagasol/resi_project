@@ -171,7 +171,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
             print("loadedState len = 1")
             logging.info(" canvas :{0}".format(loadedState))
-            widget = WidgetGraph(self, "", loadedState)
+            widget = WidgetGraph(self, fileName, loadedState)
             self.listGraphWidgets.append(widget)
             self.ui.tabWidget.addTab(widget, self.nameOfFile)
             self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() - 1)
@@ -293,13 +293,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         fileName = fileName if ".rif" in fileName else fileName + ".rif"
 
         if fileName:
-            self.saveGraphState(graphWidget, fileName)
+            defaultFilePath = '/'.join(fileName.split('/')[:-1])
+            graphWidget.dataModel.fileDefaultSavePath = defaultFilePath
+            self.saveGraphState(graphWidget)
 
     # @todo change this
     def saveGraphState(self, graphWidget, path=""):
         if graphWidget:
             if path == "":
-                path = self.settingsWindow.getSettingsVariable('defaultFolderPath')
+                if graphWidget.dataModel.fileDefaultSavePath == '':
+                    path = self.settingsWindow.getSettingsVariable('defaultFolderPath')
+                else:
+                    path = graphWidget.dataModel.fileDefaultSavePath
                 print(path)
                 with open(path + '/' + graphWidget.name + ".rif", "w") as file:
                     json.dump(graphWidget.getCurrentState(), file)
@@ -610,7 +615,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def savePreset(self):
         with open('./settings/markerPresets.json', 'w') as file:
-            json.dump(self.markerPresetList, file)
+            json.dump(self.markerPresetList, file, indent=2)
 
     def closeEvent(self, event):
         if self.defaultMarkerDictName is not None:
