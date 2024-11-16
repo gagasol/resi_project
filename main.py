@@ -148,6 +148,19 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         'recentFolders': [],
                         'recentFoldersAmount': 2
                         }
+
+        with open("./settings/settings.json", "r") as file:
+            loadedFile = json.load(file)
+            keysDefault = set(settingsDict)
+            keysLoaded = set(loadedFile[0])
+            for key in keysDefault - keysLoaded:
+                loadedFile[0][key] = settingsDict[key]
+            self.settingsWindow = SettingsWindow(loadedFile[0], mainWindow=self)
+            self.defaultMarkerDictName = self.settingsWindow.getSettingsVariable("defaultMarkerDictName")
+            self.nameToColorDict = loadedFile[1]
+            self.markerPresetList = loadedFile[2]
+            print('581 executed in main.py.loadPreset()')
+            '''
         try:
             with open("./settings/settings.json", "r") as file:
                 loadedFile = json.load(file)
@@ -176,7 +189,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     self.settingsWindow = SettingsWindow(settingsDict, mainWindow=self)
                 elif response == QMessageBox.No:
                     print('no')
-
+        '''
         # END TEMPORARY FIX
 
         self.loadOpenMenu()
