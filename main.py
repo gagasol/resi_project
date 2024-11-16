@@ -113,7 +113,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             "Crimson": "#DC143C"
         }
         self.loadPreset()
-        self.defaultMarkerDictName = self.settingsWindow.getSettingsVariable("defaultMarkerDictName")
 
         self.loadOpenMenu()
 
@@ -576,6 +575,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 for key in keysDefault - keysLoaded:
                     loadedFile[0][key] = settingsDict[key]
                 self.settingsWindow = SettingsWindow(loadedFile[0], mainWindow=self)
+                self.defaultMarkerDictName = self.settingsWindow.getSettingsVariable("defaultMarkerDictName")
                 self.nameToColorDict = loadedFile[1]
                 self.markerPresetList = loadedFile[2]
         except FileNotFoundError:
