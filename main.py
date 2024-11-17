@@ -153,9 +153,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if not fileName:
             fileName, _ = QFileDialog.getOpenFileName(None, "Select File", self.lastDirectory,
                                                       "*.rgp *.rif;;*.rgp;;*.rif")
-            if fileName:
+            if fileName and 'rif' or 'rgp' in fileName:
                 self.lastDirectory = '/'.join(fileName.split('/')[:-1])
-                print(self.lastDirectory)
 
         self.logger.info("filename :{0}".format(fileName))
         if fileName == "":
@@ -164,17 +163,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if ".rif" in fileName:
             if fileName not in self.settingsWindow.getSettingsVariable('recentFiles'):
                 self.settingsWindow.addRecentFile(fileName)
+            try:
+                with open(fileName, "r") as file:
+                    loadedState = json.load(file)
 
-            with open(fileName, "r") as file:
-                loadedState = json.load(file)
+                logging.info(" canvas :{0}".format(loadedState))
+                widget = WidgetGraph(self, fileName, loadedState)
+                self.listGraphWidgets.append(widget)
+                self.ui.tabWidget.addTab(widget, self.nameOfFile)
+                self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() - 1)
+
+            except FileNotFoundError:
+                print('File not found')
+                self.settingsWindow.removeRecentFile(fileName)
 
 
-            print("loadedState len = 1")
-            logging.info(" canvas :{0}".format(loadedState))
-            widget = WidgetGraph(self, fileName, loadedState)
-            self.listGraphWidgets.append(widget)
-            self.ui.tabWidget.addTab(widget, self.nameOfFile)
-            self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() - 1)
 
         elif ".project" in fileName:
             with open(fileName, "r") as file:

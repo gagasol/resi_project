@@ -314,6 +314,10 @@ class SettingsWindow(QDialog):
         self.setSettingsVariable('recentFiles', self.recentOpenFiles)
         return False
 
+    def removeRecentFile(self, filePath):
+        self.recentOpenFiles.remove(filePath)
+        self.setSettingsVariable('recentFiles', self.recentOpenFiles)
+
     def addRecentFolder(self, folderPath):
         self.recentOpenFolders.append(folderPath)
         recentOpenFoldersAmount = int(self.getSettingsVariable('recentFoldersAmount'))

@@ -31,9 +31,9 @@ class PrintWindow:
             graphWidget.tableWidgetMarker.hide()
 
         if '.rgp' in filename:
-            self.filename = './data/' + filename.replace('rgp', suffix)
+            self.filename = graphWidget.dataModel.fileDefaultSavePath + '/' + filename.replace('rgp', suffix)
         else:
-            self.filename = './data/' + filename + f'.{suffix}'
+            self.filename = graphWidget.dataModel.fileDefaultSavePath + '/' + filename + f'.{suffix}'
 
         if 'png' in suffix:
             self.prepareWidgetForPrint(1920, 1080)

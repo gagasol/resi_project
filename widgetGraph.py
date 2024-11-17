@@ -610,14 +610,13 @@ class WidgetGraph(QWidget):
                 item.setText(tableEntry)
                 self.tableWidgetData.setItem(row, column, item)
                 self.dataModel.changeCustomDataEntry(row, column, entry)
+                self.setTextToShowInGraph()
 
     def changeTableTopEntry(self, row, column, entry):
         item = self.tableWidgetData.item(row, column)
-        print(f'MY TEXT IS: {item.text()}')
         item.setText(entry)
         self.tableWidgetData.setItem(row, column, item)
         self.dataModel.changeCustomDataEntry(row, column, entry)
-        print(f'THIS IS {self.name}')
 
     def windowClosedByUser(self):
         self.flagWindowClosedByUserSignal = True
