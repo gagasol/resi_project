@@ -175,7 +175,7 @@ class CustomPlotWidget(pg.PlotWidget):
         # addFigurMenu.addAction(subActionAddArrow)
 
         subActionAddLine = QAction(QObject.tr('Add line'))
-        subActionAddLine.triggered.connect(lambda: self.addFigureToPlot('hLine', mousePoint))
+        subActionAddLine.triggered.connect(lambda: self.addFigureToPlot('vLine', mousePoint))
         addFigurMenu.addAction(subActionAddLine)
 
         contextMenu.addMenu(addFigurMenu)
@@ -281,11 +281,11 @@ class CustomPlotWidget(pg.PlotWidget):
             self.addItem(arrow)
             arrow.show()
             '''
-        elif figureName == 'hLine':
-            hLine = CustomInfiniteLine(self, pen='#000000', angle=0, movable=True)
-            hLine.setPos(pos.y())
-            self.figureList.append(hLine)
-            self.addItem(hLine)
+        elif figureName == 'vLine':
+            vLine = CustomInfiniteLine(self, pen='#000000', angle=90, movable=True)
+            vLine.setPos(pos.x())
+            self.figureList.append(vLine)
+            self.addItem(vLine)
 
     def enterEvent(self, event):
         self.setFocus()
