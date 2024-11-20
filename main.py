@@ -1,6 +1,7 @@
 # This Python file uses the following encoding: utf-8
 import json
 import logging
+import os
 import sys
 
 from PySide6 import QtWidgets
@@ -136,6 +137,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ui.pushButtonPng.clicked.connect(self.pngButtonClicked)
         self.ui.pushButtonSettings.clicked.connect(self.settingsButtonClicked)
         self.ui.actionOpenDefaultFolder.triggered.connect(self.openDefaultFolderDialog)
+        self.ui.actionOpenAllInFolder.triggered.connect(self.openAllRifInFolder)
         self.ui.pushButtonApplyDataTable.clicked.connect(self.applyDataToMultiple)
 
     #TDL!!!!
@@ -227,6 +229,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         if fileName:
             self.openButtonClicked(fileName)
+
+    def openAllRifInFolder(self):
+        folderPath = QFileDialog.getExistingDirectory(None, 'Select Folder')
+        for dirPath, dirNames, fileNames in os.walk(folderPath):
+            for fileName in fileNames:
+                filepath = os.path.join(dirPath, fileName)
+                if '.rif' in filepath:
+                    self.openButtonClicked(filepath)
 
     def addEntriesToOpenMenu(self, names: list[str], paths: list[str]):
         openMenu = self.ui.menuOpenButton
@@ -323,7 +333,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     # functionality for the pushButtonTabView QPushButton
     def tabButtonClicked(self):
-        if (self.ui.stackedWidgetWorkArea.currentIndex() != 0):
+        if self.ui.stackedWidgetWorkArea.currentIndex() != 0:
             for graphWidget in self.listGraphWidgets:
                 graphWidget.setParent(None)
                 self.ui.mdiArea.closeAllSubWindows()
@@ -336,7 +346,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         tabWidget = self.ui.tabWidget.widget(index)
         reply = QMessageBox.question(self, QObject.tr("Confirm close"), QObject.tr("Save before you close?"),
                                      QMessageBox.Save | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
-        if (reply == QMessageBox.Save):
+        if reply == QMessageBox.Save:
             if tabWidget is not None:
                 with open(tabWidget.name + ".rif", "w") as file:
                     json.dump(tabWidget.getCurrentState(), file)
@@ -344,7 +354,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.listGraphWidgets.remove(tabWidget)
             self.ui.tabWidget.removeTab(index)
 
-        elif (reply == QMessageBox.No):
+        elif reply == QMessageBox.No:
             if tabWidget is not None:
                 tabWidget.deleteLater()
                 self.listGraphWidgets.remove(tabWidget)
