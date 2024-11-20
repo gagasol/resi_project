@@ -68,7 +68,7 @@ class DataModel:
         tmpData = []
 
         charsRedFlags = ("{", "}", "wi", "\"dd\"", "pole", "\"set\"", "p2", "\"res\"", "ssd", "p1",
-                         "profile", "checksum", "wiPoleResult", "app", "assessment")
+                         "profile", "checksum", "wiPoleResult", "app")
         time = ""
         date = ""
         offset = ""
@@ -153,6 +153,8 @@ class DataModel:
                         self._customData["5_name"] = objectData[4]
                     except IndexError:
                         print("welp")
+                elif 'assessment' in line:
+                    self.commentRight = line.split(':')[1].strip().replace('\"', '')
 
                 tmpData.append(line.replace("\"", "").replace(",", "").replace(":",";"))
                 line = f.readline()
