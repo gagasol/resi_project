@@ -424,6 +424,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         fileNames = {widget.name: widget for widget in self.listGraphWidgets if widget is not currentWidget}
         customData = {
+            "idNumber": QObject.tr('ID-Nummer'),
             "0_diameter": QObject.tr('Durchmesser'),
             "1_mHeight": QObject.tr('Messhöhe'),
             "2_mDirection": QObject.tr('Messrichtung'),
@@ -481,10 +482,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
             for name in selectedNames:
                 for data in selectedData:
-                    entry = currentWidget.dataModel.getDataByKey(data)
-                    row = int(data.split("_")[0])
-                    print(f'entry: {entry}; row: {row}')
-                    fileNames[name].changeTableTopEntry(row, 5, entry)
+                    if '_' in data:
+                        entry = currentWidget.dataModel.getDataByKey(data)
+                        row = int(data.split("_")[0])
+                        print(f'entry: {entry}; row: {row}')
+                        fileNames[name].changeTableTopEntry(row, 5, entry)
+                    else:
+                        entry = currentWidget.dataModel.getDataByKey(data)
+                        row = 1
+                        fileNames[name].changeTableTopEntry(row, 1, entry)
 
     def updateGraphWidgets(self):
         for graph in self.listGraphWidgets:
