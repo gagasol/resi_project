@@ -91,6 +91,8 @@ class DataModel:
 
             self._name = datasource.split(".")[0].split("/")[-1]
             self._depthMsmt = self._data["depthMsmt"]
+            print(f'datasource in dataModel at ini: {datasource}')
+            print(f'name in dataModel at ini: {self._name}')
         elif 'rif' in datasource.lower() or datasource == "":
             self.fileDefaultSavePath = '/'.join(datasource.split('/')[:-1])
             self._readDataFromCustom()
