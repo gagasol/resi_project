@@ -422,7 +422,7 @@ class DataModel:
 
         commentDic = {"commentRight": self.commentRight}
         defaultMarkerNameDic = {"fileDefaultPresetName": self.fileDefaultPresetName}
-        keyValuePairs.update(self._customData)
+        #keyValuePairs.update(self._customData)
         keyValuePairs.update(commentDic)
         keyValuePairs.update(defaultMarkerNameDic)
         keyValuePairs.update(graphDataKeyValues)
