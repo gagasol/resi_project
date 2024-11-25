@@ -162,7 +162,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.logger.info("filename :{0}".format(fileName))
         if fileName == "":
             return
-        self.nameOfFile = fileName.split(".")[0].split("/")[-1]
+        self.nameOfFile = fileName.split('/')[-1].split('.')[0]
         if ".rif" in fileName:
             if fileName not in self.settingsWindow.getSettingsVariable('recentFiles'):
                 self.settingsWindow.addRecentFile(fileName)
