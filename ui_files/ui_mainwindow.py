@@ -123,6 +123,7 @@ class Ui_MainWindow(object):
         self.menuOpenButton.addSeparator()
         self.actionOpenDefaultFolder = self.menuOpenButton.addAction(QObject.tr('Default Folder'))
         self.actionOpenAllInFolder = self.menuOpenButton.addAction(QObject.tr('Open all .rif in Folder'))
+        self.actionOpenAllRGPInFolder = self.menuOpenButton.addAction(QObject.tr('Open all .rgp in Folder'))
         print(f'Len openMenu in settingsUi : {len(self.menuOpenButton.actions())}')
         self.pushButton1.setMenu(self.menuOpenButton)
 

@@ -6,7 +6,7 @@ import sys
 
 from PySide6 import QtWidgets
 from PySide6.QtCore import QPoint, QRect, QSize, QObject
-from PySide6.QtGui import QIcon, QCursor, QAction
+from PySide6.QtGui import QIcon, QCursor, QAction, QGuiApplication
 from PySide6.QtWidgets import QApplication, QFileDialog, QMdiArea, QMdiSubWindow, \
     QMessageBox, QDialog, QHBoxLayout, QVBoxLayout, QCheckBox, QGroupBox, QDialogButtonBox, QWidget
 
@@ -138,6 +138,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ui.pushButtonSettings.clicked.connect(self.settingsButtonClicked)
         self.ui.actionOpenDefaultFolder.triggered.connect(self.openDefaultFolderDialog)
         self.ui.actionOpenAllInFolder.triggered.connect(self.openAllRifInFolder)
+        self.ui.actionOpenAllRGPInFolder.triggered.connect(self.openAllRGPInFolder)
         self.ui.pushButtonApplyDataTable.clicked.connect(self.applyDataToMultiple)
 
     #TDL!!!!
@@ -238,7 +239,24 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 if '.rif' in filepath:
                     self.openButtonClicked(filepath)
 
+    def openAllRGPInFolder(self):
+        folderPath = QFileDialog.getExistingDirectory(None, 'Select Folder')
+        for dirPath, dirNames, fileNames in os.walk(folderPath):
+            for fileName in fileNames:
+                filepath = os.path.join(dirPath, fileName)
+                if '.rgp' in filepath:
+                    self.openButtonClicked(filepath)
+
     def addEntriesToOpenMenu(self, names: list[str], paths: list[str]):
+        """
+        This function adds new QAction entries to the 'open' menu of the application GUI.
+        Each QAction entry corresponds to a recent file, with a name from the 'names' list and a path
+        from the 'paths' list.
+
+        Args:
+            names (list[str]): List of names of recent files to add to 'open' menu.
+            paths (list[str]): List of full paths for each of the recent files.
+        """
         openMenu = self.ui.menuOpenButton
         openMenu.insertSeparator(openMenu.actions()[0])
 
@@ -255,6 +273,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             openMenu.insertAction(actionAtIndexZero, actionOpenRecentFile)
 
     def loadOpenMenu(self):
+        """
+        initialize the context menu for the open button
+
+        Parameters:
+        None
+
+        Return:
+        None
+
+        Notes:
+            shows recent files, recent folders, default folder and an option to open all files in a folder
+        """
         openMenu = self.ui.menuOpenButton
         staticMenuActions = 2
         seperatorCount = 2
@@ -312,6 +342,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     # @todo change this
     def saveGraphState(self, graphWidget, path=""):
+        """
+        this method saves the current state of the graphWidget
+        Args:
+            graphWidget (WidgetGraph): the widgetGraph to save
+            path (str): non mandatory variable for a different path to save the file, else it'll be the file default
+
+        Returns:
+
+        """
         if graphWidget:
             if path == "":
                 if graphWidget.dataModel.fileDefaultSavePath == '':
@@ -343,6 +382,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
     def closeTab(self, index):
+        """
+        this method checks if the user wants to save a tab before it gets closed by the user
+        Args:
+            index:
+
+        Returns:
+
+        """
         tabWidget = self.ui.tabWidget.widget(index)
         reply = QMessageBox.question(self, QObject.tr("Confirm close"), QObject.tr("Save before you close?"),
                                      QMessageBox.Save | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
@@ -402,6 +449,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 json.dump(self.settingsWindow.defaultSettingsDict, file, indent=2)
 
     def toggleOverlayButtonClicked(self):
+        """
+        this method is called when the toggleOverlayButton is clicked and shows or hides the overlay menu
+        Returns:
+
+        """
         # If overlay_widget visible, hide it, else show it
         if self.ui.widgetOverlay.isVisible():
             self.ui.widgetOverlay.hide()
@@ -420,6 +472,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.ui.pushButtonToggleOverlay.setIconSize(QSize(25, 25))
 
     def applyDataToMultiple(self):
+        """
+        This method creates a dialog with checkboxes from which the user can select data that he wants to apply
+        to multiple opened files
+        Returns:
+            None
+        """
         currentWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
 
         fileNames = {widget.name: widget for widget in self.listGraphWidgets if widget is not currentWidget}
@@ -497,6 +555,19 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             graph.canvasGraph.repaintGrid()
 
     def openPickMarker(self, defaultPresetName):
+        """
+        this method shows the PickMarker dialog from which the user can pick a name and color for a marker and
+        returns the name and color of a marker if the user clicks on the entry
+        Args:
+            defaultPresetName: the preset of markers to be shown in the dialog
+
+        Returns:
+            None if any error occurs, else the name and color of the picked marker
+
+        Notes:
+            - if the dictionary isn't available it will use the default dic and print an error message
+
+        """
         if not self.markerPresetList:
             QMessageBox.warning(self, QObject.tr("Warning"), QObject.tr("No preset available"))
             return None, None
@@ -515,17 +586,25 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.pickMarkerWin = PickMarker(self, defaultDict)
         self.overridePickMarkerDict(defaultDict)
-        # generate window at cursor and check if window is in screen, if not create at corner
-        mousePos = QCursor.pos()
-        screenGeometry = QApplication.primaryScreen().availableGeometry()
 
-        xEnd = mousePos.x() + self.pickMarkerWin.width()
-        yEnd = mousePos.y() + self.pickMarkerWin.height()
-        moveX = mousePos.x() if xEnd < screenGeometry.width() else screenGeometry.width()-self.pickMarkerWin.width()
-        moveY = mousePos.y() if yEnd < screenGeometry.height() else screenGeometry.height()-self.pickMarkerWin.height()
-        movePos = QPoint(moveX, moveY)
+        # check if the dialog would be at the edge of the screen and compensates accordingly
+        mousePos = QCursor.pos()
+        screen = QGuiApplication.screenAt(mousePos)
+
+        if screen is None:  # In case the mouse is not on any screen (shouldn't usually happen)
+            screen = QGuiApplication.primaryScreen()
+
+        screenGeometry = screen.geometry()
+
+        localMousePos = mousePos - screenGeometry.topLeft()
+
+        moveX = max(0, min(localMousePos.x(), screenGeometry.width() - self.pickMarkerWin.width()))
+        moveY = max(0, min(localMousePos.y(), screenGeometry.height() - self.pickMarkerWin.height()))
+
+        movePos = screenGeometry.topLeft() + QPoint(moveX, moveY)
 
         self.pickMarkerWin.move(movePos)
+
         if self.pickMarkerWin.exec():
             return self.pickMarkerWin.markerName, self.pickMarkerWin.markerColor
         else:
@@ -549,20 +628,52 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             graphWidget.changeFileDefaultPresetName(self.defaultMarkerDictName)
 
     def getGraphDefaultMarkerDictName(self):
+        """
+        This method returns the default marker dictionary name of the currently selected widgetGraph
+        Returns:
+            current index graphWidgtet default marker name
+        """
         graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
         return graphWidget.defaultMarkerDictName
 
     def openChangeMarkerPreset(self, defaultPresetName=None):
+        """
+        executes and shows a MarkerPresetWindow
+        Args:
+            defaultPresetName:
+
+        Returns:
+
+        """
         markerPresetWin = MarkerPresetWindow(self, self.nameToColorDict, self.markerPresetList)
-        if (markerPresetWin.exec()):
+        if markerPresetWin.exec():
             for markerDict in self.markerPresetList:
-                if (defaultPresetName in markerDict.values()):
+                if defaultPresetName in markerDict.values():
                     return markerDict
         else:
             return None
 
 
     def loadPreset(self):
+        """
+        This method loads preset settings from the settings.json file.
+
+        This method initializes a SettingsWindow object with saved or default settings. It also handles missing keys in
+        the loaded settings by filling with default values, and prompts for a settings reset if required. The method also
+        loads marker presets from the markerPresets.json file if they exist.
+
+        If settings.json or markerPresets.json is not found, it handles these exceptions and initializes with default values
+        or shows a message accordingly.
+
+        Note: Strings to show in graph are hard-coded into this method.
+
+        Args:
+            None.
+
+        Returns:
+            None. The method updates the settingsWindow, defaultMarkerDictName, nameToColorDict, and markerPresetList
+            attributes of the instance.
+        """
         strsToShowInGraph = ["number", "0_diameter", "1_mHeight", "3_objecttype", "5_name"]
         settingsDict = {"defaultMarkerDictName": "",
                         "heightWidgetTopPerc": 15,

@@ -122,13 +122,13 @@ class AutoSizedTable(QTableWidget):
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         # Disable moving down on Enter
-        if event.key() in {Qt.Key_Return, Qt.Key_Enter}:
+        if event.key() in {Qt.Key_Return, Qt.Key_Enter, Qt.Key_Tab}:
             self.focusNextPrevChild(True)
         else:
             super().keyPressEvent(event)
 
-    def focusNextPrevChild(self, next):
-        if (next):
+    def focusNextPrevChild(self, nextPrev):
+        if nextPrev:
             currentRow = self.currentRow()
             currentColumn = self.currentColumn()
             while True:
@@ -137,7 +137,7 @@ class AutoSizedTable(QTableWidget):
 
                 nextItem = self.item(currentRow, currentColumn)
 
-                if (nextItem and nextItem.flags() & Qt.ItemIsEditable):
+                if nextItem and nextItem.flags() & Qt.ItemIsEditable:
                     self.setCurrentCell(nextItem.row(), nextItem.column())
                     break
 
@@ -185,7 +185,7 @@ class MyDelegate(QStyledItemDelegate):
 
         editor.editingFinished.disconnect(self._handleEditingFinished)
 
-        # After editing, move the focus to the next cell
+        # After editing, move the focus to the nextPrev cell
         tableWidget = editor.parent().parent()
         current = tableWidget.currentItem()
         row = current.row()
@@ -662,7 +662,7 @@ class WidgetGraph(QWidget):
             itemName = None
             itemNumbers = None
             '''
-            rowStart = row % 6 + (1 - row // 6) # get the next row index
+            rowStart = row % 6 + (1 - row // 6) # get the nextPrev row index
             columnStart = column + row // 6
             for i in range(columnStart, self.tableWidgetMarker.columnCount()):
                 for j in range(rowStart, self.tableWidgetMarker.rowCount()):

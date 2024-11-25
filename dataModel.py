@@ -6,6 +6,40 @@ import logging
 
 
 class DataModel:
+    """
+    Class that represents a data model object that handles the widgetGraph data
+
+    Args:
+    datasource (str): the path to the data source
+    listNameKeys (list): List of keys to identify data names.
+    jsonData (dict): Optional JSON data to initialize the model.
+
+    Attributes:
+    _name (str): Name of the data model.
+    _dataDrill (list): Data related to drilling.
+    _dataFeed (list): Data related to feed.
+    _depthMsmt (str): Measurement of depth.
+    _customData (dict): Custom data fields.
+    jsonData (dict): JSON data for the model.
+    markerStateList (list): List of marker states.
+    dx_xlim (int): Limit on x-axis.
+    commentRight (str): Right comment for the data model.
+    _dataNameDict (dict): Dictionary for mapping data names.
+    fileDefaultPresetName (str): Default preset name for the file.
+    fileDefaultSavePath (str): Default save path for the file.
+
+    Raises:
+    Exception: If the extension of the datasource is not valid.
+
+    Methods:
+    _readDataFromRGP(file): Read data from RGP file format.
+    _readDataFromCustom(file): Read data from custom file format.
+    _formatListToDict(tmpData): Format a list to dictionary.
+    setComment(comment): Set a comment for the data model.
+    getComment(): Get the comment for the data model.
+    getGraphData(): Get the graph data for the data model.
+
+    """
     def __init__(self, datasource, listNameKeys, jsonData=None):
         self._name = ""
         self._dataDrill = None
@@ -59,12 +93,28 @@ class DataModel:
             self._depthMsmt = self._data["depthMsmt"]
         elif 'rif' in datasource.lower() or datasource == "":
             self.fileDefaultSavePath = '/'.join(datasource.split('/')[:-1])
-            self._readDataFromCustom(datasource)
+            self._readDataFromCustom()
 
         else:
             raise Exception("ERROR: extension '{0}' is not valid".format(datasource.split(".")[-1]))
 
-    def _readDataFromRGP(self, file):
+    def _readDataFromRGP(self, file: str):
+
+        """
+        Reads data from a file in RGP format and converts the extracted data into a dictionary.
+
+        Args:
+            file (str): Path to the data file.
+
+        Returns:
+            dict: Processed data from RGP file in dictionary format.
+
+        Notes:
+            - The data is read line by line and specific information is extracted, like 'drill', 'feed', 'date', 'time', etc.
+            - Certain lines that contain red flag characters are skipped.
+            - Some data is formatted for specific fields of the dictionary. For example, date and time readings are combined into one entry.
+            - If any exceptions are encountered, those are simply printed out and process continues with the next line.
+        """
         tmpData = []
 
         charsRedFlags = ("{", "}", "wi", "\"dd\"", "pole", "\"set\"", "p2", "\"res\"", "ssd", "p1",
@@ -77,31 +127,31 @@ class DataModel:
         with (open(file, 'r', errors="ignore") as f):
             line = f.readline()
             while line:
-                if (any(flag in line for flag in charsRedFlags)):
+                if any(flag in line for flag in charsRedFlags):
                     line = f.readline()
                     continue
-                if ("\"drill\"" in line):
+                if "\"drill\"" in line:
                     strList = line.split("[")[1].replace("]", "").strip().split(",")[0:-1]
                     self._dataDrill = [float(num) for num in strList]
                     line = f.readline()
                     continue
-                elif ("\"feed\"" in line):
+                elif "\"feed\"" in line:
                     strList = line.split("[")[1].replace("]", "").strip().split(",")[0:-1]
                     self._dataFeed = [float(num) for num in strList]
                     line = f.readline()
                     continue
-                elif (any(s in line for s in ["dateYear", "dateMonth", "dateDay"])):
+                elif any(s in line for s in ["dateYear", "dateMonth", "dateDay"]):
                     datePart = line.split(":")[1].strip()[:-1]
-                    if (len(datePart) == 1):
+                    if len(datePart) == 1:
                         datePart = "0" + datePart
 
                     date = datePart + "." + date
-                    if ("dateDay" in line):
+                    if "dateDay" in line:
                         tmpData.append("date; " + date[:-1])
 
                     line = f.readline()
                     continue
-                elif (any(s in line for s in ["timeHour", "timeMinute", "timeSecond"])):
+                elif any(s in line for s in ["timeHour", "timeMinute", "timeSecond"]):
                     timePart = line.split(":")[1].strip()[:-1]
                     if (len(timePart) == 1):
                         timePart = "0" + timePart
@@ -164,7 +214,27 @@ class DataModel:
 
     # @todo check if the name/color pairs of each marker fits the name/color pair of the nameToColorDict
     # if it doesnt dont change the color but create a seperate dict with that
-    def _readDataFromCustom(self, file):
+    def _readDataFromCustom(self):
+        """
+        This method reads and assigns data from a loaded JSON state to specific attributes of the class.
+
+        It extracts information related to the name, comment rights, presets,
+        data related to drilling and feeding, depth measurement, and marker states.
+
+        If any data is not found, a KeyError is caught and a message is printed.
+
+        The JSON state is assumed to be stored in the class attribute `jsonData`.
+
+        Parameter:
+        file: The file from which the data is read.
+              Note: The parameter `file` isn't used in the code block and might be removed if not necessary.
+
+        Returns:
+        None
+
+        Raises:
+        KeyError: If expected data is not found in the JSON state.
+        """
         loadedState = self.jsonData
         try:
             self._data = loadedState["data"]
@@ -202,6 +272,17 @@ class DataModel:
 
 
     def getTablaTopData(self):
+        """
+        This method formats the data specified by `self._dataNameDict` into lists of QTableWidgetItems
+        representing names and associated data.
+
+        The table entries are formatted and styled within the function. Entries that aren't custom and are
+        read from the rgp file are not editable, same goes for the name strings
+
+        Returns:
+        list: A list containing two lists. The first list contains QTableWidgetItems for the names,
+            and the second list contains associated data as QTableWidgetItems.
+        """
         result_dict = self._dataNameDict
         collectedTableNames = []
         collectedTableData = []
@@ -251,14 +332,48 @@ class DataModel:
 
 
     def getDataByKey(self, key):
+        """
+        this method returns data corresponding to a key
+        Args:
+            key: the key to look for
+
+        Returns:
+            _data entry corresponding to the key
+        """
         return self._data[key]
 
     def getNameByKey(self, key):
+        """
+        this method returns the name of a key
+        Args:
+            key: the key to look for
+
+        Returns:
+            the name corresponding to the key
+        """
         return self._dataNameDict[key]
 
-    def changeCustomDataEntry(self, row, column, entry):
-        if (column == 1):
-            if (row == 0):
+    def changeCustomDataEntry(self, row: int, column: int, entry):
+        """
+        Updates the custom data in the data model.
+
+        Changes the value of a specific attribute in the data model given the table row and column
+        where the attribute is represented.
+
+        Args:
+            row (int): The row index of the table where the attribute is located.
+            column (int): The column index of the table where the attribute is located.
+            entry (str): The new value to set for the attribute.
+
+        Notes:
+            - If the value to be changed is located in column 1, the modified fields will be either "number"
+              (if the row is 0) or "idNumber" (for other rows).
+            - If the value is in a different column, it's associated with custom data. In this case,
+              the index for identifying the right key in the data dictionary is computed based on
+              the row and column position, and the entry in the dict is updated accordingly.
+        """
+        if column == 1:
+            if row == 0:
                 self._data["number"] = entry
             else:
                 self._data["idNumber"] = entry
@@ -272,6 +387,18 @@ class DataModel:
 
 
     def getSaveState(self):
+        """
+        This method gathers necessary data for saving the state of the current instance.
+
+        It collects data values from `self._data` and custom data from `self._customData`,
+        as well as other attributes of the class such as `self._name`, `self._depthMsmt`,
+        `self._dataDrill`, `self._dataFeed`, `self.commentRight`, and `self.fileDefaultPresetName`.
+
+        If a key is not found in `self._data`, a warning is logged.
+
+        Returns:
+        dict: A dictionary containing key-value pairs representing the state of the instance.
+        """
         dataKeys = ["number", "idNumber", "depthMsmt", "date", "time", "speedFeed", "speedDrill", "tiltAngle",
                     "result", "offset", "remark", "graphAvgShow"]
         dataKeys.extend(list(self._customData.keys()))
@@ -288,8 +415,6 @@ class DataModel:
                               "deviceLength": self._depthMsmt,
                               "dataDrill": self._dataDrill,
                               "dataFeed": self._dataFeed}
-
-        print(f'time in dataModel.getSaveState: {keyValuePairs["time"]}')
 
         commentDic = {"commentRight": self.commentRight}
         defaultMarkerNameDic = {"fileDefaultPresetName": self.fileDefaultPresetName}
