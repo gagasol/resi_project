@@ -117,6 +117,8 @@ class CustomPlotWidget(pg.PlotWidget):
         self.markerPresetNames = markerPresetsList
         self.xLimit = xLimit
 
+        self._unsavedPaintChange = False
+
         self.lastClicks: List[float] = []
         self.markerList: List[MarkerRectItem] = []
         self.figureList = []
@@ -130,6 +132,7 @@ class CustomPlotWidget(pg.PlotWidget):
         self.draggingMarker = False
 
         self.createGridLines()
+        self.toggleGrid()
 
     def changeAxisFontsize(self, fontSize):
         color = self.settings.getSettingsVariable('colorLabel')
@@ -332,6 +335,7 @@ class CustomPlotWidget(pg.PlotWidget):
 
                     self.addMarker(tmpMarkerState)
                     self.lastClicks.remove(self.lastClicks[0])
+                    self.canvasPaintingChanged()
 
             elif not self.lastClicks and event.button() == Qt.RightButton:
                 mousePoint = self.getPlotItem().vb.mapSceneToView(pos)
@@ -458,6 +462,7 @@ class CustomPlotWidget(pg.PlotWidget):
             self.switchMarking()
         self.markingRegion.hide()
         self.setFocus()
+        self.canvasPaintingChanged()
 
     def deleteFigure(self, figure):
         self.figureList.remove(figure)
@@ -506,6 +511,15 @@ class CustomPlotWidget(pg.PlotWidget):
             x = 0
 
         self.parentWindow.updateTableMarkerEntry(index, name, color, x, dx)
+
+    def canvasPaintingChanged(self):
+        self._unsavedPaintChange = True
+
+    def canvasSaved(self):
+        self._unsavedPaintChange = False
+
+    def canvasNeedsSave(self):
+        return self._unsavedPaintChange
 
     def getCanvasState(self):
         markerStateList = []

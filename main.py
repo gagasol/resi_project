@@ -130,6 +130,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ui.pushButtonOpen.clicked.connect(self.openButtonClicked)
         self.ui.pushButtonSave.clicked.connect(self.saveButtonClicked)
         self.ui.actionSaveAs.triggered.connect(self.showSaveFileDialog)
+        self.ui.actionSaveAll.triggered.connect(self.saveAllOpenTabs)
         self.ui.pushButtonTabView.clicked.connect(self.tabButtonClicked)
         self.ui.pushButtonWindowView.clicked.connect(self.windowButtonClicked)
         self.ui.pushButtonPdf.clicked.connect(self.pdfButtonClicked)
@@ -323,6 +324,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.saveGraphState(graphWidget)
         print("saveButtonClicked")
 
+    def saveAllOpenTabs(self):
+        for graphWidget in self.listGraphWidgets:
+            self.saveGraphState(graphWidget)
 
     def showSaveFileDialog(self):
         graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
@@ -362,14 +366,17 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 print(f'filename in saveGraphState: {graphWidget.name}')
                 with open(path + '/' + graphWidget.name + ".rif", "w") as file:
                     json.dump(graphWidget.getCurrentState(), file)
+                    graphWidget.canvasGraph.canvasSaved()
             else:
                 with open(path, "w") as file:
                     json.dump(graphWidget.getCurrentState(), file)
+                    graphWidget.canvasGraph.canvasSaved()
         else:
             for widget in self.listGraphWidgets:
                 path = self.settingsWindow.getSettingsVariable('defaultFolderPath')
                 with open(path + '/' + graphWidget.name + ".rif", "w") as file:
                     json.dump(widget.getCurrentState(), file)
+                    graphWidget.canvasGraph.canvasSaved()
 
 
     # functionality for the pushButtonTabView QPushButton
@@ -393,20 +400,29 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         """
         tabWidget = self.ui.tabWidget.widget(index)
-        reply = QMessageBox.question(self, QObject.tr("Confirm close"), QObject.tr("Save before you close?"),
-                                     QMessageBox.Save | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
-        if reply == QMessageBox.Save:
-            if tabWidget is not None:
-                with open(tabWidget.name + ".rif", "w") as file:
-                    json.dump(tabWidget.getCurrentState(), file)
-                tabWidget.deleteLater()
-                self.listGraphWidgets.remove(tabWidget)
-            self.ui.tabWidget.removeTab(index)
+        needsSaving = tabWidget.canvasGraph.canvasNeedsSave()
+        if needsSaving:
+            reply = QMessageBox.question(self, QObject.tr("Confirm close"), QObject.tr("Save before you close?"),
+                                         QMessageBox.Save | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
+            if reply == QMessageBox.Save:
+                if tabWidget is not None:
+                    with open(tabWidget.name + ".rif", "w") as file:
+                        json.dump(tabWidget.getCurrentState(), file)
+                    tabWidget.deleteLater()
+                    self.listGraphWidgets.remove(tabWidget)
+                self.ui.tabWidget.removeTab(index)
 
-        elif reply == QMessageBox.No:
-            if tabWidget is not None:
-                tabWidget.deleteLater()
-                self.listGraphWidgets.remove(tabWidget)
+            elif reply == QMessageBox.No:
+                if tabWidget is not None:
+                    tabWidget.deleteLater()
+                    self.listGraphWidgets.remove(tabWidget)
+                self.ui.tabWidget.removeTab(index)
+
+            return
+
+        if tabWidget is not None:
+            tabWidget.deleteLater()
+            self.listGraphWidgets.remove(tabWidget)
             self.ui.tabWidget.removeTab(index)
 
 

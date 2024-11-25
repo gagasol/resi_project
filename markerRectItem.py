@@ -129,6 +129,7 @@ class MarkerRectItem(QGraphicsRectItem):
     def mousePressEvent(self, event):
         if self.isUnderMouse():
             self._canvas.draggingMarker = True
+            self._canvas.canvasPaintingChanged()
             self.lastMousePosX = event.pos().x()
             if event.pos().x() < self._x0 + self._width * 0.1:
                 self.markerDragArea = "left"

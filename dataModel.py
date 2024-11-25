@@ -71,7 +71,7 @@ class DataModel:
             "speedFeed": QObject.tr('Vorschub'),
             "speedDrill": QObject.tr('Drehzahl'),
             "tiltAngle": QObject.tr('Neigung'),
-            "result": QObject.tr('Nadelstatus'),
+            "ncState": QObject.tr('Nadelstatus'),
             "offset": QObject.tr('Offset'),
             "graphAvgShow": QObject.tr('Mittelung'),
             "empty": "",
@@ -240,6 +240,7 @@ class DataModel:
         loadedState = self.jsonData
         try:
             self._data = loadedState["data"]
+            self._data.update({'ncState': 0})
             self._name = self._data["selfName"]
             self.commentRight = self._data["commentRight"]
             self.dx_xlim = loadedState["dx_xlim"]
@@ -402,17 +403,18 @@ class DataModel:
         dict: A dictionary containing key-value pairs representing the state of the instance.
         """
         dataKeys = ["number", "idNumber", "depthMsmt", "date", "time", "speedFeed", "speedDrill", "tiltAngle",
-                    "result", "offset", "remark", "graphAvgShow"]
+                    "ncState", "offset", "remark", "graphAvgShow"]
         dataKeys.extend(list(self._customData.keys()))
 
-        keyValuePairs = {}
+        keyValuePairs = self._data
+        '''
         for key in dataKeys:
             try:
                 value = self._data[key]
                 keyValuePairs[key] = value
             except KeyError as kE:
                 logging.exception(f"Warning: Key '{kE.args[0]}' not found in self._data.")
-
+        '''
         graphDataKeyValues = {"selfName": self._name,
                               "deviceLength": self._depthMsmt,
                               "dataDrill": self._dataDrill,

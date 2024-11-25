@@ -163,6 +163,7 @@ class Ui_MainWindow(object):
         self.menu = QMenu(self.pushButton)
 
         self.actionSaveAs = self.menu.addAction(QObject.tr('Save as..'))
+        self.actionSaveAll = self.menu.addAction(QObject.tr('Save all'))
 
         self.pushButton.setMenu(self.menu)
 
