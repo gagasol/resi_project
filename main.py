@@ -337,8 +337,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         if fileName:
             defaultFilePath = '/'.join(fileName.split('/')[:-1])
+            print(f'defaultFilePath in main: {defaultFilePath}')
             graphWidget.dataModel.fileDefaultSavePath = defaultFilePath
-            self.saveGraphState(graphWidget)
+            self.saveGraphState(graphWidget, fileName)
 
     # @todo change this
     def saveGraphState(self, graphWidget, path=""):
@@ -357,7 +358,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     path = self.settingsWindow.getSettingsVariable('defaultFolderPath')
                 else:
                     path = graphWidget.dataModel.fileDefaultSavePath
-                print(path)
+                print(f'path in saveGraphState: {path}')
+                print(f'filename in saveGraphState: {graphWidget.name}')
                 with open(path + '/' + graphWidget.name + ".rif", "w") as file:
                     json.dump(graphWidget.getCurrentState(), file)
             else:
