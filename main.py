@@ -81,7 +81,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.test_file_path = "C:/Users/Heisenberg/Documents/Programming/Python/resi_project/resi/resiProject/Ka_Adl2M001.rgp"
 
-    # variable setup
+        # variable setup
 
         self.pickMarkerWin = None
         self.markerPresetWin = None
@@ -92,7 +92,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.listNameKeys = []
         self.markerPresetList = []
         self.nameOfFile = ''
-        self.lastDirectory = ''
 
         self.defaultMarkerDictName = ""
 
@@ -115,6 +114,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         }
         print('115 executed in main.py')
         self.loadPreset()
+        self.lastDirectory = self.settingsWindow.getSettingsVariable('defaultFolderPath')
 
         self.loadOpenMenu()
         print('118 executed in main.py')
@@ -125,7 +125,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.flagWindowClosedByUserSignal = False
         # endregion
 
-    # button events
+        # button events
         # clicked events
         self.ui.pushButtonOpen.clicked.connect(self.openButtonClicked)
         self.ui.pushButtonSave.clicked.connect(self.saveButtonClicked)
@@ -144,26 +144,37 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     #TDL!!!!
 
-        #self.openButtonClicked(self.test_file_path)
-
+    #self.openButtonClicked(self.test_file_path)
 
     # functionality for QPushButtons
 
     # functionality for the pushButtonOpen QPushButton
     # @todo add multiple file input
     # @todo get rid of the fileName argument befeore release
-    def openButtonClicked(self, fileName=None):
-        self.logger.info("~~~~~~~~~~~~ openButtonClicked ~~~~~~~~~~~~")
-        if not fileName:
-            fileName, _ = QFileDialog.getOpenFileName(None, "Select File", self.lastDirectory,
-                                                      "*.rgp *.rif;;*.rgp;;*.rif")
-            if fileName and 'rif' or 'rgp' in fileName:
-                self.lastDirectory = '/'.join(fileName.split('/')[:-1])
+    def openButtonClicked(self, pathToFile=None):
 
-        self.logger.info("filename :{0}".format(fileName))
-        if fileName == "":
+        if not pathToFile:
+            pathToFiles = QFileDialog.getOpenFileNames(None, 'Select Files', self.lastDirectory,
+                                                       '*.rgp * .rif;;*.rgp;;*.rif')
+
+            for pathToFile in pathToFiles[0]:
+                print(pathToFile)
+                if 'rif' or 'rgp' in pathToFile:
+                    self.lastDirectory = '/'.join(pathToFile.split('/')[:-1])
+
+                self.openNewFile(pathToFile)
+        '''
+        self.logger.info("~~~~~~~~~~~~ openButtonClicked ~~~~~~~~~~~~")
+        if not pathToFile:
+            pathToFile, _ = QFileDialog.getOpenFileName(None, "Select File", self.lastDirectory,
+                                                        "*.rgp *.rif;;*.rgp;;*.rif")
+            if pathToFile and 'rif' or 'rgp' in pathToFile:
+                self.lastDirectory = '/'.join(pathToFile.split('/')[:-1])
+
+        self.logger.info("filename :{0}".format(pathToFile))
+        if pathToFile == "":
             return
-        self.nameOfFile = fileName.split('/')[-1].split('.')[0]
+            
         if ".rif" in fileName:
             if fileName not in self.settingsWindow.getSettingsVariable('recentFiles'):
                 self.settingsWindow.addRecentFile(fileName)
@@ -207,30 +218,91 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if pathName not in self.settingsWindow.getSettingsVariable('recentFolders'):
             self.settingsWindow.addRecentFolder(pathName)
 
-        self.loadOpenMenu()
+        self.loadOpenMenu()'''
 
         #self.ui.tabWidget.addTab(widget, widget.name)
+
+    def openNewFile(self, pathToFile):
+
+        filename = pathToFile.split('/')[-1]
+
+        nameOfFile, suffix = filename.rsplit('.', 1)
+
+        print(f' pathToFile: {pathToFile}\n filename: {filename}\n suffix: {suffix}')
+
+        if suffix == "rif":
+            if pathToFile not in self.settingsWindow.getSettingsVariable('recentFiles'):
+                self.settingsWindow.addRecentFile(pathToFile)
+                print(f'YAHZI!: {pathToFile}')
+            try:
+                with open(pathToFile, "r") as file:
+                    loadedState = json.load(file)
+
+                logging.info(" canvas :{0}".format(loadedState))
+                widget = WidgetGraph(self, pathToFile, loadedState)
+                self.listGraphWidgets.append(widget)
+                self.ui.tabWidget.addTab(widget, nameOfFile)
+                self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() - 1)
+
+            except FileNotFoundError:
+                print('File not found')
+                self.settingsWindow.removeRecentFile(pathToFile)
+
+
+
+        elif suffix == 'project':
+            with open(pathToFile, "r") as file:
+                loadedState = json.load(file)
+
+            for canvas in loadedState:
+                print("loadedState len > 1")
+                logging.info(" canvas :{0}".format(canvas))
+                widget = WidgetGraph(self, "", canvas)
+                self.listGraphWidgets.append(widget)
+                self.ui.tabWidget.addTab(widget, nameOfFile)
+
+        else:
+            widget = WidgetGraph(self, pathToFile)
+            self.listGraphWidgets.append(widget)
+            self.ui.tabWidget.addTab(widget, nameOfFile + ".rgp")
+
+            self.ui.tabWidget.setCurrentIndex(len(self.listGraphWidgets) - 1)
+            self.ui.tabWidget.setCurrentIndex(self.ui.tabWidget.count() - 1)
+
+        pathToFileFolder = '/'.join(pathToFile[0:-1].split('/')[0:-1])
+        if pathToFileFolder not in self.settingsWindow.getSettingsVariable('recentFolders'):
+            self.settingsWindow.addRecentFolder(pathToFileFolder)
+
+        self.loadOpenMenu()
 
     def openActionClicked(self):
         action = self.sender()
         filePath = action.data()
         if '.rif' in filePath:
             print('Rif detected opening file')
-            self.openButtonClicked(filePath)
+            self.openNewFile(filePath)
         else:
-            print('Opening Folder now..')
-            fileName, _ = QFileDialog.getOpenFileName(None, "Select File", filePath,
-                                                      "*.rgp *.rif;;*.rgp;;*.rif")
-            if fileName:
-                self.openButtonClicked(fileName)
+            pathToFiles = QFileDialog.getOpenFileNames(None, 'Select Files', self.lastDirectory,
+                                                       '*.rgp * .rif;;*.rgp;;*.rif')
+
+            for pathToFile in pathToFiles[0]:
+                print(pathToFile)
+                if 'rif' or 'rgp' in pathToFile:
+                    self.lastDirectory = '/'.join(pathToFile.split('/')[:-1])
+
+                self.openNewFile(pathToFile)
 
     def openDefaultFolderDialog(self):
         folderPath = self.settingsWindow.getSettingsVariable('defaultFolderPath')
-        fileName, _ = QFileDialog.getOpenFileName(None, "Select File", folderPath,
-                                                  "*.rgp *.rif;;*.rgp;;*.rif")
+        pathToFiles = QFileDialog.getOpenFileNames(None, 'Select Files', folderPath,
+                                                   '*.rgp * .rif;;*.rgp;;*.rif')
 
-        if fileName:
-            self.openButtonClicked(fileName)
+        for pathToFile in pathToFiles[0]:
+            print(pathToFile)
+            if 'rif' or 'rgp' in pathToFile:
+                self.lastDirectory = '/'.join(pathToFile.split('/')[:-1])
+
+            self.openNewFile(pathToFile)
 
     def openAllRifInFolder(self):
         folderPath = QFileDialog.getExistingDirectory(None, 'Select Folder')
@@ -238,7 +310,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             for fileName in fileNames:
                 filepath = os.path.join(dirPath, fileName)
                 if '.rif' in filepath:
-                    self.openButtonClicked(filepath)
+                    self.openNewFile(filepath)
 
     def openAllRGPInFolder(self):
         folderPath = QFileDialog.getExistingDirectory(None, 'Select Folder')
@@ -246,7 +318,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             for fileName in fileNames:
                 filepath = os.path.join(dirPath, fileName)
                 if '.rgp' in filepath:
-                    self.openButtonClicked(filepath)
+                    self.openNewFile(filepath)
 
     def addEntriesToOpenMenu(self, names: list[str], paths: list[str]):
         """
@@ -301,15 +373,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             folderName = '...' + '/'.join(pathArr[-lenFolderName:])
             folderNames.append(folderName)
 
-        for i in range(len(openMenu.actions())-3, -1, -1):
+        for i in range(len(openMenu.actions()) - 3, -1, -1):
             action = openMenu.actions()[i]
             openMenu.removeAction(action)
 
-
-
         self.addEntriesToOpenMenu(folderNames, folderPaths)
         self.addEntriesToOpenMenu(filenames, filepaths)
-
 
     # functionality for the pushButtonSave QPushButton
     def saveButtonClicked(self):
@@ -378,7 +447,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     json.dump(widget.getCurrentState(), file)
                     graphWidget.canvasGraph.canvasSaved()
 
-
     # functionality for the pushButtonTabView QPushButton
     def tabButtonClicked(self):
         if self.ui.stackedWidgetWorkArea.currentIndex() != 0:
@@ -388,7 +456,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.ui.tabWidget.addTab(graphWidget, graphWidget.name)
 
         self.ui.stackedWidgetWorkArea.setCurrentIndex(0)
-
 
     def closeTab(self, index):
         """
@@ -425,7 +492,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.listGraphWidgets.remove(tabWidget)
             self.ui.tabWidget.removeTab(index)
 
-
     # functionality for the pushButtonWindowView QPushButton
     def windowButtonClicked(self):
         QMessageBox.warning(self, "Under construction", "This function is still under construction")
@@ -445,21 +511,19 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ui.stackedWidgetWorkArea.setCurrentIndex(1)
         self.ui.mdiArea.tileSubWindows()
 
-
     def pdfButtonClicked(self):
         graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
         filename = self.ui.tabWidget.tabText(self.ui.tabWidget.currentIndex())
         PrintWindow(graphWidget, self.settingsWindow, 'pdf', filename)
-
 
     def pngButtonClicked(self):
         graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
         filename = self.ui.tabWidget.tabText(self.ui.tabWidget.currentIndex())
         PrintWindow(graphWidget, self.settingsWindow, 'png', filename)
 
-
     def settingsButtonClicked(self):
-        self.markerPresetWin = MarkerPresetWindow(self, self.nameToColorDict, self.markerPresetList, calledByGraph=False)
+        self.markerPresetWin = MarkerPresetWindow(self, self.nameToColorDict, self.markerPresetList,
+                                                  calledByGraph=False)
         if self.settingsWindow.exec():
             for canvas in self.listGraphWidgets:
                 canvas.updateUi()
@@ -628,7 +692,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             return None, None
 
-
     def overridePickMarkerDict(self, markerDict=None, name="", col=""):
         graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
         if name != "":
@@ -670,7 +733,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     return markerDict
         else:
             return None
-
 
     def loadPreset(self):
         """
@@ -734,8 +796,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.settingsWindow = SettingsWindow(loadedFile[0], mainWindow=self)
                 self.defaultMarkerDictName = self.settingsWindow.getSettingsVariable("defaultMarkerDictName")
                 self.nameToColorDict = loadedFile[1]
-                # self.markerPresetList = loadedFile[2]
-                print('581 executed in main.py.loadPreset()')
         except FileNotFoundError:
 
             self.settingsWindow = SettingsWindow(settingsDict, mainWindow=self)
@@ -760,7 +820,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         except FileNotFoundError:
             print('No presets file found')
 
-
     def savePreset(self):
         with open('./settings/markerPresets.json', 'w') as file:
             json.dump(self.markerPresetList, file, indent=2)
@@ -774,7 +833,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             json.dump(saveData, f, indent=2)
 
     # algorithms
-
 
     # TDL functions I use for things
 
