@@ -394,8 +394,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         print("saveButtonClicked")
 
     def saveAllOpenTabs(self):
-        for graphWidget in self.listGraphWidgets:
+        tabWidget = self.ui.tabWidget
+
+        for i in range(tabWidget.count()):
+            if ".rgp" in tabWidget.tabText(i):
+                tabWidget.setTabText(i, tabWidget.tabText(i).split(".rgp")[0])
+            graphWidget = tabWidget.widget(i)
             self.saveGraphState(graphWidget)
+
 
     def showSaveFileDialog(self):
         graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
