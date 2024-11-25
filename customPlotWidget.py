@@ -132,8 +132,12 @@ class CustomPlotWidget(pg.PlotWidget):
         self.createGridLines()
 
     def changeAxisFontsize(self, fontSize):
-        self.getAxis("bottom").setLabel(QObject().tr("Tiefe"), units="cm", **{'font-size': str(fontSize)+"pt"})
-        self.getAxis("left").setLabel(QObject().tr("Widerstand"), units="%", **{'font-size': str(fontSize)+"pt"})
+        color = self.settings.getSettingsVariable('colorLabel')
+
+        self.getAxis("bottom").setLabel(QObject().tr("Tiefe"), units="cm", color=color,
+                                        **{'font-size': str(fontSize) + "pt"})
+        self.getAxis("left").setLabel(QObject().tr("Widerstand"), units="%", color=color,
+                                      **{'font-size': str(fontSize) + "pt"})
 
     def initAxisLabels(self):
         fontSize = self.settings.getSettingsVariable('labelFontSize')

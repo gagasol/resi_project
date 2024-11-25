@@ -54,6 +54,7 @@ class PrintWindow:
         heightGraph = self.settings.getSettingsVariable("printHeightWidgetGraphPerc")
         heightBottom = self.settings.getSettingsVariable("printHeightWidgetBottomPerc")
         fontSize = int(self.settings.getSettingsVariable("printFontSize"))
+        printLabelFontSize = int(self.settings.getSettingsVariable("printLabelFontSize"))
 
         tableDataMaxItemHeight = (self.outputHeight * heightTop/100) / 6
         tableMarkerMaxItemHeight = (self.outputHeight * heightBottom / 100) / 6
@@ -61,7 +62,7 @@ class PrintWindow:
         self.toggleUI('hide', True)
 
         self.graphWidget.changeWidgetsRelSpace(heightTop, heightGraph, heightBottom)
-        self.graphWidget.canvasGraph.changeAxisFontsize(26)
+        self.graphWidget.canvasGraph.changeAxisFontsize(printLabelFontSize)
 
         self.graphWidget.tableWidgetData.show()
         for i in range(self.graphWidget.tableWidgetData.rowCount()):
