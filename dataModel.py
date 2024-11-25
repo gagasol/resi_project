@@ -89,7 +89,7 @@ class DataModel:
             self._data = self._readDataFromRGP(datasource)
             self.fileDefaultSavePath = '/'.join(datasource.split('/')[:-1])
 
-            self._name = datasource.split(".")[0].split("/")[-1]
+            self._name = datasource.split('/')[-1].split('.')[0]
             self._depthMsmt = self._data["depthMsmt"]
             print(f'datasource in dataModel at ini: {datasource}')
             print(f'name in dataModel at ini: {self._name}')
