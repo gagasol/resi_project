@@ -802,7 +802,6 @@ class WidgetGraph(QWidget):
         state.update({"markerState": markerStateList})
 
         state.update({"dx_xlim": self.dxMarkerForTable})
-        self.logger.info("state: {0}".format(state))
         return state
 
     def saveComment(self):

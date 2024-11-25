@@ -91,8 +91,6 @@ class DataModel:
 
             self._name = datasource.split('/')[-1].split('.')[0]
             self._depthMsmt = self._data["depthMsmt"]
-            print(f'datasource in dataModel at ini: {datasource}')
-            print(f'name in dataModel at ini: {self._name}')
         elif 'rif' in datasource.lower() or datasource == "":
             self.fileDefaultSavePath = '/'.join(datasource.split('/')[:-1])
             self._readDataFromCustom()
@@ -406,7 +404,7 @@ class DataModel:
                     "ncState", "offset", "remark", "graphAvgShow"]
         dataKeys.extend(list(self._customData.keys()))
 
-        keyValuePairs = self._data
+        keyValuePairs = self._data.copy()
         '''
         for key in dataKeys:
             try:
