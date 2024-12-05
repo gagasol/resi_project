@@ -184,6 +184,16 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout.addWidget(self.pushButtonPdf)
 
+        self.pushButton_3 = QPushButton(self.frameTop)
+        self.pushButton_3.setObjectName(u"pushButton_3")
+        self.pushButton_3.setMinimumSize(QSize(15, 25))
+        self.pushButton_3.setMaximumSize(QSize(15, 25))
+        self.pushButton_3.setStyleSheet(u"QPushButton::menu-indicator{ image: none; }")
+        self.pushButton_3.setIcon(icon2)
+        self.pushButton_3.setIconSize(QSize(15, 25))
+
+        self.horizontalLayout.addWidget(self.pushButton_3)
+
         self.horizontalSpacer_4 = QSpacerItem(6, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout.addItem(self.horizontalSpacer_4)
@@ -196,6 +206,33 @@ class Ui_MainWindow(object):
         self.pushButtonPng.setIconSize(QSize(25, 25))
 
         self.horizontalLayout.addWidget(self.pushButtonPng)
+
+        self.pushButton_2 = QPushButton(self.frameTop)
+        self.pushButton_2.setObjectName(u"pushButton_2")
+        self.pushButton_2.setMinimumSize(QSize(15, 25))
+        self.pushButton_2.setMaximumSize(QSize(15, 25))
+        self.pushButton_2.setStyleSheet(u"QPushButton::menu-indicator{ image: none; }")
+        self.pushButton_2.setIcon(icon2)
+        self.pushButton_2.setIconSize(QSize(15, 25))
+
+        self.horizontalLayout.addWidget(self.pushButton_2)
+
+        self.horizontalSpacer_5 = QSpacerItem(6, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout.addItem(self.horizontalSpacer_5)
+
+        self.pushButtonPrint = QPushButton(self.frameTop)
+        self.pushButtonPrint.setObjectName(u"pushButtonPrint")
+        icon5 = QIcon()
+        icon5.addFile(u":/icons/icons/print.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.pushButtonPrint.setIcon(icon5)
+        self.pushButtonPrint.setIconSize(QSize(25, 25))
+
+        self.horizontalLayout.addWidget(self.pushButtonPrint)
+
+        self.horizontalSpacer_7 = QSpacerItem(6, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout.addItem(self.horizontalSpacer_7)
 
         self.horizontalSpacer_5 = QSpacerItem(6, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
 

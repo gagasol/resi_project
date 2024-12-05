@@ -134,6 +134,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ui.pushButtonTabView.clicked.connect(self.tabButtonClicked)
         self.ui.pushButtonWindowView.clicked.connect(self.windowButtonClicked)
         self.ui.pushButtonPdf.clicked.connect(self.pdfButtonClicked)
+        self.ui.pushButtonPrint.clicked.connect(self.printButtonClicked)
         self.ui.pushButtonToggleOverlay.clicked.connect(self.toggleOverlayButtonClicked)
         self.ui.pushButtonPng.clicked.connect(self.pngButtonClicked)
         self.ui.pushButtonSettings.clicked.connect(self.settingsButtonClicked)
@@ -520,12 +521,23 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def pdfButtonClicked(self):
         graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
         filename = self.ui.tabWidget.tabText(self.ui.tabWidget.currentIndex())
-        PrintWindow(graphWidget, self.settingsWindow, 'pdf', filename)
+        PrintWindow([graphWidget], self.settingsWindow).quickExportAs(graphWidget, 'pdf', filename)
 
+
+        '''
+        graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
+        filename = self.ui.tabWidget.tabText(self.ui.tabWidget.currentIndex())
+        PrintWindow(graphWidget, self.settingsWindow, 'pdf', filename)
+        '''
     def pngButtonClicked(self):
         graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
         filename = self.ui.tabWidget.tabText(self.ui.tabWidget.currentIndex())
-        PrintWindow(graphWidget, self.settingsWindow, 'png', filename)
+        PrintWindow([graphWidget], self.settingsWindow, ).quickExportAs(graphWidget, 'png', filename)
+
+    def printButtonClicked(self):
+        printWindow = PrintWindow(self.listGraphWidgets, self.settingsWindow)
+        printWindow.exec()
+
 
     def settingsButtonClicked(self):
         self.markerPresetWin = MarkerPresetWindow(self, self.nameToColorDict, self.markerPresetList,

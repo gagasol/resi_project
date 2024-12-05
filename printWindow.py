@@ -1,54 +1,88 @@
+from typing import Optional, Union
+
 from PySide6.QtCore import QSize, Qt, QCoreApplication, QMarginsF
 from PySide6.QtGui import QFont, QPixmap, QPainter, QPageSize, QTransform
 from PySide6.QtPrintSupport import QPrinter
+from PySide6.QtWidgets import QDialog
 
 import settingsWindow
-import widgetGraph
+from widgetGraph import WidgetGraph
+
+from ui_files.ui_printWindow import Ui_printWindow
 
 
-class PrintWindow:
-    def __init__(self, graphWidget: widgetGraph.WidgetGraph, settings: settingsWindow.SettingsWindow,
-                 suffix: str, filename: str):
-        self.suffix = suffix
-        self.graphWidget = graphWidget.copy()
+class PrintWindow(QDialog):
+    def __init__(self, listGraphWidget: list[WidgetGraph], settings: settingsWindow.SettingsWindow,
+                 parent=None):
+        super().__init__(parent)
+        self.ui = Ui_printWindow()
+        self.ui.setupUi(self)
+
+        self.ui.buttonBox.accepted.connect(self.accept)
+        self.ui.buttonBox.rejected.connect(self.reject)
+
+        graphWidgetNames = [graph.name for graph in listGraphWidget]
+
+        self.ui.createNameList(graphWidgetNames)
+
+        self.listGraphWidgets = listGraphWidget
         self.settings = settings
-        self.currentGraphWidth = graphWidget.width()
-        self.currentGraphHeight = graphWidget.height()
+        self.suffix = 'png'
 
-        self.fontDataUneven = graphWidget.tableWidgetData.item(0, 0).font()
-        self.fontDataEven = graphWidget.tableWidgetData.item(0, 1).font()
 
-        self.tableDataWidth = graphWidget.tableWidgetData.width()
 
-        self.outputWidth = 1920
-        self.outputHeight = 1080
+    def getPrintWidgetGraph(self, graphWidgetAtt: WidgetGraph, suffix: str, width: int, height: int) -> WidgetGraph:
+
+        graphWidget = graphWidgetAtt.copy()
+
+        currentGraphWidth = graphWidget.width()
+        currentGraphHeight = graphWidget.height()
+
+        fontDataUneven = graphWidget.tableWidgetData.item(0, 0).font()
+        fontDataEven = graphWidget.tableWidgetData.item(0, 1).font()
+
+        tableDataWidth = graphWidget.tableWidgetData.width()
+
+        outputWidth = width
+        outputHeight = height
 
         try:
-            self.fontMarkerTable = graphWidget.tableWidgetMarker.item(0, 0).font()
-            self.tableMarkerHeight = graphWidget.tableWidgetData.height()
+            fontMarkerTable = graphWidget.tableWidgetMarker.item(0, 0).font()
+            tableMarkerHeight = graphWidget.tableWidgetData.height()
         except AttributeError:
-            self.fontMarkerTable = None
+            fontMarkerTable = None
             graphWidget.tableWidgetMarker.hide()
 
-        if '.rgp' in filename:
-            self.filename = graphWidget.dataModel.fileDefaultSavePath + '/' + filename.replace('rgp', suffix)
-        else:
-            self.filename = graphWidget.dataModel.fileDefaultSavePath + '/' + filename + f'.{suffix}'
 
         if 'png' in suffix:
-            self.prepareWidgetForPrint(1920, 1080)
-            self.printPng()
-            self.resetWidgetAfterPrint()
-            print(f'png filename: {self.filename}')
+            graphWidget.resize(outputWidth, outputHeight)
+            self.prepareWidgetForPrint(graphWidget, outputWidth, outputHeight)
         elif 'pdf' in suffix:
-            self.prepareWidgetForPrint(1920, 1080)
-            self.printPdf()
-            self.resetWidgetAfterPrint()
-            print(f'pdf filename: {self.filename}')
+            dpi = 300
+            widthRatio = (8.27 * dpi) / outputWidth
+            heightRatio = (8.27 * dpi) / outputHeight
 
+            ratio = min(widthRatio, heightRatio)
 
-    def prepareWidgetForPrint(self, resizeWidth, resizeHeight):
-        self.graphWidget.resize(resizeWidth, resizeHeight)
+            outputWidth = int(outputWidth * ratio)
+            outputHeight = int(outputHeight * ratio)
+
+            self.prepareWidgetForPrint(graphWidget, outputWidth, outputHeight)
+
+        return graphWidget
+
+    @staticmethod
+    def getFilePathFromGraph(graph: WidgetGraph, filename: str, suffix: str) -> str:
+        pathToFile = graph.dataModel.fileDefaultSavePath
+        if '.rgp' in filename:
+            filePath = pathToFile + '/' + filename.replace('rgp', suffix)
+        else:
+            filePath = pathToFile + '/' + filename + f'.{suffix}'
+
+        return filePath
+
+    def prepareWidgetForPrint(self, graphWidget: WidgetGraph, resizeWidth: int, resizeHeight: int):
+        graphWidget.resize(resizeWidth, resizeHeight)
 
         heightTop = self.settings.getSettingsVariable("printHeightWidgetTopPerc")
         heightGraph = self.settings.getSettingsVariable("printHeightWidgetGraphPerc")
@@ -56,58 +90,71 @@ class PrintWindow:
         fontSize = int(self.settings.getSettingsVariable("printFontSize"))
         printLabelFontSize = int(self.settings.getSettingsVariable("printLabelFontSize"))
 
-        tableDataMaxItemHeight = (self.outputHeight * heightTop/100) / 6
-        tableMarkerMaxItemHeight = (self.outputHeight * heightBottom / 100) / 6
+        tableDataMaxItemHeight = (resizeHeight * heightTop/120) / 6
+        tableMarkerMaxItemHeight = (resizeHeight * heightBottom/120) / 6
 
-        self.toggleUI('hide', True)
+        self.toggleUI(graphWidget, 'hide', True)
 
-        self.graphWidget.changeWidgetsRelSpace(heightTop, heightGraph, heightBottom)
-        self.graphWidget.canvasGraph.changeAxisFontsize(printLabelFontSize)
+        widgets = {
+            self.ui.checkBoxShowTop: graphWidget.widgetTop,
+            self.ui.checkBoxShowBottom: graphWidget.widgetBottom,
+            self.ui.checkBoxShowData: graphWidget.textInGraph
+        }
 
-        self.graphWidget.tableWidgetData.show()
-        for i in range(self.graphWidget.tableWidgetData.rowCount()):
-            for j in range(self.graphWidget.tableWidgetData.columnCount()):
-                item = self.graphWidget.tableWidgetData.item(i, j)
+        for checkbox, widget in widgets.items():
+            if checkbox.isChecked():
+                widget.show()
+            else:
+                widget.hide()
+
+        graphWidget.changeWidgetsRelSpace(heightTop, heightGraph, heightBottom)
+        graphWidget.canvasGraph.changeAxisFontsize(printLabelFontSize)
+
+        graphWidget.tableWidgetData.show()
+        for i in range(graphWidget.tableWidgetData.rowCount()):
+            for j in range(graphWidget.tableWidgetData.columnCount()):
+                item = graphWidget.tableWidgetData.item(i, j)
                 if item:
-                    print(f'graphSize: {self.graphWidget.size()}')
-                    self.graphWidget.tableWidgetData.adjustFontsizeToHeight(item, fontSize, 5, tableDataMaxItemHeight)
+                    graphWidget.tableWidgetData.adjustFontsizeToHeight(item, fontSize, 5, tableDataMaxItemHeight)
 
         totalWidth = 0
-        for i in range(self.graphWidget.tableWidgetData.columnCount()):
-            totalWidth += self.graphWidget.tableWidgetData.columnWidth(i)
+        for i in range(graphWidget.tableWidgetData.columnCount()):
+            totalWidth += graphWidget.tableWidgetData.columnWidth(i)
 
-        self.graphWidget.tableWidgetData.setFixedWidth(totalWidth)
-        self.graphWidget.tableWidgetData.clearSelection()
+        graphWidget.tableWidgetData.setFixedWidth(totalWidth)
+        graphWidget.tableWidgetData.clearSelection()
 
-        if not self.graphWidget.tableWidgetMarker.isHidden():
+        if not graphWidget.tableWidgetMarker.isHidden():
             iconSize = fontSize
-            self.graphWidget.tableWidgetMarker.setIconSize(QSize(int(iconSize + iconSize*0.5), iconSize))
-            for i in range(self.graphWidget.tableWidgetMarker.rowCount()):
-                for j in range(self.graphWidget.tableWidgetMarker.columnCount()):
-                    item = self.graphWidget.tableWidgetMarker.item(i, j)
+            graphWidget.tableWidgetMarker.setIconSize(QSize(int(iconSize + iconSize*0.5), iconSize))
+            for i in range(graphWidget.tableWidgetMarker.rowCount()):
+                for j in range(graphWidget.tableWidgetMarker.columnCount()):
+                    item = graphWidget.tableWidgetMarker.item(i, j)
                     if item:
-                        self.graphWidget.tableWidgetData.adjustFontsizeToHeight(item, fontSize - 2, 5,
-                                                                                tableMarkerMaxItemHeight)
+                        graphWidget.tableWidgetData.adjustFontsizeToHeight(item, fontSize - 2, 5,
+                                                                           tableMarkerMaxItemHeight)
 
             totalHeight = 0
-            for i in range(self.graphWidget.tableWidgetMarker.rowCount()):
-                totalHeight += self.graphWidget.tableWidgetMarker.rowHeight(i)
-            self.graphWidget.tableWidgetMarker.resizeRowsToContents()
+            for i in range(graphWidget.tableWidgetMarker.rowCount()):
+                totalHeight += graphWidget.tableWidgetMarker.rowHeight(i)
+            graphWidget.tableWidgetMarker.resizeRowsToContents()
             #self.graphWidget.tableWidgetMarker.setFixedHeight(totalHeight)
-            self.graphWidget.tableWidgetMarker.clearSelection()
+            graphWidget.tableWidgetMarker.clearSelection()
 
-        if self.graphWidget.textEditComment.toPlainText() == '':
-            self.graphWidget.textEditComment.hide()
+        if graphWidget.textEditComment.toPlainText() == '':
+            graphWidget.textEditComment.hide()
         else:
-            comment = self.graphWidget.textEditComment
+            comment = graphWidget.textEditComment
             font = comment.font()
             font.setPointSize(fontSize - fontSize*0.05)
             comment.setFont(font)
             comment.setFixedWidth(600)
 
+        print('PrintWindow.prepareWidgetForPrint done')
+
         #self.graphWidget.resize(resizeWidth, resizeHeight)
 
-    def resetWidgetAfterPrint(self):
+    '''def resetWidgetAfterPrint(self):
         self.graphWidget.resetWidgetsRelSpace()
 
         labelFontSize = self.settings.getSettingsVariable("labelFontSize")
@@ -138,25 +185,34 @@ class PrintWindow:
             self.graphWidget.tableWidgetMarker.show()
 
         #self.graphWidget.resize(self.currentGraphWidth, self.currentGraphHeight)
-        QCoreApplication.processEvents()
+        QCoreApplication.processEvents()'''
 
-    def createPixmap(self, width, height):
-        scaledPixmap = QPixmap(QSize(width, height))
-        scaledPixmap.fill(Qt.transparent)
 
-        return scaledPixmap
-
-    def toggleUI(self, attr, noBackground):
-        self.graphWidget.setAttribute(Qt.WA_NoSystemBackground, noBackground)
-        widgets = [self.graphWidget.widgetMenu,
-                   self.graphWidget.labelData,
-                   self.graphWidget.canvasGraph.vLine]
+    def toggleUI(self, graphWidget, attr, noBackground):
+        graphWidget.setAttribute(Qt.WA_NoSystemBackground, noBackground)
+        widgets = [graphWidget.widgetMenu,
+                   graphWidget.labelData,
+                   graphWidget.canvasGraph.vLine]
 
         for widget in widgets:
             getattr(widget, attr)()
-    def printPdf(self):
+
+    def printPixmap(self, pixmap, filePath, suffix):
+        if suffix == 'png':
+            pixmap.save(filePath, 'png')
+        elif suffix == 'pdf':
+            self.printPdf(pixmap, filePath)
+
+    def printPdf(self, pixmap: QPixmap, filePath: str):
+        width = int(self.ui.lineEditDimWidth.text())
+        height = int(self.ui.lineEditDimHeight.text())
+
         dpi = 300
-        widthRatio = (8.27 * dpi) / 1920
+        widthRatio = (8.27 * dpi) / width
+        heightRatio = (8.27 * dpi) / height
+
+        ratio = min(widthRatio, heightRatio)
+
         printer = QPrinter()
         printer.setPageSize(QPageSize.A4)
         printer.PrinterMode.HighResolution
@@ -164,41 +220,57 @@ class PrintWindow:
         printer.setOutputFormat(QPrinter.PdfFormat)
         printer.setPageMargins(QMarginsF(0, 0, 0, 0))
         printRect = printer.pageLayout().paintRectPixels(printer.resolution())
-        print(printRect)
 
-        printer.setOutputFileName(self.filename)
-        QCoreApplication.processEvents()
-        self.graphWidget.resize(int(1920 * widthRatio), int(1080 * widthRatio))
-        pixmap = self.graphWidget.grab()
+        printer.setOutputFileName(filePath)
         painter = QPainter(printer)
         painter.drawPixmap(0, 0, pixmap)
         painter.end()
 
-    def printPng(self):
-        QCoreApplication.processEvents()
-        self.graphWidget.resize(1920, 1080)
-        screenshot = self.graphWidget.grab()
-        screenshot.save(self.filename, 'png')
 
-    def addPixmaps(self, pixmaps: list[QPixmap]):
-        amount = len(pixmaps)
-        width = 1920
-        height = 1080
+    def convertGraphsToPixmap(self, graphs: list[WidgetGraph], suffix: str, rows: int,
+                              columns: int) -> Union[QPixmap, None]:
+
+        amount = len(graphs)
+        if amount <= 0:
+            return None
+
+        if 'png' in suffix:
+            printWidth = int(self.ui.lineEditDimWidth.text())
+            printHeight = int(self.ui.lineEditDimHeight.text())
+            width = printWidth * columns
+            height = printHeight * rows
+        else:
+            width = int(self.ui.lineEditDimWidth.text())
+            height = int(self.ui.lineEditDimHeight.text())
+            dpi = 300
+
+            widthRatio = (8.27 * dpi) / width
+            heightRatio = (8.27 * dpi) / height
+
+            ratio = min(widthRatio, heightRatio)
+
+            width = int(width * ratio)
+            height = int(height * ratio)
+
+            printWidth = width / columns
+            printHeight = height / rows
 
         addedPixmap = QPixmap(QSize(width, height))
         addedPixmap.fill(Qt.transparent)
 
-        widthScale = width / pixmaps[0].width()
-        heightScale = (height/2) / pixmaps[0].height()
-
-        printWidth = int(width * widthScale)
-        printHeight = int(height * 0.5)
-
         painter = QPainter(addedPixmap)
 
-        for i, pixmap in enumerate(pixmaps):
-            tmpPixmap = pixmap.scaled(printWidth, printHeight)
-            painter.drawPixmap(0, i * printHeight, tmpPixmap)
+        for i in range(rows):
+            for j in range(columns):
+                try:
+                    graph = graphs[j + (i * columns)].copy()
+                    self.prepareWidgetForPrint(graph, printWidth, printHeight)
+                    tmpPixmap = graph.grab()
+                    tmpPixmap = tmpPixmap.scaled(printWidth, printHeight)
+                    painter.drawPixmap(j * printWidth, i * printHeight, tmpPixmap)
+                except IndexError:
+                    print('PrintWindow.convertGraphsToPixmap(): IndexError')
+                    break
 
         painter.end()
 
@@ -217,3 +289,103 @@ class PrintWindow:
 
         return rotatedPixmap
 
+    def quickExportAs(self, graphWidget: WidgetGraph, suffix: str, filename: str):
+        width = 1920
+        height = 1080
+        pixmapToPrint = self.getPrintWidgetGraph(graphWidget, suffix, width, height).grab()
+        filePath = self.getFilePathFromGraph(graphWidget, filename, suffix)
+        self.printPixmap(pixmapToPrint, filePath, suffix)
+
+    def exportSelectedGraphs(self):
+        graphsToPrint = []
+        checkboxes = self.ui.checkedBoxes
+
+        checkboxes = sorted(checkboxes, key=lambda x: x.objectName())
+
+        printCount = len(checkboxes)
+
+        suffix = self.ui.comboBoxSuffix.currentText()
+
+        rows = self.ui.spinBoxRowTotal.value()
+        columns = self.ui.spinBoxColumnTotal.value()
+
+        graphsPerPage = rows * columns
+
+        pages = printCount // graphsPerPage
+        print(f'pages: {pages}')
+        counterExtension = -1 if pages > 1 else 1
+
+        filename = self.ui.lineEditPrintName.text()
+
+        for i, box in enumerate(checkboxes):
+            name = box.text()
+            for graphWidget in self.listGraphWidgets:
+                if name in graphWidget.name:
+                    print(f'### printWindow.exportSelectedGraphs() ###\n Boxtext {name} Boxname {box.objectName()}')
+                    graphsToPrint.append(graphWidget)
+                    filePath = self.getFilePathFromGraph(graphWidget, name, suffix)
+                    if (i + 1) % graphsPerPage == 0:
+                        if graphsPerPage > 1:
+                            filePath = filePath.rsplit('/', 1)[0]
+                            count = '_' + str(counterExtension) if counterExtension >= 1 else ''
+                            filePath += '/' + filename + count + '.' + suffix
+                            counterExtension += 1
+                            print(f'ACCEPTED FILEPATH {filePath}')
+                        pixmapToPrint = self.convertGraphsToPixmap(graphsToPrint, suffix, rows, columns)
+                        self.printPixmap(pixmapToPrint, filePath, suffix)
+                        print(f'printWindow.exportSelectedGraphs : Filepath {filePath}')
+                        graphsToPrint.clear()
+
+        pixmapToPrint = self.convertGraphsToPixmap(graphsToPrint, suffix, rows, columns)
+        if pixmapToPrint:
+            self.printPixmap(pixmapToPrint, filePath, suffix)
+
+    def accept(self):
+        self.exportSelectedGraphs()
+        '''graphsToPrint = []
+        checkboxes = self.ui.checkedBoxes
+
+        checkboxes = sorted(checkboxes, key=lambda x: x.objectName())
+
+        printCount = len(checkboxes)
+
+        suffix = self.ui.comboBoxSuffix.currentText()
+
+        rows = self.ui.spinBoxRowTotal.value()
+        columns = self.ui.spinBoxColumnTotal.value()
+
+        graphsPerPage = rows * columns
+
+        pages = printCount // graphsPerPage
+        print(f'pages: {pages}')
+        counterExtension = -1 if pages > 1 else 1
+
+        filename = self.ui.lineEditPrintName.text()
+
+        for i, box in enumerate(checkboxes):
+            name = box.text()
+            for graphWidget in self.listGraphWidgets:
+                if name == graphWidget.name:
+                    pixmap, filePath = self.createPixmap(graphWidget, suffix, name)
+                    print(f'### printWindow.accept() ###\n Boxtext {name} Boxname {box.objectName()}')
+                    graphsToPrint.append(pixmap)
+                    if (i + 1) % graphsPerPage == 0:
+                        if graphsPerPage > 1:
+                            filePath = filePath.rsplit('/', 1)[0]
+                            count = '_' + str(counterExtension) if counterExtension >= 1 else ''
+                            filePath += '/' + filename + count + '.' + suffix
+                            counterExtension += 1
+                            print(f'ACCEPTED FILEPATH {filePath}')
+                        pixmapToPrint = self.addPixmaps(graphsToPrint, rows, columns)
+                        self.printPixmap(pixmapToPrint, filePath, suffix)
+                        graphsToPrint.clear()
+
+        pixmapToPrint = self.addPixmaps(graphsToPrint, rows, columns)
+        if pixmapToPrint:
+            self.printPixmap(pixmapToPrint, filePath, suffix)'''
+
+        super().accept()
+
+    def reject(self):
+        print('Challenge rejected')
+        super().reject()

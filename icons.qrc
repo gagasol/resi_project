@@ -22,5 +22,6 @@
         <file>icons/arrow_downward.svg</file>
         <file>icons/arrow_downward_30dp.svg</file>
         <file>icons/arrow_upward_30dp.svg</file>
+        <file>icons/print.svg</file>
     </qresource>
 </RCC>

@@ -158,7 +158,6 @@ class AutoSizedTable(QTableWidget):
 
         for fontsize in range(maxFontsize, minFontsize - 1, -1):
             fontMetric = QFontMetrics(QFont('', fontsize))
-            print(f'fontMetric.height: {fontMetric.height()}; itemHeight: {itemHeight}')
             if fontMetric.height() <= itemHeight:
                 font.setWeight(QFont.Normal)
                 font.setPointSize(fontsize)
@@ -599,7 +598,6 @@ class WidgetGraph(QWidget):
         # todo fix size of last column, check if entry is longer and if make size relative to content again
         item = self.tableWidgetData.item(row, column)
         entry = item.text()
-        print(f'entry on cellchanged {entry}')
         if entry:
             if column % 2 != 0:
                 while re.match(r'^\s*:', entry):
