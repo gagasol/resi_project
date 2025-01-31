@@ -61,7 +61,7 @@ class DataModel:
         self.fileDefaultPresetName = ""
         self.fileDefaultSavePath = ''
         # todo add this to settings so that the user can choose which data to display
-        # TODO need to change the behaviour on which cells are eidtable from constant to variable!!!
+        # TODO need to change the behaviour on which cells are editable from constant to variable!!!
         self._dataNameDict = {
             "number": QObject.tr('Messung Nr.'),
             "idNumber": QObject.tr('ID-Nummer'),

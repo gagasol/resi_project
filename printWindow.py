@@ -1,6 +1,6 @@
 from typing import Optional, Union
 
-from PySide6.QtCore import QSize, Qt, QCoreApplication, QMarginsF
+from PySide6.QtCore import QSize, Qt, QCoreApplication, QMarginsF, QSizeF
 from PySide6.QtGui import QFont, QPixmap, QPainter, QPageSize, QTransform
 from PySide6.QtPrintSupport import QPrinter
 from PySide6.QtWidgets import QDialog
@@ -29,8 +29,6 @@ class PrintWindow(QDialog):
         self.settings = settings
         self.suffix = 'png'
 
-
-
     def getPrintWidgetGraph(self, graphWidgetAtt: WidgetGraph, suffix: str, width: int, height: int) -> WidgetGraph:
 
         graphWidget = graphWidgetAtt.copy()
@@ -53,7 +51,6 @@ class PrintWindow(QDialog):
             fontMarkerTable = None
             graphWidget.tableWidgetMarker.hide()
 
-
         if 'png' in suffix:
             graphWidget.resize(outputWidth, outputHeight)
             self.prepareWidgetForPrint(graphWidget, outputWidth, outputHeight)
@@ -64,8 +61,10 @@ class PrintWindow(QDialog):
 
             ratio = min(widthRatio, heightRatio)
 
-            outputWidth = int(outputWidth * ratio)
-            outputHeight = int(outputHeight * ratio)
+            outputWidth = int((210 * dpi) / 25.4)
+            outputHeight = int(outputWidth * (1080 / 1920))
+
+            print(f'Width: {outputWidth}, Height: {outputHeight}')
 
             self.prepareWidgetForPrint(graphWidget, outputWidth, outputHeight)
 
@@ -90,8 +89,8 @@ class PrintWindow(QDialog):
         fontSize = int(self.settings.getSettingsVariable("printFontSize"))
         printLabelFontSize = int(self.settings.getSettingsVariable("printLabelFontSize"))
 
-        tableDataMaxItemHeight = (resizeHeight * heightTop/120) / 6
-        tableMarkerMaxItemHeight = (resizeHeight * heightBottom/120) / 6
+        tableDataMaxItemHeight = (resizeHeight * heightTop / 120) / 6
+        tableMarkerMaxItemHeight = (resizeHeight * heightBottom / 120) / 6
 
         self.toggleUI(graphWidget, 'hide', True)
 
@@ -126,7 +125,7 @@ class PrintWindow(QDialog):
 
         if not graphWidget.tableWidgetMarker.isHidden():
             iconSize = fontSize
-            graphWidget.tableWidgetMarker.setIconSize(QSize(int(iconSize + iconSize*0.5), iconSize))
+            graphWidget.tableWidgetMarker.setIconSize(QSize(int(iconSize + iconSize * 0.5), iconSize))
             for i in range(graphWidget.tableWidgetMarker.rowCount()):
                 for j in range(graphWidget.tableWidgetMarker.columnCount()):
                     item = graphWidget.tableWidgetMarker.item(i, j)
@@ -146,7 +145,7 @@ class PrintWindow(QDialog):
         else:
             comment = graphWidget.textEditComment
             font = comment.font()
-            font.setPointSize(fontSize - fontSize*0.05)
+            font.setPointSize(fontSize - fontSize * 0.05)
             comment.setFont(font)
             comment.setFixedWidth(600)
 
@@ -187,7 +186,6 @@ class PrintWindow(QDialog):
         #self.graphWidget.resize(self.currentGraphWidth, self.currentGraphHeight)
         QCoreApplication.processEvents()'''
 
-
     def toggleUI(self, graphWidget, attr, noBackground):
         graphWidget.setAttribute(Qt.WA_NoSystemBackground, noBackground)
         widgets = [graphWidget.widgetMenu,
@@ -204,17 +202,16 @@ class PrintWindow(QDialog):
             self.printPdf(pixmap, filePath)
 
     def printPdf(self, pixmap: QPixmap, filePath: str):
-        width = int(self.ui.lineEditDimWidth.text())
-        height = int(self.ui.lineEditDimHeight.text())
-
+        orientation = self.ui.comboBoxPageOrient.currentText()
         dpi = 300
-        widthRatio = (8.27 * dpi) / width
-        heightRatio = (8.27 * dpi) / height
 
-        ratio = min(widthRatio, heightRatio)
+        width = 210.0 if orientation == 'horizontal' else 297.0
+
+        pageSize = QPageSize(QSizeF(width, (pixmap.height() / dpi) * 25.4),
+                             QPageSize.Millimeter)
 
         printer = QPrinter()
-        printer.setPageSize(QPageSize.A4)
+        printer.setPageSize(pageSize)
         printer.PrinterMode.HighResolution
         printer.setResolution(dpi)
         printer.setOutputFormat(QPrinter.PdfFormat)
@@ -225,7 +222,6 @@ class PrintWindow(QDialog):
         painter = QPainter(printer)
         painter.drawPixmap(0, 0, pixmap)
         painter.end()
-
 
     def convertGraphsToPixmap(self, graphs: list[WidgetGraph], suffix: str, rows: int,
                               columns: int) -> Union[QPixmap, None]:
@@ -240,20 +236,25 @@ class PrintWindow(QDialog):
             width = printWidth * columns
             height = printHeight * rows
         else:
-            width = int(self.ui.lineEditDimWidth.text())
-            height = int(self.ui.lineEditDimHeight.text())
             dpi = 300
+            orientation = self.ui.comboBoxPageOrient.currentText()
+            print(orientation)
+            if orientation == 'vertical':
+                graphsPerPageHeight = rows if rows < 2 else 2
+                width = int((297 * dpi) / 25.4)
+                height = (width * (1920 / 1080)) * graphsPerPageHeight
+                maxHeight = int((210 * dpi) / 25.4)
+            else:
+                graphsPerPageHeight = rows if rows < 4 else 4
+                width = int((210 * dpi) / 25.4)
+                height = (width * (1080 / 1920)) * graphsPerPageHeight
+                maxHeight = int((297 * dpi) / 25.4)
 
-            widthRatio = (8.27 * dpi) / width
-            heightRatio = (8.27 * dpi) / height
+            if height > maxHeight:
+                height = maxHeight
 
-            ratio = min(widthRatio, heightRatio)
-
-            width = int(width * ratio)
-            height = int(height * ratio)
-
-            printWidth = width / columns
-            printHeight = height / rows
+            printWidth = int(width / columns)
+            printHeight = int(height / graphsPerPageHeight)
 
         addedPixmap = QPixmap(QSize(width, height))
         addedPixmap.fill(Qt.transparent)

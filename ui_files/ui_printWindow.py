@@ -78,8 +78,11 @@ class Ui_printWindow(object):
         self.comboBoxSuffix = QComboBox(self.widgetPageOrientation)
         self.comboBoxSuffix.setObjectName(u"comboBoxSuffix")
         self.comboBoxSuffix.setMaximumSize(QSize(80, 16777215))
+        self.comboBoxSuffix.currentIndexChanged.connect(self.onComboBoxSuffixChanged)
 
         self.verticalLayout_4.addWidget(self.comboBoxSuffix)
+
+        ### dimensions
 
         self.widget_4 = QWidget(self.widgetPageOrientation)
         self.widget_4.setObjectName(u"widget_4")
@@ -116,6 +119,26 @@ class Ui_printWindow(object):
         self.horizontalLayout_6.addWidget(self.lineEditDimWidth)
 
         self.verticalLayout_5.addWidget(self.widget_5)
+
+        self.widget_41 = QWidget(self.widgetPageOrientation)
+        self.widget_41.setObjectName(u"widget_41")
+        self.verticalLayout_51 = QVBoxLayout(self.widget_41)
+        self.verticalLayout_51.setSpacing(0)
+        self.verticalLayout_51.setObjectName(u"verticalLayout_51")
+        self.verticalLayout_51.setContentsMargins(0, -1, -1, -1)
+
+        self.label_2 = QLabel(self.widget_41)
+        self.label_2.setObjectName(u"label_2")
+
+        self.verticalLayout_51.addWidget(self.label_2)
+
+        self.comboBoxPageOrient = QComboBox(self.widget_41)
+        self.comboBoxPageOrient.setObjectName(u"comboBoxPageOrient")
+        self.comboBoxPageOrient.setMaximumSize(QSize(80, 16777215))
+
+        self.verticalLayout_51.addWidget(self.comboBoxPageOrient)
+
+        self.verticalLayout_4.addWidget(self.widget_41)
 
         self.widget_6 = QWidget(self.widget_4)
         self.widget_6.setObjectName(u"widget_6")
@@ -188,17 +211,6 @@ class Ui_printWindow(object):
         self.verticalLayout_6.addWidget(self.widget_9)
 
         self.verticalLayout_4.addWidget(self.widget_7)
-
-        self.label_2 = QLabel(self.widgetPageOrientation)
-        self.label_2.setObjectName(u"label_2")
-
-        self.verticalLayout_4.addWidget(self.label_2)
-
-        self.comboBoxPageOrient = QComboBox(self.widgetPageOrientation)
-        self.comboBoxPageOrient.setObjectName(u"comboBoxPageOrient")
-        self.comboBoxPageOrient.setMaximumSize(QSize(80, 16777215))
-
-        self.verticalLayout_4.addWidget(self.comboBoxPageOrient)
 
         self.checkBoxShowTop = QCheckBox(self.widgetPageOrientation)
         self.checkBoxShowTop.setObjectName(u"checkBoxShowTop")
@@ -396,4 +408,11 @@ class Ui_printWindow(object):
                 currentName = currentName.replace(projectNumber, '')
 
 
-
+    def onComboBoxSuffixChanged(self):
+        suffix = self.comboBoxSuffix.currentText()
+        if 'pdf' in suffix:
+            self.widget_4.hide()
+            self.widget_41.show()
+        else:
+            self.widget_4.show()
+            self.widget_41.hide()

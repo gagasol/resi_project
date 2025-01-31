@@ -1,9 +1,12 @@
 import re
 
-from PySide6.QtCore import QObject
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QCheckBox, QDialogButtonBox, QFileDialog
+from PySide6.QtCore import QObject, QSize, QCoreApplication
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QCheckBox, QDialogButtonBox, QFileDialog, QPushButton, QWidget, \
+    QHBoxLayout
 
 from ui_settingsWindow import Ui_Dialog
+
 
 
 class Validator:
@@ -71,7 +74,7 @@ class SettingsWindow(QDialog):
         self.defaultSettingsDict = defaultSettingsDict
         self.blockSave = False
 
-        self._dataNameDict = {
+        '''self._dataNameDict = {
             "number": QObject.tr('Messung Nr.'),
             "idNumber": QObject.tr('ID-Nummer'),
             "depthMsmt": QObject.tr('Bohrtiefe'),
@@ -90,7 +93,29 @@ class SettingsWindow(QDialog):
             "3_objecttype": QObject.tr('Objektart'),
             "4_location": QObject.tr('Standort'),
             "5_name": QObject.tr('Name')
+        }'''
+        self.checkboxWidgets = []
+        self.checkboxes = []
+        self._dataNameDict = {
+            "number": [0, QObject.tr('Messung Nr.')],
+            "idNumber": [1, QObject.tr('ID-Nummer')],
+            "depthMsmt": [2, QObject.tr('Bohrtiefe')],
+            "date": [3, QObject.tr('Datum')],
+            "time": [4, QObject.tr('Uhrzeit')],
+            "speedFeed": [5, QObject.tr('Vorschub')],
+            "speedDrill": [6, QObject.tr('Drehzahl')],
+            "tiltAngle": [7, QObject.tr('Neigung')],
+            "result": [8, QObject.tr('Nadelstatus')],
+            "offset": [9, QObject.tr('Offset')],
+            "graphAvgShow": [10, QObject.tr('Mittelung')],
+            "0_diameter": [11, QObject.tr('Durchmesser')],
+            "1_mHeight": [12, QObject.tr('Messhöhe')],
+            "2_mDirection": [13,QObject.tr('Messrichtung')],
+            "3_objecttype": [14, QObject.tr('Objektart')],
+            "4_location": [15, QObject.tr('Standort')],
+            "5_name": [16, QObject.tr('Name')]
         }
+
 
         self.strsToShowInGraph = []
         self.defaultFolderPath = ''
@@ -203,19 +228,34 @@ class SettingsWindow(QDialog):
         dialog = QDialog(self)
         layout = QVBoxLayout()
 
-        checkboxes = []
+        sortedDataNameList = list(self._dataNameDict.items())
+        sortedDataNameList = sorted(sortedDataNameList, key=lambda item: item[1][0])
 
-        for key, value in self._dataNameDict.items():
+        for key, values in sortedDataNameList:
             if key == "empty":
                 continue
+
+            value = values[1]
+            tmpWidget = QWidget(dialog)
+            tmpHLayout = QHBoxLayout(tmpWidget)
             checkbox = QCheckBox(value, dialog)
 
             if key in self.strsToShowInGraph:
                 checkbox.setChecked(True)
 
             checkbox.setObjectName(key)
-            checkboxes.append(checkbox)
-            layout.addWidget(checkbox)
+            checkbox.index = len(self.checkboxes)
+            self.checkboxes.append(checkbox)
+            tmpHLayout.addWidget(checkbox)
+
+            upButton = self._createUpButton(tmpWidget)
+            downButton = self._createDownButton(tmpWidget)
+
+            tmpHLayout.addWidget(upButton)
+            tmpHLayout.addWidget(downButton)
+            tmpWidget.setLayout(tmpHLayout)
+            self.checkboxWidgets.append(tmpWidget)
+            layout.addWidget(tmpWidget)
 
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         layout.addWidget(buttonBox)
@@ -230,7 +270,127 @@ class SettingsWindow(QDialog):
         result = dialog.exec()
 
         if result == QDialog.Accepted:
-            self.strsToShowInGraph = [cb.objectName() for cb in checkboxes if cb.isChecked()]
+            self.strsToShowInGraph = [cb.objectName() for cb in self.checkboxes if cb.isChecked()]
+            print(self.strsToShowInGraph)
+
+        self.checkboxWidgets = []
+        self.checkboxes = []
+
+
+    def _createUpButton(self, parent):
+        pushButtonUp = QPushButton(parent)
+        pushButtonUp.setMinimumSize(QSize(20, 0))
+        pushButtonUp.setMaximumSize(QSize(20, 20))
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/icons/arrow_upward_30dp.svg", QSize(), QIcon.Normal, QIcon.Off)
+        pushButtonUp.setIcon(icon2)
+        pushButtonUp.setIconSize(QSize(20, 20))
+        pushButtonUp.clicked.connect(self._upButtonPressed)
+        self._setButtonStyleShield(pushButtonUp)
+
+        return pushButtonUp
+
+    def _createDownButton(self, parent):
+        pushButtonDown = QPushButton(parent)
+        pushButtonDown.setMinimumSize(QSize(20, 0))
+        pushButtonDown.setMaximumSize(QSize(20, 20))
+        icon = QIcon()
+        icon.addFile(u':/icons/icons/arrow_downward_30dp.svg', QSize(), QIcon.Normal, QIcon.Off)
+        pushButtonDown.setIcon(icon)
+        pushButtonDown.setIconSize(QSize(20, 20))
+        pushButtonDown.clicked.connect(self._downButtonPressed)
+        self._setButtonStyleShield(pushButtonDown)
+
+        return pushButtonDown
+
+    def _setButtonStyleShield(self, button):
+        button.setStyleSheet(u"QPushButton{\n"
+                           "border: none;\n"
+                           "padding-left: -2px;\n"
+                           "}\n"
+                           "\n"
+                           "QPushButton:hover{\n"
+                           "	background-color: white;\n"
+                           "}\n"
+                           "\n"
+                           "QPushButton:pressed{\n"
+                           "	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n"
+                           "                                      stop: 0 #FFFFFF, stop: 1 #dadbde);\n"
+                           "}")
+
+    def _upButtonPressed(self):
+        widget = self.sender().parent()
+        index = widget.layout().itemAt(0).widget().index
+        dialogBox = widget.parent()
+
+        sortedDataNameList = list(self._dataNameDict.items())
+        sortedDataNameList = sorted(sortedDataNameList, key=lambda item: item[1][0])
+
+        if 0 < index:
+            widgetAbove = self.checkboxWidgets[index - 1]
+            indexAbove = widgetAbove.layout().itemAt(0).widget().index
+
+            self.checkboxes[index], self.checkboxes[indexAbove] = self.checkboxes[indexAbove], self.checkboxes[index]
+
+            widget.setParent(None)
+            widgetAbove.setParent(None)
+
+            dialogBox.layout().removeWidget(widgetAbove)
+            dialogBox.layout().removeWidget(widget)
+
+            self.checkboxWidgets[index] = widgetAbove
+            self.checkboxWidgets[index - 1] = widget
+
+            sortedDataNameList[index][1][0] = index - 1
+            sortedDataNameList[index-1][1][0] = index
+
+            widget.layout().itemAt(0).widget().index -= 1
+            widgetAbove.layout().itemAt(0).widget().index += 1
+
+            dialogBox.layout().insertWidget(indexAbove, widget)
+            dialogBox.layout().insertWidget(index, widgetAbove)
+
+            self._dataNameDict = dict(sortedDataNameList)
+            print(self._dataNameDict)
+
+            QCoreApplication.processEvents()
+
+    def _downButtonPressed(self):
+        widget = self.sender().parent()
+        index = widget.layout().itemAt(0).widget().index
+        dialogBox = widget.parent()
+
+        sortedDataNameList = list(self._dataNameDict.items())
+        sortedDataNameList = sorted(sortedDataNameList, key=lambda item: item[1][0])
+
+        if index < len(self.checkboxWidgets) - 1:
+            widgetBelow = self.checkboxWidgets[index + 1]
+            indexBelow = widgetBelow.layout().itemAt(0).widget().index
+
+            self.checkboxes[index], self.checkboxes[indexBelow] = self.checkboxes[indexBelow], self.checkboxes[index]
+
+            widgetBelow.setParent(None)
+            widget.setParent(None)
+
+            dialogBox.layout().removeWidget(widgetBelow)
+            dialogBox.layout().removeWidget(widget)
+
+            self.checkboxWidgets[index] = widgetBelow
+            self.checkboxWidgets[index + 1] = widget
+
+            sortedDataNameList[index][1][0] = index + 1
+            sortedDataNameList[index + 1][1][0] = index
+
+            widget.layout().itemAt(0).widget().index += 1
+            widgetBelow.layout().itemAt(0).widget().index -= 1
+
+            dialogBox.layout().insertWidget(index, widgetBelow)
+            dialogBox.layout().insertWidget(indexBelow, widget)
+
+            self._dataNameDict = dict(sortedDataNameList)
+            print(self._dataNameDict)
+
+            QCoreApplication.processEvents()
 
     def graphButtonClicked(self):
         self.ui.stackedWidget.setCurrentIndex(1)
