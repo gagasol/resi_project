@@ -114,7 +114,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         }
         print('115 executed in main.py')
         self.loadPreset()
-        self.lastDirectory = self.settingsWindow.getSettingsVariable('defaultFolderPath')
+        try:
+            self.lastDirectory = self.settingsWindow.getSettingsVariable('defaultFolderPath')
+        except AttributeError as e:
+            self.lastDirectory = '.'
 
         self.loadOpenMenu()
         print('118 executed in main.py')
