@@ -408,14 +408,15 @@ class CustomPlotWidget(pg.PlotWidget):
 
         self.markerList.append(tmpMarker)
 
-        self.updateMarkerIndices()
+        #self.updateMarkerIndices()
 
         self.checkAndHandleCollision(tmpMarker)
 
         print(tmpMarker, type(tmpMarker))
         self.addItem(tmpMarker)
-        self.updateTable(tmpMarker.getIndex(), tmpMarker.getName(), tmpMarker.getColor(), tmpMarker.getX0(),
-                         tmpMarker.getX1())
+        #self.updateTable(tmpMarker.getIndex(), tmpMarker.getName(), tmpMarker.getColor(), tmpMarker.getX0(),
+        #                 tmpMarker.getX1())
+        self.updateMarkerIndices()
 
     def getMarkerAtPos(self, pos):
         if pos.y() > 0:
@@ -450,7 +451,7 @@ class CustomPlotWidget(pg.PlotWidget):
                 if i < len(self.markerList) - 1:
                     markerList[i].setNextMarker(markerList[i + 1])
 
-            self.parentWindow.addTableMarkerEntry(markerList[-1].getIndex() + 1, "", "", -1, -1)
+            #self.parentWindow.addTableMarkerEntry(markerList[-1].getIndex() + 1, "", "", -1, -1)
 
     def deleteMarker(self, marker: MarkerRectItem):
         self.removeItem(marker)
@@ -510,7 +511,7 @@ class CustomPlotWidget(pg.PlotWidget):
             self.updateXGrid()
             x = 0
 
-        self.parentWindow.updateTableMarkerEntry(index, name, color, x, dx)
+        self.parentWindow.addTableMarkerEntry(index, name, color, x, dx)
 
     def canvasPaintingChanged(self):
         self._unsavedPaintChange = True

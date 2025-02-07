@@ -402,8 +402,25 @@ class Ui_printWindow(object):
     def removeRifName(self, name):
         currentName = self.lineEditPrintName.text()
         projectName, projectNumber = name.rsplit('M', 1)
+        currentProjectNames = currentName.split('-')
+
+        for currentProject in currentProjectNames:
+            if projectName in currentProject:
+                if len(self.fileNameDic[projectName]) > 1:
+                    if self.fileNameDic[projectName][0] == projectNumber:
+                        currentName = currentName.replace(projectNumber + ',', '')
+                    else:
+                        currentName = currentName.replace(',' + projectNumber, '')
+                    self.fileNameDic[projectName].remove(projectNumber)
+                else:
+                    currentName = currentName.replace(projectNumber, '')
+                    currentName = currentName.replace(projectName + '()', '')
+                    self.fileNameDic.pop(projectName)
+
+        self.lineEditPrintName.setText(currentName)
 
         if projectName in currentName:
+
             if projectNumber in currentName:
                 currentName = currentName.replace(projectNumber, '')
 

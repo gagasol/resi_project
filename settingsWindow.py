@@ -154,32 +154,41 @@ class SettingsWindow(QDialog):
 
 
     def initUi(self):
-        self.ui.doubleSpinBoxTopPerc.setValue(self.getSettingsVariable("heightWidgetTopPerc"))
-        self.ui.doubleSpinBoxGraphPerc.setValue(self.getSettingsVariable("heightWidgetGraphPerc"))
-        self.ui.doubleSpinBoxBotPerc.setValue(self.getSettingsVariable("heightWidgetBottomPerc"))
-        self.ui.lineEditFeedColor.setText(self.getSettingsVariable("colorFeedPlot"))
-        self.ui.lineEditDrillColor.setText(self.getSettingsVariable("colorDrillPlot"))
-        self.ui.lineEditGraphBackgroundColor.setText(self.getSettingsVariable("colorBackground"))
-        self.ui.lineEditMarkingGraphBackgroundColor.setText(self.getSettingsVariable("colorBackgroundMarking"))
-        self.ui.lineEditLabelColor.setText(self.getSettingsVariable('colorLabel'))
-        self.ui.doubleSpinBoxMarkerHeight.setValue(self.getSettingsVariable("markerHeightPerc")*100)
-        self.ui.spinBoxLabelSize.setValue(self.getSettingsVariable("labelFontSize"))
-        self.ui.doubleSpinBoxTopPerc_2.setValue(self.getSettingsVariable("printHeightWidgetTopPerc"))
-        self.ui.doubleSpinBoxGraphPerc_2.setValue(self.getSettingsVariable("printHeightWidgetGraphPerc"))
-        self.ui.doubleSpinBoxBotPerc_2.setValue(self.getSettingsVariable("printHeightWidgetBottomPerc"))
-        self.ui.lineEditPrintLabelSize.setText(str(self.getSettingsVariable("printLabelFontSize")))
-        self.ui.lineEditTableFontSize.setText(str(self.getSettingsVariable("printFontSize")))
-        self.strsToShowInGraph = self.getSettingsVariable("strsToShowInGraph")
-        self.recentOpenFiles = self.getSettingsVariable("recentFiles")
-        self.recentOpenFolders = self.getSettingsVariable("recentFolders")
-        self.ui.lineEditDefaultDir.setText(str(self.getSettingsVariable('defaultFolderPath')))
-        self.ui.spinBoxRecentFiles.setValue(int(self.getSettingsVariable('recentFilesAmount')))
-        self.ui.spinBoxRecentFolders.setValue(int(self.getSettingsVariable('recentFoldersAmount')))
-        self.ui.spinBoxXMajorTicks.setValue(self.getSettingsVariable('defaultGridIntervalX'))
-        self.ui.spinBoxXMinorTicks.setValue(self.getSettingsVariable('minorTicksInterval'))
-        self.ui.spinBoxYMajorTicks.setValue(self.getSettingsVariable('defaultGridIntervalY'))
-        self.ui.lineEditGridColor.setText(self.getSettingsVariable('gridColor'))
-        self.ui.spinBoxGridOp.setValue(self.getSettingsVariable('gridOpacity'))
+        try:
+            self.ui.doubleSpinBoxTopPerc.setValue(self.getSettingsVariable("heightWidgetTopPerc"))
+            self.ui.doubleSpinBoxGraphPerc.setValue(self.getSettingsVariable("heightWidgetGraphPerc"))
+            self.ui.doubleSpinBoxBotPerc.setValue(self.getSettingsVariable("heightWidgetBottomPerc"))
+            self.ui.lineEditFeedColor.setText(self.getSettingsVariable("colorFeedPlot"))
+            self.ui.lineEditDrillColor.setText(self.getSettingsVariable("colorDrillPlot"))
+            self.ui.lineEditGraphBackgroundColor.setText(self.getSettingsVariable("colorBackground"))
+            self.ui.lineEditMarkingGraphBackgroundColor.setText(self.getSettingsVariable("colorBackgroundMarking"))
+            self.ui.lineEditLabelColor.setText(self.getSettingsVariable('colorLabel'))
+            self.ui.doubleSpinBoxMarkerHeight.setValue(self.getSettingsVariable("markerHeightPerc")*100)
+            self.ui.spinBoxLabelSize.setValue(self.getSettingsVariable("labelFontSize"))
+            self.ui.doubleSpinBoxTopPerc_2.setValue(self.getSettingsVariable("printHeightWidgetTopPerc"))
+            self.ui.doubleSpinBoxGraphPerc_2.setValue(self.getSettingsVariable("printHeightWidgetGraphPerc"))
+            self.ui.doubleSpinBoxBotPerc_2.setValue(self.getSettingsVariable("printHeightWidgetBottomPerc"))
+            self.ui.lineEditPrintLabelSize.setText(str(self.getSettingsVariable("printLabelFontSize")))
+            self.ui.lineEditTableFontSize.setText(str(self.getSettingsVariable("printFontSize")))
+            self.strsToShowInGraph = self.getSettingsVariable("strsToShowInGraph")
+            self.recentOpenFiles = self.getSettingsVariable("recentFiles")
+            self.recentOpenFolders = self.getSettingsVariable("recentFolders")
+            self.ui.lineEditDefaultDir.setText(str(self.getSettingsVariable('defaultFolderPath')))
+            self.ui.spinBoxRecentFiles.setValue(int(self.getSettingsVariable('recentFilesAmount')))
+            self.ui.spinBoxRecentFolders.setValue(int(self.getSettingsVariable('recentFoldersAmount')))
+            self.ui.spinBoxXMajorTicks.setValue(self.getSettingsVariable('defaultGridIntervalX'))
+            self.ui.spinBoxXMinorTicks.setValue(self.getSettingsVariable('minorTicksInterval'))
+            self.ui.spinBoxYMajorTicks.setValue(self.getSettingsVariable('defaultGridIntervalY'))
+            self.ui.lineEditGridColor.setText(self.getSettingsVariable('gridColor'))
+            self.ui.spinBoxGridOp.setValue(self.getSettingsVariable('gridOpacity'))
+            self.ui.spinBoxGraphdisplaySize.setValue(int(self.getSettingsVariable('textInGraphFontSize')))
+            self.ui.lineEditGraphdisplayColor.setText(self.getSettingsVariable('textInGraphColor'))
+            self.ui.lineEditGraphdisplayFontsize.setText(str(self.getSettingsVariable('textInGraphPrintFontSize')))
+            self.ui.spinBoxMaxMarkerRows.setValue(self.getSettingsVariable('defaultMarkerTableRows'))
+            self._dataNameDict = self.getSettingsVariable('tableTopDataOrdered')
+        except KeyError as e:
+            print(f'No key named {e} found')
+
 
 
     def accept(self):
@@ -208,7 +217,12 @@ class SettingsWindow(QDialog):
                             'minorTicksInterval': self.ui.spinBoxXMinorTicks.value(),
                             'defaultGridIntervalY': self.ui.spinBoxYMajorTicks.value(),
                             'gridOpacity': self.ui.spinBoxGridOp.value(),
-                            'gridColor': self.ui.lineEditGridColor.text()
+                            'gridColor': self.ui.lineEditGridColor.text(),
+                            'tableTopDataOrdered': self._dataNameDict,
+                            'textInGraphFontSize': self.ui.spinBoxGraphdisplaySize.value(),
+                            'textInGraphPrintFontSize': self.ui.lineEditGraphdisplayFontsize.text(),
+                            'textInGraphColor': self.ui.lineEditGraphdisplayColor.text(),
+                            'defaultMarkerTableRows': self.ui.spinBoxMaxMarkerRows.value()
                             }
 
             for key, value in overrideDict.items():

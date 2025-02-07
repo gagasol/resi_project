@@ -222,21 +222,27 @@ class Ui_Dialog(object):
 
         self.verticalLayout_8.addWidget(self.widget_12)
 
-        self.widget_13 = QWidget(self.scrollAreaWidgetContents_3)
-        self.widget_13.setObjectName(u"widget_13")
-        self.horizontalLayout_12 = QHBoxLayout(self.widget_13)
-        self.horizontalLayout_12.setObjectName(u"horizontalLayout_12")
-        self.pushButtonGraphdisplayData = QPushButton(self.widget_13)
-        self.pushButtonGraphdisplayData.setObjectName(u"pushButtonGraphdisplayData")
+        self.widget_22 = QWidget(self.scrollAreaWidgetContents_3)
+        self.widget_22.setObjectName(u"widget_22")
+        self.horizontalLayout_21 = QHBoxLayout(self.widget_22)
+        self.horizontalLayout_21.setObjectName(u"horizontalLayout_21")
+        self.label_10 = QLabel(self.widget_22)
+        self.label_10.setObjectName(u"label_10")
 
-        self.horizontalLayout_12.addWidget(self.pushButtonGraphdisplayData)
+        self.horizontalLayout_21.addWidget(self.label_10)
 
-        self.horizontalSpacer_11 = QSpacerItem(431, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.lineEditGraphdisplayFontsize = QLineEdit(self.widget_22)
+        self.lineEditGraphdisplayFontsize.setObjectName(u"lineEditGraphdisplayFontsize")
+        self.lineEditGraphdisplayFontsize.setMaximumSize(QSize(55, 16777215))
 
-        self.horizontalLayout_12.addItem(self.horizontalSpacer_11)
+        self.horizontalLayout_21.addWidget(self.lineEditGraphdisplayFontsize)
+
+        self.horizontalSpacer_20 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout_21.addItem(self.horizontalSpacer_20)
 
 
-        self.verticalLayout_8.addWidget(self.widget_13)
+        self.verticalLayout_8.addWidget(self.widget_22)
 
         self.verticalSpacer_4 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
@@ -257,7 +263,7 @@ class Ui_Dialog(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 574, 466))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, -76, 560, 542))
         self.verticalLayout_4 = QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
         self.widget_7 = QWidget(self.scrollAreaWidgetContents)
@@ -271,6 +277,7 @@ class Ui_Dialog(object):
 
         self.lineEditFeedColor = QLineEdit(self.widget_7)
         self.lineEditFeedColor.setObjectName(u"lineEditFeedColor")
+        self.lineEditFeedColor.setMinimumSize(QSize(55, 0))
         self.lineEditFeedColor.setMaximumSize(QSize(55, 16777215))
 
         self.horizontalLayout_3.addWidget(self.lineEditFeedColor)
@@ -298,6 +305,7 @@ class Ui_Dialog(object):
 
         self.lineEditDrillColor = QLineEdit(self.widget_8)
         self.lineEditDrillColor.setObjectName(u"lineEditDrillColor")
+        self.lineEditDrillColor.setMinimumSize(QSize(55, 0))
         self.lineEditDrillColor.setMaximumSize(QSize(55, 16777215))
 
         self.horizontalLayout_9.addWidget(self.lineEditDrillColor)
@@ -352,6 +360,7 @@ class Ui_Dialog(object):
 
         self.lineEditMarkingGraphBackgroundColor = QLineEdit(self.widget_4)
         self.lineEditMarkingGraphBackgroundColor.setObjectName(u"lineEditMarkingGraphBackgroundColor")
+        self.lineEditMarkingGraphBackgroundColor.setMinimumSize(QSize(55, 0))
         self.lineEditMarkingGraphBackgroundColor.setMaximumSize(QSize(55, 16777215))
         self.lineEditMarkingGraphBackgroundColor.setFrame(True)
 
@@ -549,6 +558,59 @@ class Ui_Dialog(object):
 
         self.verticalLayout_4.addWidget(self.widget_20)
 
+        self.widget_21 = QWidget(self.scrollAreaWidgetContents)
+        self.widget_21.setObjectName(u"widget_21")
+        self.horizontalLayout_20 = QHBoxLayout(self.widget_21)
+        self.horizontalLayout_20.setObjectName(u"horizontalLayout_20")
+        self.labelGraphdisplaySize = QLabel(self.widget_21)
+        self.labelGraphdisplaySize.setObjectName(u"labelGraphdisplaySize")
+
+        self.horizontalLayout_20.addWidget(self.labelGraphdisplaySize)
+
+        self.spinBoxGraphdisplaySize = QSpinBox(self.widget_21)
+        self.spinBoxGraphdisplaySize.setObjectName(u"spinBoxGraphdisplaySize")
+
+        self.horizontalLayout_20.addWidget(self.spinBoxGraphdisplaySize)
+
+        self.labelGraphdisplayColor = QLabel(self.widget_21)
+        self.labelGraphdisplayColor.setObjectName(u"labelGraphdisplayColor")
+
+        self.horizontalLayout_20.addWidget(self.labelGraphdisplayColor)
+
+        self.lineEditGraphdisplayColor = QLineEdit(self.widget_21)
+        self.lineEditGraphdisplayColor.setObjectName(u"lineEditGraphdisplayColor")
+        self.lineEditGraphdisplayColor.setMaximumSize(QSize(55, 16777215))
+
+        self.horizontalLayout_20.addWidget(self.lineEditGraphdisplayColor)
+
+        self.pushButtonGraphdisplayColor = QPushButton(self.widget_21)
+        self.pushButtonGraphdisplayColor.setObjectName(u"pushButtonGraphdisplayColor")
+
+        self.horizontalLayout_20.addWidget(self.pushButtonGraphdisplayColor)
+
+        self.horizontalSpacer_19 = QSpacerItem(268, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout_20.addItem(self.horizontalSpacer_19)
+
+
+        self.verticalLayout_4.addWidget(self.widget_21)
+
+        self.widget_13 = QWidget(self.scrollAreaWidgetContents)
+        self.widget_13.setObjectName(u"widget_13")
+        self.horizontalLayout_12 = QHBoxLayout(self.widget_13)
+        self.horizontalLayout_12.setObjectName(u"horizontalLayout_12")
+        self.pushButtonGraphdisplayData = QPushButton(self.widget_13)
+        self.pushButtonGraphdisplayData.setObjectName(u"pushButtonGraphdisplayData")
+
+        self.horizontalLayout_12.addWidget(self.pushButtonGraphdisplayData)
+
+        self.horizontalSpacer_11 = QSpacerItem(431, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout_12.addItem(self.horizontalSpacer_11)
+
+
+        self.verticalLayout_4.addWidget(self.widget_13)
+
         self.verticalSpacer_2 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.verticalLayout_4.addItem(self.verticalSpacer_2)
@@ -616,6 +678,26 @@ class Ui_Dialog(object):
 
 
         self.verticalLayout_6.addWidget(self.widget_6)
+
+        self.widget_23 = QWidget(self.scrollAreaWidgetContents_2)
+        self.widget_23.setObjectName(u"widget_23")
+        self.horizontalLayout_22 = QHBoxLayout(self.widget_23)
+        self.horizontalLayout_22.setObjectName(u"horizontalLayout_22")
+        self.label_13 = QLabel(self.widget_23)
+        self.label_13.setObjectName(u"label_13")
+
+        self.horizontalLayout_22.addWidget(self.label_13)
+
+        self.spinBoxMaxMarkerRows = QSpinBox(self.widget_23)
+        self.spinBoxMaxMarkerRows.setObjectName(u"spinBoxMaxMarkerRows")
+
+        self.horizontalLayout_22.addWidget(self.spinBoxMaxMarkerRows)
+
+        self.horizontalSpacer_21 = QSpacerItem(260, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout_22.addItem(self.horizontalSpacer_21)
+
+        self.verticalLayout_6.addWidget(self.widget_23)
 
         self.widget_17 = QWidget(self.scrollAreaWidgetContents_2)
         self.widget_17.setObjectName(u"widget_17")
@@ -735,52 +817,59 @@ class Ui_Dialog(object):
         self.spinBoxGridOp.valueChanged.connect(self.horizontalSliderGridOp.setValue)
 
         self.pushButtonPresets.setDefault(False)
-        self.stackedWidget.setCurrentIndex(0)
+        self.stackedWidget.setCurrentIndex(-1)
 
 
         QMetaObject.connectSlotsByName(Dialog)
     # setupUi
 
     def retranslateUi(self, Dialog):
-        Dialog.setWindowTitle(QCoreApplication.translate("Dialog", u"Dialog", None))
-        self.pushButtonGraph.setText(QCoreApplication.translate("Dialog", u"Graph", None))
-        self.pushButtonPref.setText(QCoreApplication.translate("Dialog", u"Preferences", None))
-        self.pushButtonPrint.setText(QCoreApplication.translate("Dialog", u"Print", None))
-        self.pushButtonPresets.setText(QCoreApplication.translate("Dialog", u"Presets", None))
-        self.labelTopPerc_2.setText(QCoreApplication.translate("Dialog", u"Printsize of top Table", None))
-        self.labelGraphPerc_2.setText(QCoreApplication.translate("Dialog", u"Printsize of Graph", None))
-        self.labelBotPerc_2.setText(QCoreApplication.translate("Dialog", u"Printsize of bot Table", None))
-        self.label.setText(QCoreApplication.translate("Dialog", u"Print labelsize", None))
-        self.label_2.setText(QCoreApplication.translate("Dialog", u"Print table font size", None))
-        self.pushButtonGraphdisplayData.setText(QCoreApplication.translate("Dialog", u"Graphdisplay Data", None))
-        self.labelFeedColor.setText(QCoreApplication.translate("Dialog", u"Feed color", None))
-        self.pushButtonColorFeed.setText("")
-        self.labelDrillColor.setText(QCoreApplication.translate("Dialog", u"Drill color", None))
-        self.pushButtonColorDrill.setText("")
-        self.labelGraphBackground.setText(QCoreApplication.translate("Dialog", u"Graph background color", None))
-        self.pushButtonColor_2.setText("")
-        self.labelMarkingGraphBackground.setText(QCoreApplication.translate("Dialog", u"Graph background color while marking", None))
-        self.lineEditMarkingGraphBackgroundColor.setText("")
-        self.pushButtonColorBackgroundMarking.setText("")
-        self.labelMarkerHeight.setText(QCoreApplication.translate("Dialog", u"Marker height (% of total height)", None))
-        self.labelLabelSize.setText(QCoreApplication.translate("Dialog", u"Label Size", None))
-        self.labelLabelColor.setText(QCoreApplication.translate("Dialog", u"Label Color", None))
-        self.pushButtonColorLabel.setText("")
-        self.label_6.setText(QCoreApplication.translate("Dialog", u"x-axis major ticks", None))
-        self.label_7.setText(QCoreApplication.translate("Dialog", u"x-axis minor ticks", None))
-        self.label_11.setText(QCoreApplication.translate("Dialog", u"y-axis major ticks", None))
-        self.label_12.setText(QCoreApplication.translate("Dialog", u"y-axis minor ticks", None))
-        self.label_8.setText(QCoreApplication.translate("Dialog", u"Grid color", None))
-        self.lineEditGridColor.setText("")
-        self.pushButtonGridColor.setText("")
-        self.label_9.setText(QCoreApplication.translate("Dialog", u"Grid oppacity", None))
-        self.labelTopPerc.setText(QCoreApplication.translate("Dialog", u"Size of top Table", None))
-        self.labelGraphPerc.setText(QCoreApplication.translate("Dialog", u"Size of Graph", None))
-        self.labelBotPerc.setText(QCoreApplication.translate("Dialog", u"Size of bot Table", None))
-        self.label_5.setText(QCoreApplication.translate("Dialog", u"Default Directory", None))
-        self.pushButtonDefaultDir.setText(QCoreApplication.translate("Dialog", u"+", None))
-        self.label_4.setText(QCoreApplication.translate("Dialog", u"Amount of recently opened files shown", None))
-        self.label_3.setText(QCoreApplication.translate("Dialog", u"Amount of recently opened folders shown", None))
-        self.pushButton.setText(QCoreApplication.translate("Dialog", u"Reset recent data", None))
+            Dialog.setWindowTitle(QCoreApplication.translate("Dialog", u"Dialog", None))
+            self.pushButtonGraph.setText(QCoreApplication.translate("Dialog", u"Graph", None))
+            self.pushButtonPref.setText(QCoreApplication.translate("Dialog", u"Preferences", None))
+            self.pushButtonPrint.setText(QCoreApplication.translate("Dialog", u"Print", None))
+            self.pushButtonPresets.setText(QCoreApplication.translate("Dialog", u"Presets", None))
+            self.labelTopPerc_2.setText(QCoreApplication.translate("Dialog", u"Printsize of top Table", None))
+            self.labelGraphPerc_2.setText(QCoreApplication.translate("Dialog", u"Printsize of Graph", None))
+            self.labelBotPerc_2.setText(QCoreApplication.translate("Dialog", u"Printsize of bot Table", None))
+            self.label.setText(QCoreApplication.translate("Dialog", u"Print labelsize", None))
+            self.label_2.setText(QCoreApplication.translate("Dialog", u"Print table fontsize", None))
+            self.label_10.setText(QCoreApplication.translate("Dialog", u"Print Graphdisplay fontsize", None))
+            self.labelFeedColor.setText(QCoreApplication.translate("Dialog", u"Feed color", None))
+            self.pushButtonColorFeed.setText("")
+            self.labelDrillColor.setText(QCoreApplication.translate("Dialog", u"Drill color", None))
+            self.pushButtonColorDrill.setText("")
+            self.labelGraphBackground.setText(QCoreApplication.translate("Dialog", u"Graph background color", None))
+            self.pushButtonColor_2.setText("")
+            self.labelMarkingGraphBackground.setText(
+                    QCoreApplication.translate("Dialog", u"Graph background color while marking", None))
+            self.lineEditMarkingGraphBackgroundColor.setText("")
+            self.pushButtonColorBackgroundMarking.setText("")
+            self.labelMarkerHeight.setText(
+                    QCoreApplication.translate("Dialog", u"Marker height (% of total height)", None))
+            self.labelLabelSize.setText(QCoreApplication.translate("Dialog", u"Label Size", None))
+            self.labelLabelColor.setText(QCoreApplication.translate("Dialog", u"Label Color", None))
+            self.pushButtonColorLabel.setText("")
+            self.label_6.setText(QCoreApplication.translate("Dialog", u"x-axis major ticks", None))
+            self.label_7.setText(QCoreApplication.translate("Dialog", u"x-axis minor ticks", None))
+            self.label_11.setText(QCoreApplication.translate("Dialog", u"y-axis major ticks", None))
+            self.label_12.setText(QCoreApplication.translate("Dialog", u"y-axis minor ticks", None))
+            self.label_8.setText(QCoreApplication.translate("Dialog", u"Grid color", None))
+            self.lineEditGridColor.setText("")
+            self.pushButtonGridColor.setText("")
+            self.label_9.setText(QCoreApplication.translate("Dialog", u"Grid oppacity", None))
+            self.labelGraphdisplaySize.setText(QCoreApplication.translate("Dialog", u"Graphdisplay size", None))
+            self.labelGraphdisplayColor.setText(QCoreApplication.translate("Dialog", u"Graphdisplay color", None))
+            self.pushButtonGraphdisplayColor.setText("")
+            self.pushButtonGraphdisplayData.setText(QCoreApplication.translate("Dialog", u"Graphdisplay Data", None))
+            self.labelTopPerc.setText(QCoreApplication.translate("Dialog", u"Size of top Table", None))
+            self.labelGraphPerc.setText(QCoreApplication.translate("Dialog", u"Size of Graph", None))
+            self.labelBotPerc.setText(QCoreApplication.translate("Dialog", u"Size of bot Table", None))
+            self.label_13.setText(QCoreApplication.translate("Dialog", u"Maximum Marker rows", None))
+            self.label_5.setText(QCoreApplication.translate("Dialog", u"Default Directory", None))
+            self.pushButtonDefaultDir.setText(QCoreApplication.translate("Dialog", u"+", None))
+            self.label_4.setText(QCoreApplication.translate("Dialog", u"Amount of recently opened files shown", None))
+            self.label_3.setText(QCoreApplication.translate("Dialog", u"Amount of recently opened folders shown", None))
+            self.pushButton.setText(QCoreApplication.translate("Dialog", u"Reset recent data", None))
     # retranslateUi
 

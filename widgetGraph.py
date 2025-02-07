@@ -287,6 +287,8 @@ class WidgetGraph(QWidget):
         self.dictMeasurementData = {}
 
         self.textInGraph = None
+
+        self.maxRows = 6
         # todo delete later
         # arg variables
         self.mainWindow = MainWindow
@@ -302,6 +304,7 @@ class WidgetGraph(QWidget):
                 self.defaultMarkerDictName = self.dataModel.fileDefaultPresetName
 
             self.labelFontSize = self.mainWindow.settingsWindow.getSettingsVariable("labelFontSize")
+            self.maxRows = self.mainWindow.settingsWindow.getSettingsVariable('defaultMarkerTableRows')
             self.setUpUi()
             self.initializeData()
 
@@ -444,7 +447,13 @@ class WidgetGraph(QWidget):
 
         self.verticalLayout_2.addWidget(self.widgetGraph)
 
-        self.textInGraph = pg.TextItem(text="", color="#000000")
+        textInGraphColor = self.settingsWindow.getSettingsVariable("textInGraphColor")
+        textInGraphFontSize = self.settingsWindow.getSettingsVariable('textInGraphFontSize')
+
+        self.textInGraph = pg.TextItem(text="", color=textInGraphColor)
+        font = QFont()
+        font.setPointSize(textInGraphFontSize)
+        self.textInGraph.setFont(font)
         self.textInGraph.setPos(0, 100)
         self.textInGraph.hide()
         self.canvasGraph.addItem(self.textInGraph)
@@ -479,7 +488,7 @@ class WidgetGraph(QWidget):
         self.tableWidgetMarker.horizontalHeader().setVisible(False)
         self.tableWidgetMarker.verticalHeader().setVisible(False)
         self.tableWidgetMarker.setColumnCount(2)
-        self.tableWidgetMarker.setRowCount(6)
+        self.tableWidgetMarker.setRowCount(self.maxRows)
         self.tableWidgetMarker.verticalHeader().setMinimumSectionSize(0)
         sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         sizePolicy2.setHorizontalStretch(0)
@@ -611,6 +620,7 @@ class WidgetGraph(QWidget):
                 self.setTextToShowInGraph()
 
     def changeTableTopEntry(self, row, column, entry):
+        entry = str(entry)
         item = self.tableWidgetData.item(row, column)
         item.setText(entry)
         self.tableWidgetData.setItem(row, column, item)
@@ -624,15 +634,16 @@ class WidgetGraph(QWidget):
 
     def addTableMarkerEntry(self, index, name, color, x, dx):
         # @todo overload class to get a on_item_changed(self, item) signal and use it to change the markers
-        row = index % 6
-        column = index // 6 + 1 * index // 6
+
+        row = index % self.maxRows
+        column = index // self.maxRows + 1 * index // self.maxRows
 
         x = round(x, 2)
         dx = round(dx, 2)
 
-        if index >= 6:
-            if index % 6 == 0:
-                n = self.tableWidgetMarker.columnCount()
+        if index >= self.maxRows:
+            n = self.tableWidgetMarker.columnCount()
+            if column+1 > n:
                 self.tableWidgetMarker.setColumnCount(n + 2)
 
         if name != "":
@@ -672,6 +683,7 @@ class WidgetGraph(QWidget):
         print(" Index: {0}\n row: {1}\n column: {2}\n name: {3}".format(index, row, column, itemName))
         self.tableWidgetMarker.setItem(row, column, itemName)
         self.tableWidgetMarker.setItem(row, column + 1, itemNumbers)
+        self.updateTableMarkerColumns()
 
     def onTableMarkerCellClicked(self, row, column):
         if column % 2 == 0:
@@ -691,8 +703,10 @@ class WidgetGraph(QWidget):
                 self.canvasGraph.changeMarker(row + column - 1, _x0=x0, _x1=x1)
 
     def updateTableMarkerEntry(self, index, name, color, xPar, dxPar):
-        row = index % 6
-        column = index // 6 + 1 * index // 6
+        maxRows = self.maxRows
+
+        row = index % self.maxRows
+        column = index // self.maxRows + 1 * index // self.maxRows
         x = xPar - self.dxMarkerForTable
         dx = dxPar - self.dxMarkerForTable
         pixmap = QPixmap(30, 30)
@@ -710,8 +724,10 @@ class WidgetGraph(QWidget):
         self.tableWidgetMarker.setItem(row, column + 1, item)
 
     def updateTableMarkerEntryNameCol(self, index, name, color):
-        row = index % 6
-        column = index // 6 + 1 * index // 6
+        maxRows = 4
+
+        row = index % self.maxRows
+        column = index // self.maxRows + 1 * index // self.maxRows
 
         pixmap = QPixmap(30, 30)
         pixmap.fill(QColor(color))
@@ -729,6 +745,18 @@ class WidgetGraph(QWidget):
         item = QTableWidgetItem(": {0} cm bis {1} cm".format(round(x0, 2), round(x1, 2)))
         self.tableWidgetMarker.setItem(row, column, item)
 
+    def updateTableMarkerColumns(self):
+        column = 0
+        while column < self.tableWidgetMarker.columnCount():
+            isEmpty = all(self.tableWidgetMarker.item(row, column) is None for
+                          row in range(self.tableWidgetMarker.rowCount()))
+            print(f'columns: {self.tableWidgetMarker.columnCount()} columnCount: {column} isEmpty: {isEmpty}')
+            if isEmpty:
+                self.tableWidgetMarker.removeColumn(column)
+                self.tableWidgetMarker.removeColumn(column+1)
+            else:
+                column += 2
+
     def changeXAxisZero(self, xOffset):
         bottom_axis = self.canvasGraph.getPlotItem().getAxis("bottom")
         bottom_axis.setOffset(xOffset)
@@ -738,11 +766,16 @@ class WidgetGraph(QWidget):
 
     def setTextToShowInGraph(self):
         textStr = ""
+        font = QFont()
+        font.setPointSize(self.settingsWindow.getSettingsVariable('textInGraphFontSize'))
+        color = self.settingsWindow.getSettingsVariable('textInGraphColor')
         maxLen = 0
         for key in self.strsToShowInGraph:
             textStr += f"{self.dataModel.getNameByKey(key)}: {self.dataModel.getDataByKey(key)}\n"
             maxLen = max(maxLen, len(f"{self.dataModel.getNameByKey(key)}: {self.dataModel.getDataByKey(key)}"))
         self.textInGraph.setText(textStr[:-1])
+        self.textInGraph.setFont(font)
+        self.textInGraph.setColor(color)
 
     def changeFileDefaultPresetName(self, defaultPresetName):
         self.canvasGraph.fileDefaultMarkerDictName = defaultPresetName
