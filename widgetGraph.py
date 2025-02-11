@@ -4,7 +4,7 @@ import re
 
 import numpy as np
 import pyqtgraph as pg
-from PySide6.QtCore import (QSize, Qt, QObject, )
+from PySide6.QtCore import (QSize, Qt, QObject, QTimer, )
 from PySide6.QtGui import (QColor, QIcon,
                            QPixmap, QKeyEvent, QFont, QFontMetrics)
 from PySide6.QtWidgets import QCheckBox, QTableWidget, \
@@ -164,6 +164,8 @@ class AutoSizedTable(QTableWidget):
                 break
 
         widgetItem.setFont(font)
+
+
 
 
 class MyDelegate(QStyledItemDelegate):
@@ -586,6 +588,9 @@ class WidgetGraph(QWidget):
         self.canvasGraph.colorWhileMarkingHex = QColor(self.settingsWindow.getSettingsVariable("colorBackgroundMarking"))
         self.canvasGraph.changeAxisFontsize(self.settingsWindow.getSettingsVariable("labelFontSize"))
         self.strsToShowInGraph = self.settingsWindow.getSettingsVariable("strsToShowInGraph")
+        self.maxRows = self.settingsWindow.getSettingsVariable("defaultMarkerTableRows")
+        self.tableWidgetMarker.setRowCount(self.maxRows)
+        self.updateTableMarker()
         self.resetWidgetsRelSpace()
         self.setTextToShowInGraph()
 
@@ -724,8 +729,6 @@ class WidgetGraph(QWidget):
         self.tableWidgetMarker.setItem(row, column + 1, item)
 
     def updateTableMarkerEntryNameCol(self, index, name, color):
-        maxRows = 4
-
         row = index % self.maxRows
         column = index // self.maxRows + 1 * index // self.maxRows
 
@@ -757,6 +760,14 @@ class WidgetGraph(QWidget):
             else:
                 column += 2
 
+
+    def updateTableMarker(self):
+        self.tableWidgetMarker.clear()
+        self.tableWidgetMarker.setRowCount(self.maxRows)
+        for marker in self.canvasGraph.markerList:
+            self.addTableMarkerEntry(marker.getIndex(), marker.getName(), marker.getColor(), marker.getX0(),
+                                     marker.getX1())
+
     def changeXAxisZero(self, xOffset):
         bottom_axis = self.canvasGraph.getPlotItem().getAxis("bottom")
         bottom_axis.setOffset(xOffset)
@@ -786,7 +797,7 @@ class WidgetGraph(QWidget):
         if topPerc + graphPerc + botPerc > 100:
             raise Exception("Sum must be less than 100")
 
-        if (saveValues):
+        if saveValues:
             self.heightWidgetTopPerc = topPerc
             self.heightWidgetGraphPerc = graphPerc
             self.heightWidgetBottomPerc = botPerc

@@ -5,10 +5,10 @@ import os
 import sys
 
 from PySide6 import QtWidgets
-from PySide6.QtCore import QPoint, QRect, QSize, QObject
+from PySide6.QtCore import QPoint, QRect, QSize, QObject, QTimer, Qt
 from PySide6.QtGui import QIcon, QCursor, QAction, QGuiApplication
 from PySide6.QtWidgets import QApplication, QFileDialog, QMdiArea, QMdiSubWindow, \
-    QMessageBox, QDialog, QHBoxLayout, QVBoxLayout, QCheckBox, QGroupBox, QDialogButtonBox, QWidget
+    QMessageBox, QDialog, QHBoxLayout, QVBoxLayout, QCheckBox, QGroupBox, QDialogButtonBox, QWidget, QLabel, QFrame
 
 from markerpresetwindow import MarkerPresetWindow
 from pickMarkerWindow import PickMarker
@@ -16,6 +16,36 @@ from printWindow import PrintWindow
 from settingsWindow import SettingsWindow
 from ui_files.ui_mainwindow import Ui_MainWindow
 from widgetGraph import WidgetGraph
+
+
+class AutoCloseMessageBox(QLabel):
+    def __init__(self, message, timeout=2, parent=None):
+        super().__init__(message, parent)
+        self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint | Qt.ToolTip)
+
+        # Set text and StyleSheet for the toast message
+        self.setText(message)
+        self.setFrameStyle(QFrame.Panel | QFrame.Plain)
+        self.setStyleSheet("""
+                    background-color: #876ca1;
+                    color: black;
+                    font-size: 16px;
+                    border-style: solid;
+                    border-width: 1px;
+                    border-color: black;
+                    border-radius: 2px; 
+                """)
+        self.adjustSize()
+
+        QTimer.singleShot(timeout * 1000, self.close)
+
+    def showEvent(self, event):
+        parent = self.parentWidget()
+        if parent is not None:
+            parent_rect = parent.geometry()
+            self.setGeometry(parent_rect.topRight().x() - self.width() - 10, parent_rect.topRight().y() + 35,
+                             self.width(), self.height())
+        super().showEvent(event)
 
 
 class CustomQMdiArea(QMdiArea):
@@ -394,8 +424,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         graphWidget = tabWidget.widget(currentIndex)
 
-        self.saveGraphState(graphWidget)
+        savePath = self.saveGraphState(graphWidget)
         print("saveButtonClicked")
+        dialog = AutoCloseMessageBox(f'Saved to {savePath}', parent=self)
+        dialog.show()
 
     def saveAllOpenTabs(self):
         tabWidget = self.ui.tabWidget
@@ -405,6 +437,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 tabWidget.setTabText(i, tabWidget.tabText(i).split(".rgp")[0])
             graphWidget = tabWidget.widget(i)
             self.saveGraphState(graphWidget)
+
+        dialog = AutoCloseMessageBox('Multiple files saved', parent=self)
+        dialog.show()
 
 
     def showSaveFileDialog(self):
@@ -422,7 +457,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             defaultFilePath = '/'.join(fileName.split('/')[:-1])
             print(f'defaultFilePath in main: {defaultFilePath}')
             graphWidget.dataModel.fileDefaultSavePath = defaultFilePath
-            self.saveGraphState(graphWidget, fileName)
+            savePath = self.saveGraphState(graphWidget, fileName)
+
+            dialog = AutoCloseMessageBox(f'Saved to {savePath}', parent=self)
+            dialog.show()
 
     # @todo change this
     def saveGraphState(self, graphWidget, path=""):
@@ -446,10 +484,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 with open(path + '/' + graphWidget.name + ".rif", "w") as file:
                     json.dump(graphWidget.getCurrentState(), file)
                     graphWidget.canvasGraph.canvasSaved()
+
+                return path + '/' + graphWidget.name + ".rif"
             else:
                 with open(path, "w") as file:
                     json.dump(graphWidget.getCurrentState(), file)
                     graphWidget.canvasGraph.canvasSaved()
+
+                return path + '/' + graphWidget.name + ".rif"
         else:
             for widget in self.listGraphWidgets:
                 path = self.settingsWindow.getSettingsVariable('defaultFolderPath')
@@ -525,6 +567,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
         filename = self.ui.tabWidget.tabText(self.ui.tabWidget.currentIndex())
         PrintWindow([graphWidget], self.settingsWindow).quickExportAs(graphWidget, 'pdf', filename)
+        dialog = AutoCloseMessageBox('PDF exported', parent=self)
+        dialog.show()
 
 
         '''
@@ -536,10 +580,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
         filename = self.ui.tabWidget.tabText(self.ui.tabWidget.currentIndex())
         PrintWindow([graphWidget], self.settingsWindow, ).quickExportAs(graphWidget, 'png', filename)
+        dialog = AutoCloseMessageBox('PNG exported', parent=self)
+        dialog.show()
 
     def printButtonClicked(self):
         printWindow = PrintWindow(self.listGraphWidgets, self.settingsWindow)
-        printWindow.exec()
+        if printWindow.exec():
+            dialog = AutoCloseMessageBox('File printed', parent=self)
+            dialog.show()
 
 
     def settingsButtonClicked(self):
@@ -652,6 +700,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                         entry = currentWidget.dataModel.getDataByKey(data)
                         row = 1
                         fileNames[name].changeTableTopEntry(row, 1, entry)
+
+            dialog = AutoCloseMessageBox('Data copied to other files', parent=self)
+            dialog.show()
 
     def updateGraphWidgets(self):
         for graph in self.listGraphWidgets:

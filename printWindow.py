@@ -1,7 +1,7 @@
 from typing import Optional, Union
 
 from PySide6.QtCore import QSize, Qt, QCoreApplication, QMarginsF, QSizeF
-from PySide6.QtGui import QFont, QPixmap, QPainter, QPageSize, QTransform
+from PySide6.QtGui import QFont, QPixmap, QPainter, QPageSize, QTransform, QFontMetrics
 from PySide6.QtPrintSupport import QPrinter
 from PySide6.QtWidgets import QDialog
 
@@ -28,6 +28,7 @@ class PrintWindow(QDialog):
         self.listGraphWidgets = listGraphWidget
         self.settings = settings
         self.suffix = 'png'
+        self.removeFromHeightPerc = 0
 
     def getPrintWidgetGraph(self, graphWidgetAtt: WidgetGraph, suffix: str, width: int, height: int) -> WidgetGraph:
 
@@ -89,8 +90,26 @@ class PrintWindow(QDialog):
         fontSize = int(self.settings.getSettingsVariable("printFontSize"))
         printLabelFontSize = int(self.settings.getSettingsVariable("printLabelFontSize"))
 
-        tableDataMaxItemHeight = (resizeHeight * heightTop / 120) / 6
-        tableMarkerMaxItemHeight = (resizeHeight * heightBottom / 120) / 6
+        maxRows = self.settings.getSettingsVariable('defaultMarkerTableRows')
+        maxRows = maxRows if 0 < maxRows <= len(graphWidget.canvasGraph.markerList) else (
+            len(graphWidget.canvasGraph.markerList))
+
+        graphWidget.maxRows = maxRows
+        graphWidget.updateTableMarker()
+
+        # todo put this into a function fitHeightToFontSize(height, fontSize, rows) -> newHeight
+        if maxRows == 0:
+            graphWidget.widgetBottom.hide()
+            maxRows = 1
+
+        heightTop, deltaTop, tableDataMaxItemHeight = (
+            self.fitHeightToFontSize(resizeHeight, heightTop, fontSize, 6))
+        heightBottom, deltaBottom, tableMarkerMaxItemHeight = (
+            self.fitHeightToFontSize(resizeHeight, heightBottom, fontSize, maxRows))
+
+        heightGraph += int(deltaTop) + int(deltaBottom)
+
+        print(f'prepareWidgetForPrint: Top: {heightTop}, Bot: {heightBottom}, Graph: {heightGraph}')
 
         self.toggleUI(graphWidget, 'hide', True)
 
@@ -136,6 +155,12 @@ class PrintWindow(QDialog):
             totalHeight = 0
             for i in range(graphWidget.tableWidgetMarker.rowCount()):
                 totalHeight += graphWidget.tableWidgetMarker.rowHeight(i)
+                print(f'printWindow.prepareWidgetForPrint: row {i} height {graphWidget.tableWidgetData.rowHeight(i)}')
+
+            print(f'rows multiplied: {graphWidget.tableWidgetMarker.rowCount() * graphWidget.tableWidgetMarker.rowHeight(0)}')
+            print(f'row count: {graphWidget.tableWidgetMarker.rowCount()}')
+            print(f'printWindow.prepareWidgetForPrint: Total height: {totalHeight}')
+
             graphWidget.tableWidgetMarker.resizeRowsToContents()
             #self.graphWidget.tableWidgetMarker.setFixedHeight(totalHeight)
             graphWidget.tableWidgetMarker.clearSelection()
@@ -152,6 +177,25 @@ class PrintWindow(QDialog):
         print('PrintWindow.prepareWidgetForPrint done')
 
         #self.graphWidget.resize(resizeWidth, resizeHeight)
+
+    def fitHeightToFontSize(self, heightTotal: int, heightPercentage: float, fontSize: int, rows: int) \
+            -> [float, float, float]:
+        newHeightPercentage = heightPercentage
+        deltaPercentage = 0
+
+        if rows == 0:
+            return newHeightPercentage, 0, 0
+
+        tableMaxItemHeight = (heightTotal * heightPercentage / 100) / rows
+
+        fontMetric = QFontMetrics(QFont('', fontSize))
+
+        if heightTotal * heightPercentage / 100 > fontMetric.height() * rows:
+            newHeightPercentage = ((fontMetric.height() * rows) / heightTotal) * 100
+            deltaPercentage = abs(heightPercentage - newHeightPercentage)
+
+
+        return newHeightPercentage, deltaPercentage, tableMaxItemHeight
 
     '''def resetWidgetAfterPrint(self):
         self.graphWidget.resetWidgetsRelSpace()
