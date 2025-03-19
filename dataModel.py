@@ -195,7 +195,8 @@ class DataModel:
 
                 elif ("object\":" in line):
                     try:
-                        objectData = line.split(":")[1].strip().replace("[", "").replace("]", "").replace("\"", "")[:-1].split(",")
+                        objectData = line.split(":")[1].strip().replace("[", "").replace(
+                                "]", "").replace("\"", "")[:-1].split(",")
                         self._customData["1_mHeight"] = objectData[0]
                         self._customData["2_mDirection"] = objectData[1]
                         self._customData["3_objecttype"] = objectData[2]
@@ -206,7 +207,8 @@ class DataModel:
                 elif 'assessment' in line:
                     self.commentRight = line.split(':')[1].strip().replace('\"', '')
 
-                tmpData.append(line.replace("\"", "").replace(",", "").replace(":",";"))
+                tmpData.append(line.replace("\"", "").replace(
+                        ",", "").replace(":",";"))
                 line = f.readline()
 
         return self._formatListToDict(tmpData)
@@ -262,17 +264,17 @@ class DataModel:
         return dictData
 
 
-    def setComment(self, comment: str):
+    def setComment(self, comment: str) -> None:
         self.commentRight = comment
 
-    def getComment(self):
+    def getComment(self) -> str:
         return self.commentRight
 
-    def getGraphData(self):
+    def getGraphData(self) -> [str, float, float, float]:
         return [self._name, self._depthMsmt, self._dataDrill, self._dataFeed]
 
 
-    def getTablaTopData(self):
+    def getTablaTopData(self) -> list[list[QTableWidgetItem]]:
         """
         This method formats the data specified by `self._dataNameDict` into lists of QTableWidgetItems
         representing names and associated data.
@@ -332,7 +334,7 @@ class DataModel:
         return [collectedTableNames, collectedTableData]
 
 
-    def getDataByKey(self, key):
+    def getDataByKey(self, key) -> str:
         """
         this method returns data corresponding to a key
         Args:

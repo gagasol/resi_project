@@ -500,13 +500,17 @@ class SettingsWindow(QDialog):
             self.setSettingsVariable('recentFolders', self.recentOpenFolders)
             return True
 
+    def removeRecentFolder(self, folderPath):
+        self.recentOpenFolders.remove(folderPath)
+        self.setSettingsVariable('recentFolders', self.recentOpenFolders)
+
         self.setSettingsVariable('recentFolders', self.recentOpenFolders)
         return False
 
-    def getSettingsVariable(self, variableName):
+    def getSettingsVariable(self, variableName: str):
         return self.defaultSettingsDict[variableName]
 
-    def setSettingsVariable(self, variableName, value):
+    def setSettingsVariable(self, variableName: str, value):
         self.defaultSettingsDict[variableName] = value
 
 

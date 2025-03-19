@@ -424,9 +424,9 @@ class WidgetGraph(QWidget):
                                             colorBackground, colorBackgroundMarking, font, markerHeightPerc,
                                             axisItems={"bottom": bottom_axis})
         self.canvasGraph.showGrid(x=False, y=False)
-
-        penDrill = pg.mkPen(color=colorDrillPlot, width=0.7)
-        penFeed = pg.mkPen(color=colorFeedPlot, width=0.7)
+        # appereantly those are wrong so for now just use the color of the other one, later change variables
+        penDrill = pg.mkPen(color=colorFeedPlot, width=0.7)
+        penFeed = pg.mkPen(color=colorDrillPlot, width=0.7)
 
         self.canvasGraph.plot(self.x, dataDrill, pen=penFeed)
         self.canvasGraph.plot(self.x, dataFeed, pen=penDrill)

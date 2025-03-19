@@ -10,6 +10,8 @@ from PySide6.QtGui import QIcon, QCursor, QAction, QGuiApplication
 from PySide6.QtWidgets import QApplication, QFileDialog, QMdiArea, QMdiSubWindow, \
     QMessageBox, QDialog, QHBoxLayout, QVBoxLayout, QCheckBox, QGroupBox, QDialogButtonBox, QWidget, QLabel, QFrame
 
+import settingsWindow
+import widgetGraph
 from markerpresetwindow import MarkerPresetWindow
 from pickMarkerWindow import PickMarker
 from printWindow import PrintWindow
@@ -113,11 +115,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # variable setup
 
-        self.pickMarkerWin = None
-        self.markerPresetWin = None
-        self.settingsWindow = None
+        self.pickMarkerWin: PickMarker
+        self.markerPresetWin: MarkerPresetWindow
+        self.settingsWindow: SettingsWindow
         # @todo IMPORTANT make the nameToColorDict into a real thing!
-        self.listGraphWidgets = []
+        self.listGraphWidgets: list[WidgetGraph] = []
         self.nameToColorDict = {}
         self.listNameKeys = []
         self.markerPresetList = []
@@ -142,15 +144,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             "Chocolate": "#D2691E",
             "Crimson": "#DC143C"
         }
-        print('115 executed in main.py')
         self.loadPreset()
         try:
             self.lastDirectory = self.settingsWindow.getSettingsVariable('defaultFolderPath')
-        except AttributeError as e:
+        except AttributeError:
+            print('AttributeError')
             self.lastDirectory = '.'
 
         self.loadOpenMenu()
-        print('118 executed in main.py')
 
         self.listNameKeys = ["idNumber", "date"]
 
@@ -268,6 +269,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             if pathToFile not in self.settingsWindow.getSettingsVariable('recentFiles'):
                 self.settingsWindow.addRecentFile(pathToFile)
                 print(f'YAHZI!: {pathToFile}')
+            else:
+                self.settingsWindow.removeRecentFile(pathToFile)
+                self.settingsWindow.addRecentFile(pathToFile)
             try:
                 with open(pathToFile, "r") as file:
                     loadedState = json.load(file)
@@ -281,8 +285,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             except FileNotFoundError:
                 print('File not found')
                 self.settingsWindow.removeRecentFile(pathToFile)
-
-
 
         elif suffix == 'project':
             with open(pathToFile, "r") as file:
@@ -306,6 +308,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         pathToFileFolder = '/'.join(pathToFile[0:-1].split('/')[0:-1])
         if pathToFileFolder not in self.settingsWindow.getSettingsVariable('recentFolders'):
             self.settingsWindow.addRecentFolder(pathToFileFolder)
+        else:
+            self.settingsWindow.removeRecentFolder(pathToFileFolder)
+            self.settingsWindow.addRecentFolder(pathToFileFolder)
 
         self.loadOpenMenu()
 
@@ -316,7 +321,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             print('Rif detected opening file')
             self.openNewFile(filePath)
         else:
-            pathToFiles = QFileDialog.getOpenFileNames(None, 'Select Files', self.lastDirectory,
+            pathToFiles = QFileDialog.getOpenFileNames(None, 'Select Files', filePath,
                                                        '*.rgp * .rif;;*.rgp;;*.rif')
 
             for pathToFile in pathToFiles[0]:
@@ -563,7 +568,19 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ui.stackedWidgetWorkArea.setCurrentIndex(1)
         self.ui.mdiArea.tileSubWindows()
 
-    def pdfButtonClicked(self):
+    def pdfButtonClicked(self) -> None:
+        """
+        Handles the event triggered when the PDF button is clicked, exporting the currently
+        displayed graph widget as a PDF file. This method retrieves the currently active
+        widget and its respective name, using them to initiate a PDF export. A message dialog
+        is displayed to notify the user of a successful export.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         graphWidget = self.ui.tabWidget.widget(self.ui.tabWidget.currentIndex())
         filename = self.ui.tabWidget.tabText(self.ui.tabWidget.currentIndex())
         PrintWindow([graphWidget], self.settingsWindow).quickExportAs(graphWidget, 'pdf', filename)
